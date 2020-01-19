@@ -1,12 +1,23 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 
-import user from './modules/user'
+import {
+  createStore,
+  Module,
+  Getters,
+  Mutations,
+  Actions,
+} from 'vuex-smart-module'
+import { user } from './modules/user'
 
 Vue.use(Vuex)
 
-export default new Vuex.Store({
+/* tslint:disable:max-classes-per-file */
+
+const root = new Module({
   modules: {
     user,
   },
 })
+
+export default createStore(root)

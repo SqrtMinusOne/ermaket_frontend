@@ -1,12 +1,12 @@
 <template>
-  <div>Welcome home!!</div>
+  <div>404</div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component({})
-export default class Home extends Vue {
+export default class Error404 extends Vue {
 
 }
 
