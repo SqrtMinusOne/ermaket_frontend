@@ -5,6 +5,9 @@
     header-text-variant="white"
   >
     <b-card-text>
+      <b-alert variant="danger" :show="error" @dimissed="setError(null)" dismissible>
+        {{ error }}
+      </b-alert>
       <b-form @submit="onLogin">
         <b-form-group label="Login" label-for="login-input">
           <b-form-input id="login-input" v-model="form.login" />
@@ -28,7 +31,11 @@ import { Component, Vue } from 'vue-property-decorator'
 import { userMapper } from '@/store/modules/user'
 
 const Mappers = Vue.extend({
+  computed: {
+    ...userMapper.mapState(['error'])
+  },
   methods: {
+    ...userMapper.mapMutations(['setError']),
     ...userMapper.mapActions(['login'])
   }
 })
@@ -43,7 +50,7 @@ export default class LoginForm extends Mappers {
   public async onLogin(e: Event) {
     e.preventDefault()
     await this.login(this.form)
-    this.$router.push('/home')
+    this.$router.push('/')
   }
 }
 </script>

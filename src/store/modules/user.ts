@@ -28,6 +28,13 @@ class UserMutations extends Mutations<UserState> {
   public setHierarchy(hierarchy: Hierarchy | null) {
     this.state.hierarchy = hierarchy
   }
+
+  public reset () {
+      const s: any = new UserState()
+      Object.keys(s).forEach((key: any) => {
+        (this.state as any)[key] = s[key]
+      })
+  }
 }
 
 class UserActions extends Actions<
@@ -42,8 +49,7 @@ class UserActions extends Actions<
       this.mutations.setUser(response.data.user)
       this.mutations.setHierarchy(response.data.hierarchy)
     } catch {
-      this.mutations.setUser(null)
-      this.mutations.setUser(null)
+      this.mutations.reset()
     }
   }
 
@@ -62,9 +68,11 @@ class UserActions extends Actions<
   }
 
   public async logout() {
-    await UserAPI.logout()
-      this.mutations.setUser(null)
-      this.mutations.setUser(null)
+    try {
+      await UserAPI.logout()
+    } finally {
+      this.mutations.reset()
+    }
   }
 }
 

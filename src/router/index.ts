@@ -12,7 +12,7 @@ const routes: RouteConfig[] = [
   {
     path: '/login',
     name: 'login',
-    component: Login
+    component: Login,
   },
   ...LoggedInRoutes.routes,
   {

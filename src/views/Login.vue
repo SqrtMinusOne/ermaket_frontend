@@ -1,16 +1,20 @@
 <template>
-  <b-container fluid>
-    <b-row align-h="center" align-v="center">
-      <b-col sm="12" md="6">
-        <LoginForm />
-      </b-col>
-    </b-row>
-  </b-container>
+  <div>
+    <Navbar />
+    <b-container fluid>
+      <b-row align-h="center" align-v="center">
+        <b-col sm="12" md="6">
+          <LoginForm />
+        </b-col>
+      </b-row>
+    </b-container>
+  </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import LoginForm from '@/components/LoginForm.vue'
+import Navbar from '@/components/Navbar.vue'
 import { userMapper } from '@/store/modules/user'
 
 const Mappers = Vue.extend({
@@ -25,19 +29,16 @@ const Mappers = Vue.extend({
 })
 
 @Component({
-  components: { LoginForm },
+  components: { LoginForm, Navbar },
 })
 export default class Login extends Mappers {
   @Watch('isLoggedIn')
-  onLoggedIn() {
+  private onLoggedIn() {
     if (this.isLoggedIn) {
-      this.$router.push('/home')
+      this.$router.push('/')
     }
   }
 }
-
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>
