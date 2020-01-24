@@ -96,7 +96,7 @@ export default class Home extends Mappers {
   }
   
   @Emit()
-  onCollapse(collapsed: boolean) {
+  public onCollapse(collapsed: boolean) {
     return collapsed
   }
 }

@@ -12,5 +12,6 @@ import { Component, Vue } from 'vue-property-decorator'
 export default class App extends Vue {}
 </script>
 
-<style>
+<style lang="scss">
+@import './sass/app.scss'
 </style>

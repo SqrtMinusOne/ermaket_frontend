@@ -23,7 +23,7 @@ export default class Home extends Vue {
   private sidebarCollapsedWidth = 50
   private sidebarCollapsed = false
 
-  onCollapse(collapsed: boolean) {
+  private onCollapse(collapsed: boolean) {
     this.sidebarCollapsed = collapsed
   }
 

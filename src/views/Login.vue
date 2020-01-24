@@ -2,7 +2,7 @@
   <div>
     <Navbar />
     <b-container fluid>
-      <b-row align-h="center" align-v="center">
+      <b-row align-h="center" align-v="center" class="mt-3">
         <b-col sm="12" md="6">
           <LoginForm />
         </b-col>
