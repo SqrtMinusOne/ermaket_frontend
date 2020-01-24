@@ -30,7 +30,7 @@ export interface HierarchyElem {
 }
 
 export interface Section extends HierarchyElem {
-  children: HierarchyElem[]
+  children: number[]
 }
 
 export interface Column {
@@ -94,7 +94,7 @@ export interface Page extends HierarchyElem {
 }
 
 export interface PrebuiltPage extends HierarchyElem {
-  [key: string]: any // TODO
+  type: string // TODO
 }
 
 export interface Hierarchy {

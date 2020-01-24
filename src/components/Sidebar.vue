@@ -12,12 +12,15 @@
 <script lang="ts">
 import { Component, Vue, Emit } from 'vue-property-decorator'
 import { userMapper } from '../store/modules/user'
+import { HierarchyElem, Section, Table, Form, PrebuiltPage } from '../store/types'
+import { instanceOfSection, instanceOfTable, instanceOfForm, instanceOfPrebuiltPage } from '../store/guards'
 // tslint:disable-next-line:no-var-requires
 const SidebarMenu = require('vue-sidebar-menu').SidebarMenu
 
 const Mappers = Vue.extend({
   computed: {
     ...userMapper.mapState(['hierarchy']),
+    ...userMapper.mapGetters(['hierarchyElem']),
   },
 })
 
@@ -29,7 +32,7 @@ interface Icon {
 }
 
 interface Item {
-  href: string
+  href: string | object
   title: string
   icon?: Icon | string
   badge?: Icon
@@ -65,6 +68,56 @@ interface Menu extends Array<Item|HeaderItem|ComponentItem> {}
   components: { SidebarMenu }
 })
 export default class Home extends Mappers {
+  private makeMenuElem(element: HierarchyElem): Item {
+    if (instanceOfTable(element)) {
+      return this.makeTable(element as Table)
+    }
+    if (instanceOfSection(element)) {
+      return this.makeSection(element as Section)
+    }
+    if (instanceOfForm(element)) {
+      return this.makeForm(element as Form)
+    }
+    // TODO page
+    return this.makePrebuiltPage(element as PrebuiltPage)
+  }
+
+  private makeTable(element: Table): Item {
+    return {
+      title: element.name,
+      href: { path: `/table/${element.id}` },
+      icon: 'fas fa-table'
+    }
+  }
+
+  private makeSection(element: Section): Item {
+    const children: Item [] = []
+    for (let id of element.children) {
+      children.push(this.makeMenuElem(this.hierarchyElem(id) as HierarchyElem))
+    }
+    return {
+      title: element.name,
+      href: '#',
+      icon: 'fas fa-caret-right',
+      child: children,
+    }
+  }
+
+  private makeForm(element: Form): Item {
+    return {
+      title: element.name,
+      href: { path: `/forms/${element.id}` },
+      icon: 'fas fa-wpforms'
+    }
+  }
+
+  private makePrebuiltPage(element: PrebuiltPage): Item {
+    return {
+      title: element.name,
+      href: '#' // TODO
+    }
+  }
+
   private get menu () {
     if (this.hierarchy === null) {
       return []
@@ -72,29 +125,17 @@ export default class Home extends Mappers {
     const menu: Menu = [
       {
         header: true,
-        title: 'Main Navigation',
+        title: 'Navigation',
         hiddenOnCollapse: true
       },
-      {
-        href: '/',
-        title: 'Dashboard',
-        icon: 'fa fa-user'
-      },
-      {
-        href: '/charts',
-        title: 'Charts',
-        icon: 'fa fa-chart-area',
-        child: [
-          {
-            href: '/charts/sublink',
-            title: 'Sub Link'
-          }
-        ]
-      }
     ]
+    for (let rootId of this.hierarchy.root) {
+      menu.push(this.makeMenuElem(this.hierarchyElem(rootId) as HierarchyElem))
+    }
+
     return menu
   }
-  
+
   @Emit()
   public onCollapse(collapsed: boolean) {
     return collapsed

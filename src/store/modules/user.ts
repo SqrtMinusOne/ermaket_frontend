@@ -1,5 +1,5 @@
 import { Getters, Mutations, Actions, Module, createMapper } from 'vuex-smart-module'
-import { User, Hierarchy } from '@/store/types'
+import { User, Hierarchy, HierarchyElem } from '@/store/types'
 import UserAPI from '../../api/user'
 
 /* tslint:disable:max-classes-per-file */
@@ -13,6 +13,14 @@ class UserState {
 class UserGetters extends Getters<UserState> {
   get isLoggedIn() {
     return this.state.user !== null
+  }
+
+  get hierarchyElem() {
+    return (id: number): HierarchyElem | undefined => {
+      if (this.state.hierarchy) {
+        return this.state.hierarchy.hierarchy.find((elem: HierarchyElem) => elem.id === id)
+      }
+    }
   }
 }
 
