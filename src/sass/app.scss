@@ -3,4 +3,6 @@
 @import "vue-sidebar-menu/src/scss/vue-sidebar-menu";
 @import "bootstrap/scss/bootstrap";
 @import "ag-grid-community/dist/styles/ag-grid.scss";
-@import "ag-grid-community/src/styles/ag-theme-bootstrap/sass/ag-theme-bootstrap.scss";
+@import "../../node_modules/ag-grid-community/src/styles/ag-theme-material/sass/ag-theme-material.scss";
+//@import "ag-grid-community/dist/styles/ag-theme-bootstrap";
+//@import "../../node_modules/ag-grid-community/dist/styles/ag-theme-balham.css";

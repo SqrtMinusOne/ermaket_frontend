@@ -1,13 +1,18 @@
 <template>
   <div>
-    Table {{ $route.params.id }}
+    <TableComponent :id="Number($route.params.id)" />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import TableComponent from '@/components/Table.vue'
 
-@Component({})
+@Component({
+  components: {
+    TableComponent
+  }
+})
 export default class Table extends Vue {
 
 }

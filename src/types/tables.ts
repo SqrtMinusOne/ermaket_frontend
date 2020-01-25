@@ -37,6 +37,23 @@ export type Filter = FilterObject | Criterion[]
 
 export type Order = string[]
 
-export interface TableData {
-  [key: string]: object[]
+export type RowData = any[]
+
+export interface LoadedTable {
+  data: RowData
+  time: Date
+  rowCount: number
+}
+
+export interface TableResponse {
+  data: RowData
+  total: number
+}
+
+export interface Loaded {
+  [key: number]: LoadedTable
+}
+
+export interface Transaction {
+  [key: string]: object[] // TODO
 }

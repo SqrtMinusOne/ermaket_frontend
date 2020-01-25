@@ -81,6 +81,9 @@ export interface FormDescription {
 }
 
 export interface Table extends HierarchyElem {
+  tableName: string
+  schema: string
+  linesOnPage: number
   columns: Column[]
   formDescription: FormDescription
 }

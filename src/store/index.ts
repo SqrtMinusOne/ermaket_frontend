@@ -9,6 +9,7 @@ import {
   Actions,
 } from 'vuex-smart-module'
 import { user } from './modules/user'
+import { table } from './modules/table'
 
 Vue.use(Vuex)
 
@@ -17,6 +18,7 @@ Vue.use(Vuex)
 const root = new Module({
   modules: {
     user,
+    table,
   },
 })
 
