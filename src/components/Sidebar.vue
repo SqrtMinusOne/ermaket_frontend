@@ -12,8 +12,8 @@
 <script lang="ts">
 import { Component, Vue, Emit } from 'vue-property-decorator'
 import { userMapper } from '../store/modules/user'
-import { HierarchyElem, Section, Table, Form, PrebuiltPage } from '../store/types'
-import { instanceOfSection, instanceOfTable, instanceOfForm, instanceOfPrebuiltPage } from '../store/guards'
+import { HierarchyElem, Section, Table, Form, PrebuiltPage } from '@/types/user'
+import { instanceOfSection, instanceOfTable, instanceOfForm, instanceOfPrebuiltPage } from '@/types/user_guards'
 // tslint:disable-next-line:no-var-requires
 const SidebarMenu = require('vue-sidebar-menu').SidebarMenu
 
@@ -92,7 +92,7 @@ export default class Home extends Mappers {
 
   private makeSection(element: Section): Item {
     const children: Item [] = []
-    for (let id of element.children) {
+    for (const id of element.children) {
       children.push(this.makeMenuElem(this.hierarchyElem(id) as HierarchyElem))
     }
     return {
@@ -129,7 +129,7 @@ export default class Home extends Mappers {
         hiddenOnCollapse: true
       },
     ]
-    for (let rootId of this.hierarchy.root) {
+    for (const rootId of this.hierarchy.root) {
       menu.push(this.makeMenuElem(this.hierarchyElem(rootId) as HierarchyElem))
     }
 
@@ -137,7 +137,7 @@ export default class Home extends Mappers {
   }
 
   @Emit()
-  public onCollapse(collapsed: boolean) {
+  private onCollapse(collapsed: boolean) {
     return collapsed
   }
 }

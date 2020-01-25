@@ -1,6 +1,6 @@
 import { http } from '@/axios-common'
 import { AxiosPromise } from 'axios'
-import { DefaultResponse } from '@/store/types'
+import { DefaultResponse } from '@/types/user'
 
 export default class UserAPI {
   public static login(

@@ -1,6 +1,6 @@
 import { Getters, Mutations, Actions, Module, createMapper } from 'vuex-smart-module'
-import { User, Hierarchy, HierarchyElem } from '@/store/types'
-import UserAPI from '../../api/user'
+import { User, Hierarchy, HierarchyElem } from '@/types/user'
+import UserAPI from '@/api/user'
 
 /* tslint:disable:max-classes-per-file */
 

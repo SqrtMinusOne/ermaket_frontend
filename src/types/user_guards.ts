@@ -1,4 +1,4 @@
-import { HierarchyElem, Section, Table, Form, PrebuiltPage } from './types'
+import { HierarchyElem, Section, Table, Form, PrebuiltPage } from './user'
 
 export function instanceOfSection(obj: HierarchyElem): obj is Section {
   return 'children' in obj
