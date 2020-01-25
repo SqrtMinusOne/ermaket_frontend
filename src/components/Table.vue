@@ -13,6 +13,7 @@ import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 import { AgGridVue } from 'ag-grid-vue'
 import { instanceOfTable } from '@/types/user_guards'
 import { Table } from '@/types/user'
+import TableHeader from './table/header'
 import {
   IDatasource,
   IGetRowsParams,
@@ -28,11 +29,11 @@ import { userMapper } from '@/store/modules/user'
 const Mappers = Vue.extend({
   computed: {
     ...tableMapper.mapState(['loaded', 'transaction']),
-    ...userMapper.mapGetters(['hierarchyElem'])
+    ...userMapper.mapGetters(['hierarchyElem']),
   },
   methods: {
-    ...tableMapper.mapActions(['fetchRows'])
-  }
+    ...tableMapper.mapActions(['fetchRows']),
+  },
 })
 
 @Component({
@@ -44,13 +45,32 @@ export default class TableComponent extends Mappers {
   @Prop({ type: Number, required: true }) private readonly id!: number
 
   private error?: string
-  
+  private gridApi?: GridApi
+  private columnApi?: ColumnApi
+
+  private gridOptions: GridOptions = {
+    rowModelType: 'infinite',
+    rowBuffer: 0,
+    paginationPageSize: 100,
+    pagination: true,
+    frameworkComponents: {
+      agColumnHeader: TableHeader,
+    }
+    // floatingFilter: true,
+  }
+
   @Watch('id')
-  onIdChanged() {
-    if (!instanceOfTable(this.hierarchyElem(this.id))) {
+  private onIdChanged() {
+    this.initTable()
+  }
+
+  private initTable() {
+    const elem = this.hierarchyElem(this.id)
+    if (!instanceOfTable(elem)) {
       this.error = 'This table does not exist'
       return
     }
+    this.gridOptions.paginationPageSize = elem.linesOnPage
     if (this.gridApi) {
       this.gridApi.setDatasource(this.makeDataSource())
     }
@@ -61,31 +81,27 @@ export default class TableComponent extends Mappers {
       this.$router.push('/page_not_exists')
     }
   }
-  
+
   private get columnDefs(): ColDef[] {
     const defs: ColDef[] = []
     const table = this.hierarchyElem(this.id) as Table
+    if (!table) {
+      return defs
+    }
     for (const column of table.columns) {
       const def: ColDef = {
         headerName: column.text,
         field: column.rowName,
         sortable: column.isSort,
         editable: column.isEditable,
-        suppressFiltersToolPanel: !column.isFilter
+        filter: column.isFilter,
+        resizable: true,
+        headerComponentParams: { isPk: column.isPk }
+        // eaderComponent: TableHeader,
       }
       defs.push(def)
     }
     return defs
-  }
-  
-  private gridApi?: GridApi
-  private columnApi?: ColumnApi
-
-  private gridOptions: GridOptions = {
-    rowModelType: 'infinite',
-    rowBuffer: 0,
-    paginationPageSize: 100,
-    floatingFilter: true,
   }
 
   private makeDataSource(): IDatasource {
@@ -98,10 +114,11 @@ export default class TableComponent extends Mappers {
           rowStart: params.startRow,
           rowEnd: params.endRow,
         }
-        self.fetchRows(payload)
+        self
+          .fetchRows(payload)
           .then((data) => {
             this.rowCount = self.loaded[self.id].rowCount
-            params.successCallback(data)
+            params.successCallback(data, this.rowCount)
           })
           .catch(() => {
             params.failCallback()
@@ -113,10 +130,10 @@ export default class TableComponent extends Mappers {
   private onGridReady(params: GridReadyEvent) {
     this.gridApi = params.api
     this.columnApi = params.columnApi
-    this.gridApi.setDatasource(this.makeDataSource())
+    this.initTable()
   }
 
-  get tableStyle() {
+  private get tableStyle() {
     return {
       width: '100%',
       height: '400px',
@@ -125,4 +142,4 @@ export default class TableComponent extends Mappers {
 }
 </script>
 
-<style scoped></style>
+<style lang="scss"></style>

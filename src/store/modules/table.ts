@@ -52,7 +52,7 @@ class TableMutations extends Mutations<TableState> {
       this.state.loaded[id] = {
         data: [],
         rowCount,
-        time: new Date()
+        time: new Date(),
       }
     } else {
       this.state.loaded[id].time = new Date()
@@ -85,7 +85,7 @@ class TableActions extends Actions<
   public $init(store: Store<any>): void {
     this.user = user.context(store)
   }
-  
+
   public async fetchRows({
     id,
     rowStart,
