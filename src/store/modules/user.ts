@@ -1,8 +1,35 @@
 import { Getters, Mutations, Actions, Module, createMapper } from 'vuex-smart-module'
-import { User, Hierarchy, HierarchyElem } from '@/types/user'
+import { $enum } from 'ts-enum-util'
+import { User, Hierarchy, HierarchyElem, Access, TableLinkType, FormLinkType, FormDescription } from '@/types/user'
+import { instanceOfTable, instanceOfForm, instanceOfLinkedColumn, instanceOfLinkedField } from '@/types/user_guards'
 import UserAPI from '@/api/user'
 
 /* tslint:disable:max-classes-per-file */
+
+function setEnums(elem: HierarchyElem) {
+  for (const access of elem.accessRights) {
+    access.access = access.access.map((acc) => $enum(Access).asValueOrThrow(acc))
+  }
+  if (instanceOfTable(elem)) {
+    for (const column of elem.columns) {
+      if (instanceOfLinkedColumn(column)) {
+        column.linkType = $enum(TableLinkType).asValueOrThrow(column.linkType)
+      }
+    }
+    setEnumsForm(elem.formDescription)
+  }
+  if (instanceOfForm(elem)) {
+    setEnumsForm(elem.formDescription)
+  }
+}
+
+function setEnumsForm(elem: FormDescription) {
+  for (const field of elem.fields) {
+    if (instanceOfLinkedField(field)) {
+      field.linkType = $enum(FormLinkType).asValueOrThrow(field.linkType)
+    }
+  }
+}
 
 class UserState {
   public user: User | null = null
@@ -33,6 +60,11 @@ class UserMutations extends Mutations<UserState> {
 
   public setHierarchy(hierarchy: Hierarchy | null) {
     this.state.hierarchy = hierarchy
+    if (this.state.hierarchy) {
+      for (const elem of this.state.hierarchy.hierarchy) {
+        setEnums(elem)
+      }
+    }
   }
 
   public reset () {

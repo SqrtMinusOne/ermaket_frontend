@@ -22,7 +22,7 @@ import {
 } from 'ag-grid-community'
 
 import { instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
-import { Table, Column, LinkedColumn } from '@/types/user'
+import { Table, Column, LinkedColumn, TableLinkType } from '@/types/user'
 import { FilterObject, Order, Operator, Criterion } from '@/types/tables'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
@@ -106,7 +106,7 @@ export default class TableComponent extends Mappers {
         headerName: column.text,
         field: column.rowName,
         sortable: column.isSort && Boolean(column.type),
-        editable: column.isEditable,
+        editable: this.getIsEditable(column),
         filter: this.getFilter(column),
         resizable: true,
         headerComponentParams: { isPk: column.isPk },
@@ -117,6 +117,16 @@ export default class TableComponent extends Mappers {
       defs.push(def)
     }
     return defs
+  }
+  
+  private getIsEditable(column: Column) {
+    if (!instanceOfLinkedColumn(column)) {
+      return column.isEditable
+    }
+    if (column.fkName && column.linkType !== TableLinkType.linked) {
+      return column.isEditable
+    }
+    return false
   }
 
   private getRenderer(column: Column) {

@@ -10,9 +10,9 @@ export interface User {
 }
 
 export enum Access {
-  view,
-  change,
-  delete,
+  view = 'view',
+  change = 'change',
+  delete = 'delete',
 }
 
 export interface AccessRight {
@@ -46,9 +46,9 @@ export interface Column {
 }
 
 export enum TableLinkType {
-  simple,
-  dropdown,
-  linked,
+  simple = 'simple',
+  dropdown = 'dropdown',
+  linked = 'linked',
 }
 
 export interface LinkedColumn extends Column {
@@ -60,11 +60,11 @@ export interface LinkedColumn extends Column {
 }
 
 export enum FormLinkType {
-  simple,
-  dropdown,
-  linkedTable,
-  linkedForm,
-  groupedForm
+  simple = 'simple',
+  dropdown = 'dropdown',
+  linkedTable = 'linkTable',
+  linkedForm = 'linkedForm',
+  groupedForm = 'groupedForm'
 }
 
 export interface Field {
@@ -73,7 +73,7 @@ export interface Field {
   isEditable: boolean
 }
 
-export interface LinkedField {
+export interface LinkedField extends Field {
   linkType: FormLinkType
   linkSchema: string
   linkTableName: string

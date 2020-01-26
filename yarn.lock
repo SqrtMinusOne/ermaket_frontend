@@ -11194,6 +11194,11 @@ tryer@^1.0.1:
   resolved "https://registry.yarnpkg.com/tryer/-/tryer-1.0.1.tgz#f2c85406800b9b0f74c9f7465b81eaad241252f8"
   integrity sha512-c3zayb8/kWWpycWYg87P71E1S1ZL6b6IJxfb5fvsUgsf0S2MVGaDhDXXjDMpdCpfWXqptc+4mXwmiy1ypXqRAA==
 
+ts-enum-util@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/ts-enum-util/-/ts-enum-util-4.0.1.tgz#22762b841ccac8c07ca1c0ebd5e53b28418727ae"
+  integrity sha512-ipCgRzaCp8jK8Ug/ePNvf2+YkW2qBNEKCeJu4sTsNL2/Vgzf6EqOIe8xNhUqK50e16ID9ShHYnAZo//jaKdZxA==
+
 ts-jest@^24.2.0:
   version "24.3.0"
   resolved "https://registry.yarnpkg.com/ts-jest/-/ts-jest-24.3.0.tgz#b97814e3eab359ea840a1ac112deae68aa440869"

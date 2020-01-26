@@ -19,6 +19,7 @@
     "bootstrap-vue": "^2.2.2",
     "core-js": "^3.4.4",
     "moment": "^2.24.0",
+    "ts-enum-util": "^4.0.1",
     "vue": "^2.6.11",
     "vue-bootstrap-datetimepicker": "^5.0.1",
     "vue-class-component": "^7.0.2",

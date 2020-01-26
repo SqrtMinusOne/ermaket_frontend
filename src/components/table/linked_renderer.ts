@@ -9,6 +9,7 @@ interface Params extends ICellRendererParams {
 @Component({
   template: `
     <div v-if="isFk"> {{ params.data[colElem.fkName] }} </div>
+    <div v-else> {{ colElem }} </div>
   `
 })
 export default class LinkedRenderer extends Vue {
