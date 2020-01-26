@@ -41,6 +41,7 @@ export interface Column {
   isFilter: boolean
   isEditable: boolean
   isPk: boolean
+  isRequired: boolean
 }
 
 export enum TableLinkType {
@@ -53,6 +54,8 @@ export interface LinkedColumn extends Column {
   linkTableName: string
   linkSchema: string
   linkType: TableLinkType
+  fkName?: string
+  isMultiple: boolean
 }
 
 export enum FormLinkType {

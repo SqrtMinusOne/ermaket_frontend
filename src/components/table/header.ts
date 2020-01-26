@@ -7,7 +7,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator'
       ref="root"
       class="w-100 h-100 d-flex align-items-center"
     >
-      <i class="fas fa-key mr-2" v-if="params.isPk" />
+      <i class="fas fa-key mr-2" v-b-tooltip.hover title="Key attribute" v-if="params.isPk" />
       <div>{{ params.displayName }}</div>
       <div v-if="params.enableSorting" v-html="sortIcon" class="ml-2" />
       <div class="ml-auto mr-2 d-flex darken_hover" :style="filterStyle" @click.stop="onFilterClicked" v-if="params.enableMenu">

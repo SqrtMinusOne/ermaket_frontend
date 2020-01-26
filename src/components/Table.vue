@@ -11,10 +11,11 @@
 <script lang="ts">
 import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 import { AgGridVue } from 'ag-grid-vue'
-import { instanceOfTable } from '@/types/user_guards'
+import { instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
 import { Table, Column, LinkedColumn } from '@/types/user'
 import { FilterObject, Order, Operator, Criterion } from '@/types/tables'
 import TableHeader from './table/header'
+import LinkedRenderer from './table/linked_renderer'
 import {
   IDatasource,
   IGetRowsParams,
@@ -56,6 +57,7 @@ export default class TableComponent extends Mappers {
     pagination: true,
     frameworkComponents: {
       agColumnHeader: TableHeader,
+      LinkedRenderer
     },
     multiSortKey: 'ctrl',
     // floatingFilter: true,
@@ -99,10 +101,33 @@ export default class TableComponent extends Mappers {
         filter: this.getFilter(column),
         resizable: true,
         headerComponentParams: { isPk: column.isPk },
+        cellRendererParams: { columnElem: column },
+        cellRenderer: this.getRenderer(column),
+        ...this.getEditor(column)
       }
       defs.push(def)
     }
     return defs
+  }
+
+  private getRenderer(column: Column) {
+    if (instanceOfLinkedColumn(column)) {
+      return 'LinkedRenderer'
+    }
+    return undefined 
+  }
+
+  private getEditor(column: Column) {
+    if (column.type && column.type.startsWith('enum')) {
+      const opts = column.type.slice(5, -1).split(',').map((attr) => attr.trim().slice(1, -1))
+      return {
+        cellEditor: 'agSelectCellEditor',
+        cellEditorParams: {
+          columnElem: column,
+          values: opts
+        }
+      }
+    }
   }
 
   private getFilter(column: Column | LinkedColumn) {
@@ -129,8 +154,8 @@ export default class TableComponent extends Mappers {
           id: self.id,
           rowStart: params.startRow,
           rowEnd: params.endRow,
-          filter: filter,
-          order: order,
+          filter,
+          order,
         }
         self
           .fetchRows(payload)
@@ -174,8 +199,12 @@ export default class TableComponent extends Mappers {
     }
     for (const [column, filter] of Object.entries(model)) {
       const { and, or } = this.castFilterColumn(column, filter)
-      and && obj.and.push(...and)
-      or && obj.or.push(...or)
+      if (and) {
+        obj.and.push(...and)
+      } 
+      if (or) {
+        obj.or.push(...or)
+      }
     }
     if (obj.and.length + obj.or.length === 0) {
       return undefined
@@ -187,16 +216,16 @@ export default class TableComponent extends Mappers {
     if ('operator' in filter) {
       const noRange = filter.operator === 'or'
       const conditions = [
-            ...this.castCondition(column, filter.condition1, noRange),
-            ...this.castCondition(column, filter.condition2, noRange),
-          ]
+        ...this.castCondition(column, filter.condition1, noRange),
+        ...this.castCondition(column, filter.condition2, noRange),
+      ]
       if (filter.operator === 'AND') {
         return {
-          and: conditions
+          and: conditions,
         }
       } else {
         return {
-          or: conditions
+          or: conditions,
         }
       }
     } else {
@@ -204,7 +233,11 @@ export default class TableComponent extends Mappers {
     }
   }
 
-  private castCondition(column: string, condition: any, noRange: boolean = false): Criterion[] {
+  private castCondition(
+    column: string,
+    condition: any,
+    noRange: boolean = false
+  ): Criterion[] {
     const operators = {
       equals: Operator.equals,
       notEqual: Operator.not_equals,
@@ -218,15 +251,18 @@ export default class TableComponent extends Mappers {
       empty: Operator.isnotnull,
     }
     if (condition.type === 'inRange' && !noRange) {
-      return [{
-        field_name: column,
-        operator: Operator.greater_than_equals,
-        field_value: condition.filter || condition.dateFrom
-      }, {
-        field_name: column,
-        operator: Operator.less_than_equals,
-        field_value: condition.filterTo || condition.dateTo
-      }]
+      return [
+        {
+          field_name: column,
+          operator: Operator.greater_than_equals,
+          field_value: condition.filter || condition.dateFrom,
+        },
+        {
+          field_name: column,
+          operator: Operator.less_than_equals,
+          field_value: condition.filterTo || condition.dateTo,
+        },
+      ]
     } else if (condition.type === 'inRange' && noRange) {
       this.error = 'Range is not supported with OR'
     }
@@ -236,11 +272,13 @@ export default class TableComponent extends Mappers {
       console.warn(this.error)
       return []
     }
-    return [{
-      field_name: column,
-      operator: op,
-      field_value: condition.filter || condition.dateFrom
-    }]
+    return [
+      {
+        field_name: column,
+        operator: op,
+        field_value: condition.filter || condition.dateFrom,
+      },
+    ]
   }
 
   private onGridReady(params: GridReadyEvent) {
