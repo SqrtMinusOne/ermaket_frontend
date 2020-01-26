@@ -5,6 +5,10 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
 
+// tslint:disable-next-line:no-var-requires
+const datePicker = require('vue-bootstrap-datetimepicker')
+import 'pc-bootstrap4-datetimepicker/build/css/bootstrap-datetimepicker.css'
+
 import { library, dom } from '@fortawesome/fontawesome-svg-core'
 // TODO 19-01-20 22:15:01 extract only necessary for production
 import { fas } from '@fortawesome/free-solid-svg-icons'
@@ -20,6 +24,7 @@ import store from './store'
 Vue.config.productionTip = false
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
+Vue.use(datePicker)
 
 store.dispatch('user/fetchUser').then(() => {
   new Vue({

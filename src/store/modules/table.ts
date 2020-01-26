@@ -10,9 +10,10 @@ import { Store } from 'vuex'
 
 import { Loaded, Transaction, RowData, Filter, Order } from '@/types/tables'
 import { instanceOfTable } from '@/types/user_guards'
-import { Table } from '@/types/user'
+import { Table, Column } from '@/types/user'
 import TableAPI from '@/api/table'
 import { user } from './user'
+import moment from 'moment'
 
 /* tslint:disable:max-classes-per-file */
 
@@ -60,6 +61,21 @@ class TableMutations extends Mutations<TableState> {
     data.forEach((datum, index) => {
       this.state.loaded[id].data[index + rowStart] = datum
     })
+  }
+
+  public makeCasts({ id, columns }: { id: number, columns: Column[] }) {
+    const casts: Array<((col: any[]) => void)> = []
+    columns.forEach((column, index) => {
+      if (column.type === 'timestamp' || column.type === 'date') {
+        casts.push((col: any) => {
+          col[column.rowName] = moment(col[column.rowName])
+        })
+      }
+    })
+
+    for (const row of this.state.loaded[id].data) {
+      casts.forEach((cast) => cast(row))
+    }
   }
 
   public clearRows(id: number) {
@@ -126,6 +142,7 @@ class TableActions extends Actions<
         rowCount: data.data.total,
         data: data.data.data,
       })
+      this.mutations.makeCasts({ id, columns: elem.columns })
     }
     return data.data.data
   }

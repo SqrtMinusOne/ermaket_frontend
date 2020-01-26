@@ -11,11 +11,6 @@
 <script lang="ts">
 import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 import { AgGridVue } from 'ag-grid-vue'
-import { instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
-import { Table, Column, LinkedColumn } from '@/types/user'
-import { FilterObject, Order, Operator, Criterion } from '@/types/tables'
-import TableHeader from './table/header'
-import LinkedRenderer from './table/linked_renderer'
 import {
   IDatasource,
   IGetRowsParams,
@@ -25,8 +20,19 @@ import {
   GridApi,
   ColumnApi,
 } from 'ag-grid-community'
+
+import { instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
+import { Table, Column, LinkedColumn } from '@/types/user'
+import { FilterObject, Order, Operator, Criterion } from '@/types/tables'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
+
+import TableHeader from './table/header'
+import LinkedRenderer from './table/linked_renderer'
+import TimestampRenderer from './table/timestamp_renderer'
+import BootstrapEditor from './table/bootstrap_editor'
+import DatePickerEditor from './table/datepicker_editor'
+
 
 const Mappers = Vue.extend({
   computed: {
@@ -57,7 +63,10 @@ export default class TableComponent extends Mappers {
     pagination: true,
     frameworkComponents: {
       agColumnHeader: TableHeader,
-      LinkedRenderer
+      LinkedRenderer,
+      BootstrapEditor,
+      DatePickerEditor,
+      TimestampRenderer,
     },
     multiSortKey: 'ctrl',
     // floatingFilter: true,
@@ -114,19 +123,48 @@ export default class TableComponent extends Mappers {
     if (instanceOfLinkedColumn(column)) {
       return 'LinkedRenderer'
     }
-    return undefined 
+    switch (column.type) {
+      case 'date':
+      case 'time':
+      case 'timestamp':
+        return 'TimestampRenderer'
+    }
+    return undefined
   }
 
   private getEditor(column: Column) {
-    if (column.type && column.type.startsWith('enum')) {
+    if (!column.type) {
+      return
+    }
+    const params = {
+      columnElem: column
+    }
+    if (column.type.startsWith('enum')) {
       const opts = column.type.slice(5, -1).split(',').map((attr) => attr.trim().slice(1, -1))
       return {
         cellEditor: 'agSelectCellEditor',
         cellEditorParams: {
-          columnElem: column,
+          ...params,
           values: opts
         }
       }
+    }
+    switch (column.type) {
+      case 'text':
+        return {
+          cellEditor: 'agLargeTextCellEditor',
+          cellEditorParams: params
+        }
+      case 'timestamp':
+        return {
+          cellEditor: 'DatePickerEditor',
+          cellEditorParams: params
+        }
+      default:
+        return {
+          cellEditor: 'BootstrapEditor',
+          cellEditorParams: params
+        }
     }
   }
 
@@ -201,7 +239,7 @@ export default class TableComponent extends Mappers {
       const { and, or } = this.castFilterColumn(column, filter)
       if (and) {
         obj.and.push(...and)
-      } 
+      }
       if (or) {
         obj.or.push(...or)
       }

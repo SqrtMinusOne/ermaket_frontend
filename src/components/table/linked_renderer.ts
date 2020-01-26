@@ -1,6 +1,10 @@
-import { Component, Vue, Watch } from 'vue-property-decorator'
+import { Component, Vue } from 'vue-property-decorator'
 import { ICellRendererParams } from 'ag-grid-community'
 import { LinkedColumn } from '@/types/user'
+
+interface Params extends ICellRendererParams {
+  [key: string]: any
+}
 
 @Component({
   template: `
@@ -8,12 +12,10 @@ import { LinkedColumn } from '@/types/user'
   `
 })
 export default class LinkedRenderer extends Vue {
-  private params!: ICellRendererParams
+  private params!: Params
   
-  private mounted() {}
-
   private get colElem(): LinkedColumn {
-    return this.params.colDef.cellRendererParams.columnElem
+    return this.params.columnElem
   }
 
   private get isFk(): boolean {

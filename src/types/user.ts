@@ -42,6 +42,7 @@ export interface Column {
   isEditable: boolean
   isPk: boolean
   isRequired: boolean
+  dateFormat?: string
 }
 
 export enum TableLinkType {
