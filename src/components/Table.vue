@@ -12,7 +12,8 @@
 import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 import { AgGridVue } from 'ag-grid-vue'
 import { instanceOfTable } from '@/types/user_guards'
-import { Table } from '@/types/user'
+import { Table, Column, LinkedColumn } from '@/types/user'
+import { FilterObject, Order, Operator, Criterion } from '@/types/tables'
 import TableHeader from './table/header'
 import {
   IDatasource,
@@ -55,7 +56,8 @@ export default class TableComponent extends Mappers {
     pagination: true,
     frameworkComponents: {
       agColumnHeader: TableHeader,
-    }
+    },
+    multiSortKey: 'ctrl',
     // floatingFilter: true,
   }
 
@@ -92,16 +94,28 @@ export default class TableComponent extends Mappers {
       const def: ColDef = {
         headerName: column.text,
         field: column.rowName,
-        sortable: column.isSort,
+        sortable: column.isSort && Boolean(column.type),
         editable: column.isEditable,
-        filter: column.isFilter,
+        filter: this.getFilter(column),
         resizable: true,
-        headerComponentParams: { isPk: column.isPk }
-        // eaderComponent: TableHeader,
+        headerComponentParams: { isPk: column.isPk },
       }
       defs.push(def)
     }
     return defs
+  }
+
+  private getFilter(column: Column | LinkedColumn) {
+    if (!column.type) {
+      return false
+    }
+    if (column.type.match(/((float|int)\d*|bool|decimal.*)/)) {
+      return 'agNumberColumnFilter'
+    }
+    if (column.type.match(/(date|timestamp)/)) {
+      return 'agDateColumnFilter'
+    }
+    return 'agTextColumnFilter'
   }
 
   private makeDataSource(): IDatasource {
@@ -109,22 +123,124 @@ export default class TableComponent extends Mappers {
     return {
       rowCount: undefined,
       getRows(params: IGetRowsParams) {
+        const filter = self.castFilterModel(params.filterModel)
+        const order = self.castSortModel(params.sortModel)
         const payload = {
           id: self.id,
           rowStart: params.startRow,
           rowEnd: params.endRow,
+          filter: filter,
+          order: order,
         }
         self
           .fetchRows(payload)
           .then((data) => {
-            this.rowCount = self.loaded[self.id].rowCount
+            if (!filter && self.loaded[self.id]) {
+              this.rowCount = self.loaded[self.id].rowCount
+            } else {
+              if (data.length < params.endRow - params.startRow) {
+                this.rowCount = params.startRow + data.length
+              } else {
+                this.rowCount = undefined
+              }
+            }
             params.successCallback(data, this.rowCount)
           })
-          .catch(() => {
+          .catch((err) => {
+            console.error(err)
             params.failCallback()
           })
       },
     }
+  }
+
+  private castSortModel(model: any[]): Order | undefined {
+    if (model.length === 0) {
+      return
+    }
+    return model.map((sort: any) => {
+      if (sort.sort === 'asc') {
+        return sort.colId
+      } else {
+        return `-${sort.colId}`
+      }
+    })
+  }
+
+  private castFilterModel(model: any): FilterObject | undefined {
+    const obj: any = {
+      and: [],
+      or: [],
+    }
+    for (const [column, filter] of Object.entries(model)) {
+      const { and, or } = this.castFilterColumn(column, filter)
+      and && obj.and.push(...and)
+      or && obj.or.push(...or)
+    }
+    if (obj.and.length + obj.or.length === 0) {
+      return undefined
+    }
+    return obj
+  }
+
+  private castFilterColumn(column: string, filter: any): FilterObject {
+    if ('operator' in filter) {
+      const noRange = filter.operator === 'or'
+      const conditions = [
+            ...this.castCondition(column, filter.condition1, noRange),
+            ...this.castCondition(column, filter.condition2, noRange),
+          ]
+      if (filter.operator === 'AND') {
+        return {
+          and: conditions
+        }
+      } else {
+        return {
+          or: conditions
+        }
+      }
+    } else {
+      return { and: this.castCondition(column, filter) }
+    }
+  }
+
+  private castCondition(column: string, condition: any, noRange: boolean = false): Criterion[] {
+    const operators = {
+      equals: Operator.equals,
+      notEqual: Operator.not_equals,
+      contains: Operator.icontains,
+      startsWith: Operator.istartswith,
+      endsWith: Operator.iendswith,
+      lessThan: Operator.less_than,
+      lessThanOrEqual: Operator.less_than_equals,
+      greaterThan: Operator.greater_than,
+      greaterThanOrEqual: Operator.greater_than_equals,
+      empty: Operator.isnotnull,
+    }
+    if (condition.type === 'inRange' && !noRange) {
+      return [{
+        field_name: column,
+        operator: Operator.greater_than_equals,
+        field_value: condition.filter || condition.dateFrom
+      }, {
+        field_name: column,
+        operator: Operator.less_than_equals,
+        field_value: condition.filterTo || condition.dateTo
+      }]
+    } else if (condition.type === 'inRange' && noRange) {
+      this.error = 'Range is not supported with OR'
+    }
+    const op = operators[condition.type as keyof typeof operators]
+    if (op === undefined) {
+      this.error = `Operator ${condition.type} is not supported`
+      console.warn(this.error)
+      return []
+    }
+    return [{
+      field_name: column,
+      operator: op,
+      field_value: condition.filter || condition.dateFrom
+    }]
   }
 
   private onGridReady(params: GridReadyEvent) {

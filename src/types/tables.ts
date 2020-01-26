@@ -1,6 +1,6 @@
 export interface Criterion {
   field_name: string
-  operator: Operator
+  operator: Operator | string
   field_value: string
 }
 

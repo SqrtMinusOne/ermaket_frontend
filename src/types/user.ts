@@ -36,6 +36,7 @@ export interface Section extends HierarchyElem {
 export interface Column {
   rowName: string
   text: string
+  type: string
   isSort: boolean
   isFilter: boolean
   isEditable: boolean

@@ -1,4 +1,4 @@
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 
 @Component({
   template: `
@@ -21,21 +21,49 @@ export default class TableHeader extends Vue {
   private sortIcon: string = ''
   private sort: string = ''
 
+  private mounted() {
+    this.params.column.addEventListener('sortChanged', this.onSortChanged)
+  }
+  
+  private setSortIcon() {
+    const model = this.params.api.getSortModel()
+    const index = model.findIndex((sort: any) => sort.colId === this.params.column.colId)
+    switch (this.sort) {
+      case 'asc':
+        this.sortIcon = '<i class="fas fa-arrow-up"></i>' + index
+        break
+      case 'desc':
+        this.sortIcon = '<i class="fas fa-arrow-down"></i>' + index
+        break
+      default:
+        this.sortIcon = ''
+    }
+  }
+
+  private onSortChanged() {
+    if (this.params.column.isSortAscending()) {
+      this.sort = 'asc'
+    } else if (this.params.column.isSortDescending()) {
+      this.sort = 'desc'
+    } else {
+      this.sort = ''
+    }
+    this.setSortIcon()
+  }
+
   private onSortClicked(event: any) {
     if (!this.params.enableSorting) {
       return
     }
     if (this.sort === '') {
       this.sort = 'asc'
-      this.sortIcon = '<i class="fas fa-arrow-up"></i>'
     } else if (this.sort === 'asc') {
       this.sort = 'desc'
-      this.sortIcon = '<i class="fas fa-arrow-down"></i>'
     } else {
       this.sort = ''
-      this.sortIcon = ''
     }
-    this.params.setSort(this.sort, event.shiftKey)
+    this.params.setSort(this.sort, event.ctrlKey)
+    this.setSortIcon()
   }
 
   private get filterStyle() {
