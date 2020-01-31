@@ -29,6 +29,7 @@ import { userMapper } from '@/store/modules/user'
 
 import TableHeader from './table/header'
 import LinkedRenderer from './table/linked_renderer'
+import LinkedEditor from './table/linked_editor'
 import TimestampRenderer from './table/timestamp_renderer'
 import BootstrapEditor from './table/bootstrap_editor'
 import DatePickerEditor from './table/datepicker_editor'
@@ -63,6 +64,7 @@ export default class TableComponent extends Mappers {
     frameworkComponents: {
       agColumnHeader: TableHeader,
       LinkedRenderer,
+      LinkedEditor,
       BootstrapEditor,
       DatePickerEditor,
       TimestampRenderer,
@@ -142,15 +144,20 @@ export default class TableComponent extends Mappers {
   }
 
   private getEditor(column: Column, table: Table) {
-    console.log(column)
-    if (
-      instanceOfLinkedColumn(column) &&
-      column.linkType !== TableLinkType.simple
-    ) {
-      return
-    }
-
     const params = { columnElem: column, table }
+    
+    if (instanceOfLinkedColumn(column)) {
+      switch (column.linkType) {
+        case TableLinkType.linked:
+          return
+        case TableLinkType.simple:
+        case TableLinkType.dropdown:
+          return {
+            cellEditor: 'LinkedEditor',
+            cellEditorParams: params
+          }
+      }
+    }
 
     if (column.type && column.type.startsWith('enum')) {
       const opts = column.type

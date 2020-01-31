@@ -27,6 +27,8 @@ class TableGetters extends Getters<TableState> {
     if (!this.state.loaded[id]) {
       return null
     }
+    rowStart = rowStart > 0 ? rowStart : 0
+    rowEnd = rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length - 1
     if (this.state.loaded[id].data.length > rowEnd) {
       const slice = this.state.loaded[id].data.slice(rowStart, rowEnd)
       if (slice.every((datum) => datum !== undefined && datum !== null)) {
@@ -58,6 +60,7 @@ class TableMutations extends Mutations<TableState> {
     } else {
       this.state.loaded[id].time = new Date()
     }
+    rowStart = rowStart > 0 ? rowStart : 0
     data.forEach((datum, index) => {
       this.state.loaded[id].data[index + rowStart] = datum
     })
@@ -132,7 +135,7 @@ class TableActions extends Actions<
       elem.schema,
       filter,
       rowStart,
-      rowEnd - rowStart,
+      rowEnd > 0 ? rowEnd - rowStart : -1,
       order
     )
     if (!filter && !order) {

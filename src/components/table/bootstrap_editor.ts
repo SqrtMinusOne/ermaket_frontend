@@ -10,7 +10,7 @@ interface Params extends ICellEditorParams {
 
 const Mappers = Vue.extend({
   computed: {
-    ...userMapper.mapGetters(['table']),
+    ...userMapper.mapGetters(['getTable']),
   },
 })
 

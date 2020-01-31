@@ -48,7 +48,7 @@ class UserGetters extends Getters<UserState> {
     }
   }
 
-  public table(schema: string, name: string): Table | undefined {
+  public getTable(schema: string, name: string): Table | undefined {
     if (!this.state.hierarchy) {
       return
     }

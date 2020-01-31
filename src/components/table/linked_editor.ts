@@ -1,13 +1,23 @@
 import { ICellEditorParams } from 'ag-grid-community'
 import { Component, Vue } from 'vue-property-decorator'
-import { LinkedColumn, TableLinkType } from '@/types/user'
+import { LinkedColumn, TableLinkType, Column } from '@/types/user'
+import LinkedSelect from '@/components/LinkedSelect.vue'
 
 interface Params extends ICellEditorParams {
   [key: string]: any
 }
 
 @Component({
-  template: `<b-form-input />`
+  template: `
+  <LinkedSelect
+    :table="column.linkTableName"
+    :schema="column.linkSchema"
+    :multiple="column.isMultiple"
+    v-model="value"
+  />`,
+  components: {
+    LinkedSelect,
+  }
 })
 export default class LinkedEditor extends Vue {
   private params!: Params
@@ -15,6 +25,14 @@ export default class LinkedEditor extends Vue {
 
   public getValue() {
     return this.value
+  }
+
+  public isPopup() {
+    return this.column.isMultiple
+  }
+
+  private created() {
+    this.value = this.params.data[this.column.fkName as keyof Params]
   }
 
   private get column(): LinkedColumn {
