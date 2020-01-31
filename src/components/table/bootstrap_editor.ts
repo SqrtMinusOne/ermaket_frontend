@@ -1,34 +1,52 @@
 import { ICellEditorParams } from 'ag-grid-community'
 import { Component, Vue } from 'vue-property-decorator'
+import { Column, TableLinkType, Table, LinkedColumn } from '@/types/user'
+import { instanceOfLinkedColumn } from '@/types/user_guards'
+import { userMapper } from '@/store/modules/user'
 
 interface Params extends ICellEditorParams {
   [key: string]: any
 }
 
+const Mappers = Vue.extend({
+  computed: {
+    ...userMapper.mapGetters(['table']),
+  },
+})
+
 @Component({
   template: `
     <b-form-input v-if="number" :type="type"  v-model="value" ref="input" autofocus />
     <b-form-input v-else :type="type" :step="step" v-model="value" ref="input" autofocus number />
-  `
+  `,
 })
-export default class BootstrapEditor extends Vue {
+export default class BootstrapEditor extends Mappers {
   private params!: Params
   private value: any
   private number: boolean = false
   private step: number = 1
   private type: string = 'text'
-  
+
   public getValue() {
     return this.value
   }
 
+  private get column(): Column {
+    return this.params.columnElem
+  }
+
   private created() {
     this.setType()
-    this.value = this.params.value
+    if (!instanceOfLinkedColumn(this.column)) {
+      this.value = this.params.value
+    } else {
+      this.value = this.params.data[this.column.fkName as keyof Params]
+    }
   }
 
   private setType() {
-    switch (this.params.columnElem.type) {
+    const toSwitch = this.column.type
+    switch (toSwitch) {
       case 'float8':
       case 'float4':
         this.type = 'number'
@@ -48,7 +66,7 @@ export default class BootstrapEditor extends Vue {
         this.type = 'time'
         break
       default:
-        if (this.params.columnElem.type.startsWith('decimal')) {
+        if (toSwitch && toSwitch.startsWith('decimal')) {
           this.type = 'number'
           this.number = true
         }

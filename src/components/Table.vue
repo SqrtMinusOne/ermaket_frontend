@@ -33,7 +33,6 @@ import TimestampRenderer from './table/timestamp_renderer'
 import BootstrapEditor from './table/bootstrap_editor'
 import DatePickerEditor from './table/datepicker_editor'
 
-
 const Mappers = Vue.extend({
   computed: {
     ...tableMapper.mapState(['loaded', 'transaction']),
@@ -105,20 +104,20 @@ export default class TableComponent extends Mappers {
       const def: ColDef = {
         headerName: column.text,
         field: column.rowName,
-        sortable: column.isSort && Boolean(column.type),
-        editable: this.getIsEditable(column),
-        filter: this.getFilter(column),
         resizable: true,
+        sortable: column.isSort && Boolean(column.type),
+        filter: this.getFilter(column),
         headerComponentParams: { isPk: column.isPk },
-        cellRendererParams: { columnElem: column },
+        cellRendererParams: { columnElem: column, table },
         cellRenderer: this.getRenderer(column),
-        ...this.getEditor(column)
+        editable: this.getIsEditable(column),
+        ...this.getEditor(column, table),
       }
       defs.push(def)
     }
     return defs
   }
-  
+
   private getIsEditable(column: Column) {
     if (!instanceOfLinkedColumn(column)) {
       return column.isEditable
@@ -142,38 +141,46 @@ export default class TableComponent extends Mappers {
     return undefined
   }
 
-  private getEditor(column: Column) {
-    if (!column.type) {
+  private getEditor(column: Column, table: Table) {
+    console.log(column)
+    if (
+      instanceOfLinkedColumn(column) &&
+      column.linkType !== TableLinkType.simple
+    ) {
       return
     }
-    const params = {
-      columnElem: column
-    }
-    if (column.type.startsWith('enum')) {
-      const opts = column.type.slice(5, -1).split(',').map((attr) => attr.trim().slice(1, -1))
+
+    const params = { columnElem: column, table }
+
+    if (column.type && column.type.startsWith('enum')) {
+      const opts = column.type
+        .slice(5, -1)
+        .split(',')
+        .map((attr) => attr.trim().slice(1, -1))
       return {
         cellEditor: 'agSelectCellEditor',
         cellEditorParams: {
           ...params,
-          values: opts
-        }
+          values: opts,
+        },
       }
     }
+
     switch (column.type) {
       case 'text':
         return {
           cellEditor: 'agLargeTextCellEditor',
-          cellEditorParams: params
+          cellEditorParams: params,
         }
       case 'timestamp':
         return {
           cellEditor: 'DatePickerEditor',
-          cellEditorParams: params
+          cellEditorParams: params,
         }
       default:
         return {
           cellEditor: 'BootstrapEditor',
-          cellEditorParams: params
+          cellEditorParams: params,
         }
     }
   }

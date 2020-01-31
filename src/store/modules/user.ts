@@ -1,6 +1,6 @@
 import { Getters, Mutations, Actions, Module, createMapper } from 'vuex-smart-module'
 import { $enum } from 'ts-enum-util'
-import { User, Hierarchy, HierarchyElem, Access, TableLinkType, FormLinkType, FormDescription } from '@/types/user'
+import { User, Hierarchy, HierarchyElem, Access, TableLinkType, FormLinkType, FormDescription, Table } from '@/types/user'
 import { instanceOfTable, instanceOfForm, instanceOfLinkedColumn, instanceOfLinkedField } from '@/types/user_guards'
 import UserAPI from '@/api/user'
 
@@ -46,6 +46,19 @@ class UserGetters extends Getters<UserState> {
     if (this.state.hierarchy) {
       return this.state.hierarchy.hierarchy.find((elem: HierarchyElem) => elem.id === id)
     }
+  }
+
+  public table(schema: string, name: string): Table | undefined {
+    if (!this.state.hierarchy) {
+      return
+    }
+    return this.state.hierarchy.hierarchy.find((elem: HierarchyElem) => {
+      if (instanceOfTable(elem)) {
+        if (elem.schema === schema && elem.tableName === name) {
+          return true
+        }
+      }
+    }) as Table | undefined
   }
 }
 
