@@ -8,7 +8,15 @@ import {
 } from 'vuex-smart-module'
 import { Store } from 'vuex'
 
-import { Loaded, Transaction, RowData, Filter, Order } from '@/types/tables'
+import {
+  Loaded,
+  Transaction,
+  RowData,
+  Filter,
+  Order,
+  Operator,
+  Criterion,
+} from '@/types/tables'
 import { instanceOfTable } from '@/types/user_guards'
 import { Table, Column } from '@/types/user'
 import TableAPI from '@/api/table'
@@ -16,6 +24,26 @@ import { user } from './user'
 import moment from 'moment'
 
 /* tslint:disable:max-classes-per-file */
+
+function makeFilter(t: Table, key: any): Criterion[] {
+  const pk = t.columns.find((column) => column.isPk) as Column
+  return [
+    {
+      field_name: pk.rowName,
+      operator: Operator.equals,
+      field_value: key,
+    },
+  ]
+}
+
+function makeKey(t: Table, filter: Filter) {
+  const criteria = Array.isArray(filter) ? filter : (filter.and as Criterion[])
+  const pk = t.columns.find((column) => column.isPk) as Column
+  const criterion = criteria.find(
+    (c) => c.field_name === pk.rowName
+  ) as Criterion
+  return criterion.field_value
+}
 
 class TableState {
   public loaded: Loaded = {}
@@ -37,6 +65,14 @@ class TableGetters extends Getters<TableState> {
     }
     return null
   }
+
+  public getRecord(id: number, key: any) {
+    if (!this.state.loaded[id]) {
+      return null
+    }
+    const record = this.state.loaded[id].records[key]
+    return record || null
+  }
 }
 
 class TableMutations extends Mutations<TableState> {
@@ -56,6 +92,7 @@ class TableMutations extends Mutations<TableState> {
         data: [],
         rowCount,
         time: new Date(),
+        records: {},
       }
     } else {
       this.state.loaded[id].time = new Date()
@@ -66,8 +103,24 @@ class TableMutations extends Mutations<TableState> {
     })
   }
 
-  public makeCasts({ id, columns }: { id: number, columns: Column[] }) {
-    const casts: Array<((col: any[]) => void)> = []
+  public setRecord({ id, key, data }: { id: number; key: any; data: any }) {
+    if (!this.state.loaded[id]) {
+      this.state.loaded[id] = {
+        data: [],
+        rowCount: 0,
+        time: new Date(),
+        records: {},
+      }
+    }
+
+    this.state.loaded[id].records[key] = {
+      data,
+      time: new Date(),
+    }
+  }
+
+  public makeCasts({ id, columns }: { id: number; columns: Column[] }) {
+    const casts: Array<(col: any[]) => void> = []
     columns.forEach((column, index) => {
       if (column.type === 'timestamp' || column.type === 'date') {
         casts.push((col: any) => {
@@ -148,6 +201,37 @@ class TableActions extends Actions<
       this.mutations.makeCasts({ id, columns: elem.columns })
     }
     return data.data.data
+  }
+
+  public async fetchRecord({
+    id,
+    filter,
+    key,
+    reload,
+  }: {
+    id: number
+    filter?: Filter
+    key?: any
+    reload?: boolean
+  }) {
+    const elem = this.user.getters.hierarchyElem(id)
+    if (!instanceOfTable(elem)) {
+      return
+    }
+    if (!filter && !key) {
+      throw new TypeError('filter and key can\'t both be undefined')
+    }
+    key = key !== undefined ? key : makeKey(elem, filter as Filter)
+    const record = this.getters.getRecord(id, key)
+    if (record && !reload) {
+      return record
+    }
+    if (!filter) {
+      filter = makeFilter(elem, key)
+    }
+    const data = await TableAPI.get_entry(elem.tableName, elem.schema, filter)
+    this.mutations.setRecord({ id, key, data: data.data })
+    return this.getters.getRecord(id, key)
   }
 }
 

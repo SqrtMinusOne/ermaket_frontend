@@ -10,7 +10,6 @@
       @change="$emit('change', $event.target.value)"
       :multiple="multiple"
       :options="options"
-      :key="key"
     />
   </div>
 </template>
@@ -34,7 +33,7 @@ const Mappers = Vue.extend({
 export default class LinkedSelect extends Mappers {
   @Prop({ type: String, required: true }) private readonly table!: string
   @Prop({ type: String, required: true }) private readonly schema!: string
-  @Prop({ type: Boolean, default: false }) private readonly multiple: boolean = false
+  @Prop({ type: Boolean, default: false }) private readonly multiple!: boolean
   @Model('change') private value: any
 
   private isLoading: boolean = true
@@ -42,7 +41,6 @@ export default class LinkedSelect extends Mappers {
   private data: any[] = []
   private options: any[] = []
   private tableElem!: Table
-  private key: number = 0
 
   private async created() {
     this.tableElem = this.getTable(this.schema, this.table) as Table
@@ -58,7 +56,6 @@ export default class LinkedSelect extends Mappers {
 
     this.options = this.data.map((datum) => datum[this.index])
     this.isLoading = false
-    this.key++
   }
 }
 </script>

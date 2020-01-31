@@ -39,10 +39,19 @@ export type Order = string[]
 
 export type RowData = any[]
 
+export interface LoadedRecord {
+  data: any
+  time: Date
+}
+
 export interface LoadedTable {
   data: RowData
   time: Date
   rowCount: number
+  records: {
+    [key: string]: LoadedRecord
+    [key: number]: LoadedRecord
+  }
 }
 
 export interface TableResponse {
@@ -53,6 +62,7 @@ export interface TableResponse {
 export interface Loaded {
   [key: number]: LoadedTable
 }
+
 
 export interface Transaction {
   [key: string]: object[] // TODO

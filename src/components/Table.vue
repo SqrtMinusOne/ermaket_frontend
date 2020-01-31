@@ -102,6 +102,7 @@ export default class TableComponent extends Mappers {
     if (!table) {
       return defs
     }
+    const pk = table.columns.find((col) => col.isPk)
     for (const column of table.columns) {
       const def: ColDef = {
         headerName: column.text,
@@ -109,8 +110,8 @@ export default class TableComponent extends Mappers {
         resizable: true,
         sortable: column.isSort && Boolean(column.type),
         filter: this.getFilter(column),
-        headerComponentParams: { isPk: column.isPk },
-        cellRendererParams: { columnElem: column, table },
+        headerComponentParams: { isPk: column.isPk, columnElem: column, table, pk },
+        cellRendererParams: { columnElem: column, table, pk },
         cellRenderer: this.getRenderer(column),
         editable: this.getIsEditable(column),
         ...this.getEditor(column, table),
@@ -124,7 +125,7 @@ export default class TableComponent extends Mappers {
     if (!instanceOfLinkedColumn(column)) {
       return column.isEditable
     }
-    if (column.fkName && column.linkType !== TableLinkType.linked) {
+    if (column.linkType !== TableLinkType.linked) {
       return column.isEditable
     }
     return false
@@ -144,8 +145,9 @@ export default class TableComponent extends Mappers {
   }
 
   private getEditor(column: Column, table: Table) {
-    const params = { columnElem: column, table }
-    
+    const pk = table.columns.find((col) => col.isPk)
+    const params = { columnElem: column, table, pk }
+
     if (instanceOfLinkedColumn(column)) {
       switch (column.linkType) {
         case TableLinkType.linked:
