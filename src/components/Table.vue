@@ -3,6 +3,7 @@
     :columnDefs="columnDefs"
     :gridOptions="gridOptions"
     @grid-ready="onGridReady"
+    @cell-value-changed="onValueChanged"
     class="ag-theme-material"
     ref="table"
   />
@@ -29,7 +30,7 @@ import { userMapper } from '@/store/modules/user'
 
 import TableHeader from './table/header'
 import LinkedRenderer from './table/linked_renderer'
-import LinkedEditor from './table/linked_editor'
+import LinkedEditor, { MakeLinkedSelectSetter } from './table/linked_editor'
 import TimestampRenderer from './table/timestamp_renderer'
 import BootstrapEditor from './table/bootstrap_editor'
 import DatePickerEditor from './table/datepicker_editor'
@@ -40,7 +41,7 @@ const Mappers = Vue.extend({
     ...userMapper.mapGetters(['hierarchyElem']),
   },
   methods: {
-    ...tableMapper.mapActions(['fetchRows']),
+    ...tableMapper.mapActions(['fetchRows', 'setRecordUpdate']),
   },
 })
 
@@ -173,10 +174,13 @@ export default class TableComponent extends Mappers {
   }
 
   private getEditor(column: Column, table: Table) {
-    const pk = table.columns.find((col) => col.isPk)
+    const pk = table.columns.find((col) => col.isPk) as Column
     const params = { columnElem: column, table, pk }
 
     if (instanceOfLinkedColumn(column)) {
+      const valueSetter = MakeLinkedSelectSetter(column, (key: any, data: any) => {
+        this.setRecordUpdate({ id: table.id, key, data })
+      }, pk)
       switch (column.linkType) {
         case TableLinkType.linked:
           return
@@ -184,7 +188,8 @@ export default class TableComponent extends Mappers {
         case TableLinkType.dropdown:
           return {
             cellEditor: 'LinkedEditor',
-            cellEditorParams: params
+            cellEditorParams: params,
+            valueSetter,
           }
       }
     }
@@ -233,6 +238,10 @@ export default class TableComponent extends Mappers {
       return 'agDateColumnFilter'
     }
     return 'agTextColumnFilter'
+  }
+
+  private onValueChanged(event: any) {
+    console.log(event)
   }
 
   private makeDataSource(): IDatasource {
@@ -372,8 +381,8 @@ export default class TableComponent extends Mappers {
       },
     ]
   }
-
 }
+
 </script>
 
 <style lang="scss"></style>

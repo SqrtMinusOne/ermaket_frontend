@@ -16,8 +16,8 @@ const Mappers = Vue.extend({
 
 @Component({
   template: `
-    <b-form-input v-if="number" :type="type"  v-model="value" ref="input" autofocus />
-    <b-form-input v-else :type="type" :step="step" v-model="value" ref="input" autofocus number />
+    <b-form-input v-if="number" :type="type"  v-model="value" ref="input" autofocus number />
+    <b-form-input v-else :type="type" :step="step" v-model="value" ref="input" autofocus />
   `,
 })
 export default class BootstrapEditor extends Mappers {

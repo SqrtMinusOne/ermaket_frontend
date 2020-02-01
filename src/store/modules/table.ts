@@ -119,6 +119,18 @@ class TableMutations extends Mutations<TableState> {
     }
   }
 
+  public updateRecord({ id, key, data }: { id: number, key: any, data: any }) {
+    this.state.loaded[id].records[key].data = {
+      ...this.state.loaded[id].records[key].data, ...data
+    }
+  }
+
+  public updateRow({ id, index, data }: { id: number, index: number, data: any }) {
+    this.state.loaded[id].data[index] = {
+      ...this.state.loaded[id].data[index], ...data
+    }
+  }
+
   public makeCasts({ id, columns }: { id: number; columns: Column[] }) {
     const casts: Array<(col: any[]) => void> = []
     columns.forEach((column, index) => {
@@ -232,6 +244,14 @@ class TableActions extends Actions<
     const data = await TableAPI.get_entry(elem.tableName, elem.schema, filter)
     this.mutations.setRecord({ id, key, data: data.data })
     return this.getters.getRecord(id, key)
+  }
+
+  public setRecordUpdate({ id, key, data }: { id: number, key: any, data: any }) {
+    this.mutations.updateRecord({ id, key, data })
+  }
+
+  public setRowUpdate({ id, index, data }: { id: number, index: number, data: any }) {
+    this.mutations.updateRow({ id, index, data })
   }
 }
 

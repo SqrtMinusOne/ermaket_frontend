@@ -7,7 +7,7 @@
     />
     <b-form-select
       :value="value"
-      @change="$emit('change', $event.target.value)"
+      @change="onChange"
       :multiple="multiple"
       :options="options"
     />
@@ -16,6 +16,7 @@
 
 <script lang="ts">
 import { Component, Vue, Prop, Model } from 'vue-property-decorator'
+import { ValueSetterParams } from 'ag-grid-community'
 import { Table, Column } from '@/types/user'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
@@ -56,6 +57,10 @@ export default class LinkedSelect extends Mappers {
 
     this.options = this.data.map((datum) => datum[this.index])
     this.isLoading = false
+  }
+
+  private onChange(event: any) {
+    this.$emit('change', event)
   }
 }
 </script>

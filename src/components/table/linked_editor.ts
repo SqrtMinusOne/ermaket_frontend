@@ -1,6 +1,7 @@
-import { ICellEditorParams } from 'ag-grid-community'
+import { ICellEditorParams, ValueSetterParams } from 'ag-grid-community'
 import { Component, Vue } from 'vue-property-decorator'
 import { LinkedColumn, TableLinkType, Column } from '@/types/user'
+import { LoadedRecord } from '@/types/tables'
 import LinkedSelect from '@/components/LinkedSelect.vue'
 import { userMapper } from '@/store/modules/user'
 import { tableMapper } from '@/store/modules/table'
@@ -19,6 +20,27 @@ const Mappers = Vue.extend({
   },
 })
 
+export function MakeLinkedSelectSetter(
+  column: LinkedColumn,
+  setRecord: (key: any, data: any) => void,
+  pk: Column,
+): ((params: ValueSetterParams) => boolean) | string | undefined {
+  if (column.fkName) {
+    return (params: ValueSetterParams) => {
+      params.data[column.fkName as keyof any] = params.newValue
+      return true
+    }
+  } else {
+    return (params: ValueSetterParams) => {
+      const data: any = {}
+      const key = params.data[pk.rowName]
+      data[column.rowName] = params.newValue
+      setRecord(key, data)
+      return true
+    }
+  }
+}
+
 @Component({
   template: `
   <LinkedSelect
@@ -30,7 +52,7 @@ const Mappers = Vue.extend({
   />`,
   components: {
     LinkedSelect,
-  }
+  },
 })
 export default class LinkedEditor extends Mappers {
   private params!: Params
