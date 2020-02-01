@@ -142,7 +142,7 @@ class TableMutations extends Mutations<TableState> {
     })
 
     for (const row of this.state.loaded[id].data) {
-      casts.forEach((cast) => cast(row))
+      casts.forEach((cast) => row && cast(row))
     }
   }
 

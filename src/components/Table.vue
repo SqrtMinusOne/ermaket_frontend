@@ -4,6 +4,7 @@
     :gridOptions="gridOptions"
     @grid-ready="onGridReady"
     @cell-value-changed="onValueChanged"
+    @pagination-changed="onModelUpdated"
     class="ag-theme-material"
     ref="table"
   />
@@ -21,7 +22,7 @@ import {
   CellValueChangedEvent,
   GridApi,
   ColumnApi,
-  RowNode
+  RowNode,
 } from 'ag-grid-community'
 import _ from 'lodash'
 
@@ -47,6 +48,7 @@ const Mappers = Vue.extend({
   methods: {
     ...tableMapper.mapActions(['fetchRows', 'setRecordUpdate', 'setRowUpdate']),
   },
+  name: 'TableComponent',
 })
 
 @Component({
@@ -60,19 +62,20 @@ export default class TableComponent extends Mappers {
   @Prop({ type: Object }) private readonly filterModel?: FilterObject
   @Prop({ type: Object }) private readonly sortModel?: Order
   @Prop({ type: Boolean, default: false }) private readonly noEdit!: boolean
-  
+
   private error?: string
   private gridApi?: GridApi
   private columnApi?: ColumnApi
   private onResize: any
   private linkedOpened: {
-    [key:string]: LinkedColumn
-    [key:number]: LinkedColumn
+    [key: string]: LinkedColumn
+    [key: number]: LinkedColumn
   } = {}
+  private defaultRowHeight: number = 48
 
   private gridOptions: GridOptions = {
     rowModelType: 'infinite',
-    rowBuffer: 0,
+    rowBuffer: 20,
     paginationPageSize: 100,
     pagination: true,
     frameworkComponents: {
@@ -90,7 +93,7 @@ export default class TableComponent extends Mappers {
     },
     fullWidthCellRenderer: 'LinkedTableRenderer',
     isFullWidthCell: this.isFullWidth,
-    // floatingFilter: true,
+    getRowHeight: this.getRowHeight,
   }
 
   public onLinkedTable(key: any, column: LinkedColumn) {
@@ -105,8 +108,52 @@ export default class TableComponent extends Mappers {
     delete this.linkedOpened[key]
   }
 
+  private getRowHeight(node: RowNode) {
+    if (this.isFullWidth(node)) {
+      return 200
+    }
+    return this.defaultRowHeight
+  }
+
+  private onModelUpdated() {
+    if (!_.isEmpty(this.linkedOpened)) {
+      this.setRowsHeight()
+    }
+  }
+
+  public setRowsHeight() {
+    let gridHeight = 0
+    if (!this.gridOptions.api) {
+      return
+    }
+    const startIndex = this.gridOptions.api.paginationGetCurrentPage() * this.gridOptions.api.paginationGetPageSize()
+    const endIndex = startIndex + this.gridOptions.api.paginationGetPageSize()
+    this.gridOptions.api.forEachNode((node: RowNode) => {
+      let rowHeight
+      if (node.rowIndex >= startIndex && node.rowIndex < endIndex) {
+        rowHeight = (this.gridOptions.getRowHeight as any)(node)
+      } else {
+        rowHeight = this.defaultRowHeight
+      }
+      node.setRowHeight(rowHeight)
+      node.setRowTop(gridHeight)
+      gridHeight += rowHeight
+    })
+    if (!gridHeight) {
+      return
+    }
+
+    const elements = this.$el.getElementsByClassName(
+      'ag-center-cols-container'
+    ) as any
+    if (elements) {
+      elements[0].style.height = `${gridHeight}px`
+      console.log(elements)
+    }
+  }
+
   private isFullWidth(row: RowNode) {
-    return Boolean(row.data._linked)
+    return Boolean(row.data && row.data._linked)
   }
 
   @Watch('id')
@@ -127,7 +174,7 @@ export default class TableComponent extends Mappers {
       this.gridApi.setSortModel(this.sortModel)
     }
   }
-  
+
   private created() {
     if (!instanceOfTable(this.hierarchyElem(this.id))) {
       this.$router.push('/page_not_exists')
@@ -144,7 +191,7 @@ export default class TableComponent extends Mappers {
       window.addEventListener('resize', this.onResize, { passive: true })
     }
   }
-  
+
   private get elem(): Table {
     return this.hierarchyElem(this.id) as Table
   }
@@ -155,6 +202,11 @@ export default class TableComponent extends Mappers {
 
   private initTable() {
     const elem = this.elem
+    this.linkedOpened = {}
+    this.gridOptions.fullWidthCellRendererParams = {
+      table: this.elem as Table,
+      pk: this.pk,
+    }
     if (!instanceOfTable(elem)) {
       this.error = 'This table does not exist'
       return
@@ -205,7 +257,12 @@ export default class TableComponent extends Mappers {
         resizable: true,
         sortable: column.isSort && Boolean(column.type),
         filter: this.getFilter(column),
-        headerComponentParams: { isPk: column.isPk, columnElem: column, table, pk },
+        headerComponentParams: {
+          isPk: column.isPk,
+          columnElem: column,
+          table,
+          pk,
+        },
         cellRendererParams: { columnElem: column, table, pk },
         cellRenderer: this.getRenderer(column),
         editable: this.getIsEditable(column),
@@ -228,7 +285,7 @@ export default class TableComponent extends Mappers {
     }
     return false
   }
-  
+
   private getRenderer(column: Column) {
     if (instanceOfLinkedColumn(column)) {
       return 'LinkedRenderer'
@@ -247,9 +304,13 @@ export default class TableComponent extends Mappers {
     const params = { columnElem: column, table, pk }
 
     if (instanceOfLinkedColumn(column)) {
-      const valueSetter = MakeLinkedSelectSetter(column, (key: any, data: any) => {
-        this.setRecordUpdate({ id: table.id, key, data })
-      }, pk)
+      const valueSetter = MakeLinkedSelectSetter(
+        column,
+        (key: any, data: any) => {
+          this.setRecordUpdate({ id: table.id, key, data })
+        },
+        pk
+      )
       switch (column.linkType) {
         case TableLinkType.linked:
           return
@@ -318,7 +379,6 @@ export default class TableComponent extends Mappers {
     return {
       rowCount: undefined,
       getRows(params: IGetRowsParams) {
-        console.log(params)
         const filter = self.castFilterModel(params.filterModel)
         const order = self.castSortModel(params.sortModel)
         const payload = {
@@ -467,7 +527,6 @@ export default class TableComponent extends Mappers {
     return newData
   }
 }
-
 </script>
 
 <style lang="scss"></style>

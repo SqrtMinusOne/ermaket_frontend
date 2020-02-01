@@ -26,6 +26,9 @@ Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 Vue.use(datePicker)
 
+import TableComponent from '@/components/Table.vue'
+Vue.component('TableComponent', TableComponent)
+
 store.dispatch('user/fetchUser').then(() => {
   new Vue({
     router,
