@@ -37,15 +37,25 @@ const Mappers = Vue.extend({
         <font-awesome-icon :icon="['fas', 'sync']"/>
       </b-button>
     </div>
-    <div v-else v-b-tooltip.hover.bottomright.html="recordTooltip">
+    <div v-else v-b-popover.hover="recordTooltip">
       <b-button
         variant="outline-primary"
         @click="onLinkedTable"
         v-b-tooltip.hover.noninteractive
         title="Open linked table"
         class="mr-1"
+        v-if="!isLinkOpened"
       >
         <font-awesome-icon :icon="['fas', 'arrow-down']"/>
+      </b-button>
+      <b-button v-else
+        variant="outline-primary"
+        @click="onCloseLinkedTable"
+        v-b-tooltip.hover.noninteractive
+        title="Close linked table"
+        class="mr-1"
+      >
+        <font-awesome-icon :icon="['fas', 'arrow-up']"/>
       </b-button>
       {{ recordString }}
     </div>
@@ -81,8 +91,21 @@ export default class LinkedRenderer extends Mappers {
     )
   }
 
+  private onCloseLinkedTable() {
+    this.params.context.parent.onLinkedClose(this.params.data[this.params.pk.rowName])
+  }
+
   private get colElem(): LinkedColumn {
     return this.params.columnElem
+  }
+
+  private get isLinkOpened() {
+    return (
+      this.colElem ===
+      this.params.context.parent.getLinked(
+        this.params.data[this.params.pk.rowName]
+      )
+    )
   }
 
   private get record() {
@@ -104,16 +127,21 @@ export default class LinkedRenderer extends Mappers {
   }
 
   private get recordTooltip() {
+    let content = ''
     if (this.record) {
       const data = this.record.data[this.colElem.rowName]
       if (!Array.isArray(data)) {
         return data
       }
-      return `<ul class="list_no_indent">${data
+      content = `<ul class="list_no_indent">${data
         .map((datum) => `<li>${datum}</li>`)
         .join('')}</ul>`
     }
-    return ''
+    return {
+      title: this.colElem.text,
+      content,
+      html: true
+    }
   }
 
   private get isFk(): boolean {

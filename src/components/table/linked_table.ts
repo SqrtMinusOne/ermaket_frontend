@@ -21,11 +21,19 @@ const Mappers = Vue.extend({
 
 @Component({
   template: `
-    <div>
+    <b-card
+      border-variant="primary"
+      header-bg-variant="primary"
+      header-text-variant="white"
+      no-body
+    >
+      <template v-slot:header>
+        {{ table.name }}
+      </template>
       <TableComponent
         :id="table.id"
-        style="height: 200px" />
-    </div>
+        style="height: 300px" />
+    </b-card>
   `,
 })
 export default class LinkedTableRenderer extends Mappers {

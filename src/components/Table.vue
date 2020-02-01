@@ -71,6 +71,7 @@ export default class TableComponent extends Mappers {
     [key: string]: LinkedColumn
     [key: number]: LinkedColumn
   } = {}
+  private resetHeight: boolean = false
   private defaultRowHeight: number = 48
 
   private gridOptions: GridOptions = {
@@ -94,6 +95,7 @@ export default class TableComponent extends Mappers {
     fullWidthCellRenderer: 'LinkedTableRenderer',
     isFullWidthCell: this.isFullWidth,
     getRowHeight: this.getRowHeight,
+    headerHeight: 40,
   }
 
   public onLinkedTable(key: any, column: LinkedColumn) {
@@ -101,37 +103,49 @@ export default class TableComponent extends Mappers {
     if (this.gridApi) {
       this.gridApi.refreshInfiniteCache()
     }
-    console.log(this.linkedOpened)
   }
 
   public onLinkedClose(key: any) {
     delete this.linkedOpened[key]
+    this.resetHeight = true
+    if (this.gridApi) {
+      this.gridApi.refreshInfiniteCache()
+    }
+  }
+
+  public getLinked(key: any) {
+    return this.linkedOpened[key]
   }
 
   private getRowHeight(node: RowNode) {
     if (this.isFullWidth(node)) {
-      return 200
+      return 350
     }
     return this.defaultRowHeight
   }
 
   private onModelUpdated() {
-    if (!_.isEmpty(this.linkedOpened)) {
+    if (this.resetHeight || !_.isEmpty(this.linkedOpened)) {
       this.setRowsHeight()
+      this.resetHeight = false
     }
   }
 
   public setRowsHeight() {
     let gridHeight = 0
+    let clipperHeight = 0
+    let delta = 0
     if (!this.gridOptions.api) {
       return
     }
+
     const startIndex = this.gridOptions.api.paginationGetCurrentPage() * this.gridOptions.api.paginationGetPageSize()
     const endIndex = startIndex + this.gridOptions.api.paginationGetPageSize()
     this.gridOptions.api.forEachNode((node: RowNode) => {
       let rowHeight
       if (node.rowIndex >= startIndex && node.rowIndex < endIndex) {
         rowHeight = (this.gridOptions.getRowHeight as any)(node)
+        clipperHeight += rowHeight
       } else {
         rowHeight = this.defaultRowHeight
       }
@@ -148,7 +162,11 @@ export default class TableComponent extends Mappers {
     ) as any
     if (elements) {
       elements[0].style.height = `${gridHeight}px`
-      console.log(elements)
+    }
+
+    const clippers = this.$el.getElementsByClassName('ag-center-cols-clipper') as any
+    if (clippers) {
+      clippers[0].style.height = `${clipperHeight}px`
     }
   }
 
