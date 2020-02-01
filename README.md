@@ -2,3 +2,4 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/SqrtMinusOne/ermaket_frontend)
 ![GitHub](https://img.shields.io/github/license/SqrtMinusOne/ermaket_frontend?label=license)
 ![GitHub last commit](https://img.shields.io/github/last-commit/SqrtMinusOne/ermaket_frontend)
+[![time tracker](https://wakatime.com/badge/github/SqrtMinusOne/ermaket_frontend.svg)](https://wakatime.com/badge/github/SqrtMinusOne/ermaket_frontend)
