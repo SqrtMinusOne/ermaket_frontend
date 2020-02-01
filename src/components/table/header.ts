@@ -16,10 +16,10 @@ const Mappers = Vue.extend({
       ref="root"
       class="w-100 h-100 d-flex align-items-center"
     >
-      <div  class="mr-2" v-b-tooltip.hover title="Key attribute" v-if="params.isPk">
+      <div class="mr-2" v-b-tooltip.hover.noninteractive title="Key attribute" v-if="params.isPk">
         <font-awesome-icon :icon="['fas', 'key']"/>
       </div>
-      <div class="mr-2" v-b-tooltip.hover :title="linkTooltip" v-if="isLinked">
+      <div class="mr-2" v-b-tooltip.hover.noninteractive :title="linkTooltip" v-if="isLinked">
         <font-awesome-icon :icon="['fas', 'link']" />
       </div>
       <div>{{ params.displayName }}</div>

@@ -30,6 +30,10 @@ export default class DatePickerEditor extends Vue {
     return moment(this.value, this.options.format)
   }
 
+  public isCancelBeforeStart() {
+    return !this.params.data
+  }
+
   public isPopup() {
     return true
   }

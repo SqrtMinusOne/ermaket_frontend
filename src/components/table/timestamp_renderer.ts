@@ -9,7 +9,8 @@ interface Params extends ICellRendererParams {
 
 @Component({
   template: `
-    <div> {{ text }} </div>
+    <b-spinner v-b-tooltip.hover.noninteractive title="Загрузка" v-if="!params.data" />
+    <div v-else> {{ text }} </div>
   `
 })
 export default class DateRenderer extends Vue {

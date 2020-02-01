@@ -16,7 +16,7 @@ const Mappers = Vue.extend({
 
 @Component({
   template: `
-    <b-form-input v-if="number" :type="type"  v-model="value" ref="input" autofocus number />
+    <b-form-input v-else-if="number" :type="type"  v-model="value" ref="input" autofocus number />
     <b-form-input v-else :type="type" :step="step" v-model="value" ref="input" autofocus />
   `,
 })
@@ -29,6 +29,10 @@ export default class BootstrapEditor extends Mappers {
 
   public getValue() {
     return this.value
+  }
+  
+  public isCancelBeforeStart() {
+    return !this.params.data
   }
 
   private get column(): Column {

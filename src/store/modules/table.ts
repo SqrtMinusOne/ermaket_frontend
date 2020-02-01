@@ -57,7 +57,7 @@ class TableGetters extends Getters<TableState> {
     }
     rowStart = rowStart > 0 ? rowStart : 0
     rowEnd = rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length - 1
-    if (this.state.loaded[id].data.length > rowEnd) {
+    if (this.state.loaded[id].data.length >= rowEnd) {
       const slice = this.state.loaded[id].data.slice(rowStart, rowEnd)
       if (slice.every((datum) => datum !== undefined && datum !== null)) {
         return slice

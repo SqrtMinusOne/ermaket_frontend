@@ -18,9 +18,12 @@ import {
   GridOptions,
   ColDef,
   GridReadyEvent,
+  CellValueChangedEvent,
   GridApi,
   ColumnApi,
+  RowNode
 } from 'ag-grid-community'
+import _ from 'lodash'
 
 import { instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
 import { Table, Column, LinkedColumn, TableLinkType } from '@/types/user'
@@ -34,6 +37,7 @@ import LinkedEditor, { MakeLinkedSelectSetter } from './table/linked_editor'
 import TimestampRenderer from './table/timestamp_renderer'
 import BootstrapEditor from './table/bootstrap_editor'
 import DatePickerEditor from './table/datepicker_editor'
+import LinkedTableRenderer from './table/linked_table'
 
 const Mappers = Vue.extend({
   computed: {
@@ -41,7 +45,7 @@ const Mappers = Vue.extend({
     ...userMapper.mapGetters(['hierarchyElem']),
   },
   methods: {
-    ...tableMapper.mapActions(['fetchRows', 'setRecordUpdate']),
+    ...tableMapper.mapActions(['fetchRows', 'setRecordUpdate', 'setRowUpdate']),
   },
 })
 
@@ -53,11 +57,18 @@ const Mappers = Vue.extend({
 export default class TableComponent extends Mappers {
   @Prop({ type: Number, required: true }) private readonly id!: number
   @Prop({ type: Boolean, default: false }) private fill!: boolean
-
+  @Prop({ type: Object }) private readonly filterModel?: FilterObject
+  @Prop({ type: Object }) private readonly sortModel?: Order
+  @Prop({ type: Boolean, default: false }) private readonly noEdit!: boolean
+  
   private error?: string
   private gridApi?: GridApi
   private columnApi?: ColumnApi
   private onResize: any
+  private linkedOpened: {
+    [key:string]: LinkedColumn
+    [key:number]: LinkedColumn
+  } = {}
 
   private gridOptions: GridOptions = {
     rowModelType: 'infinite',
@@ -71,14 +82,50 @@ export default class TableComponent extends Mappers {
       BootstrapEditor,
       DatePickerEditor,
       TimestampRenderer,
+      LinkedTableRenderer,
     },
     multiSortKey: 'ctrl',
+    context: {
+      parent: this,
+    },
+    fullWidthCellRenderer: 'LinkedTableRenderer',
+    isFullWidthCell: this.isFullWidth,
     // floatingFilter: true,
+  }
+
+  public onLinkedTable(key: any, column: LinkedColumn) {
+    this.linkedOpened[key] = column
+    if (this.gridApi) {
+      this.gridApi.refreshInfiniteCache()
+    }
+    console.log(this.linkedOpened)
+  }
+
+  public onLinkedClose(key: any) {
+    delete this.linkedOpened[key]
+  }
+
+  private isFullWidth(row: RowNode) {
+    return Boolean(row.data._linked)
   }
 
   @Watch('id')
   private onIdChanged() {
     this.initTable()
+  }
+
+  @Watch('filterModel')
+  private onFilterChanged() {
+    if (this.gridApi) {
+      this.gridApi.setFilterModel(this.filterModel)
+    }
+  }
+
+  @Watch('sortModel')
+  private onSortChanged() {
+    if (this.gridApi) {
+      this.gridApi.setSortModel(this.sortModel)
+    }
   }
   
   private created() {
@@ -97,17 +144,36 @@ export default class TableComponent extends Mappers {
       window.addEventListener('resize', this.onResize, { passive: true })
     }
   }
+  
+  private get elem(): Table {
+    return this.hierarchyElem(this.id) as Table
+  }
 
+  private get pk(): Column {
+    return this.elem.columns.find((col) => col.isPk) as Column
+  }
 
   private initTable() {
-    const elem = this.hierarchyElem(this.id)
+    const elem = this.elem
     if (!instanceOfTable(elem)) {
       this.error = 'This table does not exist'
       return
     }
     this.gridOptions.paginationPageSize = elem.linesOnPage
     if (this.gridApi) {
+      if (!_.isEmpty(this.gridApi.getFilterModel())) {
+        this.gridApi.setFilterModel(null)
+      }
+      if (!_.isEmpty(this.gridApi.getSortModel())) {
+        this.gridApi.setSortModel(null)
+      }
       this.gridApi.setDatasource(this.makeDataSource())
+      if (this.filterModel) {
+        this.gridApi.setFilterModel(this.filterModel)
+      }
+      if (this.sortModel) {
+        this.gridApi.setSortModel(this.sortModel)
+      }
     }
   }
 
@@ -127,11 +193,11 @@ export default class TableComponent extends Mappers {
 
   private get columnDefs(): ColDef[] {
     const defs: ColDef[] = []
-    const table = this.hierarchyElem(this.id) as Table
+    const table = this.elem
     if (!table) {
       return defs
     }
-    const pk = table.columns.find((col) => col.isPk)
+    const pk = this.pk
     for (const column of table.columns) {
       const def: ColDef = {
         headerName: column.text,
@@ -151,6 +217,9 @@ export default class TableComponent extends Mappers {
   }
 
   private getIsEditable(column: Column) {
+    if (this.noEdit) {
+      return false
+    }
     if (!instanceOfLinkedColumn(column)) {
       return column.isEditable
     }
@@ -159,7 +228,7 @@ export default class TableComponent extends Mappers {
     }
     return false
   }
-
+  
   private getRenderer(column: Column) {
     if (instanceOfLinkedColumn(column)) {
       return 'LinkedRenderer'
@@ -174,7 +243,7 @@ export default class TableComponent extends Mappers {
   }
 
   private getEditor(column: Column, table: Table) {
-    const pk = table.columns.find((col) => col.isPk) as Column
+    const pk = this.pk
     const params = { columnElem: column, table, pk }
 
     if (instanceOfLinkedColumn(column)) {
@@ -240,8 +309,8 @@ export default class TableComponent extends Mappers {
     return 'agTextColumnFilter'
   }
 
-  private onValueChanged(event: any) {
-    console.log(event)
+  private onValueChanged(event: CellValueChangedEvent) {
+    this.setRowUpdate({ id: this.id, index: event.rowIndex, data: event.data })
   }
 
   private makeDataSource(): IDatasource {
@@ -249,6 +318,7 @@ export default class TableComponent extends Mappers {
     return {
       rowCount: undefined,
       getRows(params: IGetRowsParams) {
+        console.log(params)
         const filter = self.castFilterModel(params.filterModel)
         const order = self.castSortModel(params.sortModel)
         const payload = {
@@ -269,6 +339,9 @@ export default class TableComponent extends Mappers {
               } else {
                 this.rowCount = undefined
               }
+            }
+            if (!_.isEmpty(self.linkedOpened)) {
+              data = self.injectLinkedRows(data)
             }
             params.successCallback(data, this.rowCount)
           })
@@ -380,6 +453,18 @@ export default class TableComponent extends Mappers {
         field_value: condition.filter || condition.dateFrom,
       },
     ]
+  }
+
+  private injectLinkedRows(data: any[]): any[] {
+    const newData: any = []
+    for (const datum of data) {
+      newData.push(datum)
+      const col = this.linkedOpened[datum[this.pk.rowName]]
+      if (col) {
+        newData.push({ ...datum, _linked: col })
+      }
+    }
+    return newData
   }
 }
 

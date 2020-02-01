@@ -21,9 +21,9 @@ const Mappers = Vue.extend({
 @Component({
   template: `
     <b-spinner
-      v-b-tooltip.hover
+      v-b-tooltip.hover.noninteractive
       title="Loading from linked tables"
-      v-if="isLoading"
+      v-if="isLoading || !params.data"
     />
     </div>
     <div v-else-if="isFk"> {{ params.data[colElem.fkName] }} </div>
@@ -31,13 +31,22 @@ const Mappers = Vue.extend({
       <b-button
         variant="outline-primary"
         @click="onSync"
-        v-b-tooltip.hover
+        v-b-tooltip.hover.noninteractive
         title="Load the record from linked tables"
       >
         <font-awesome-icon :icon="['fas', 'sync']"/>
       </b-button>
     </div>
-    <div v-else v-b-tooltip.hover.html="recordTooltip">
+    <div v-else v-b-tooltip.hover.bottomright.html="recordTooltip">
+      <b-button
+        variant="outline-primary"
+        @click="onLinkedTable"
+        v-b-tooltip.hover.noninteractive
+        title="Open linked table"
+        class="mr-1"
+      >
+        <font-awesome-icon :icon="['fas', 'arrow-down']"/>
+      </b-button>
       {{ recordString }}
     </div>
   `,
@@ -63,6 +72,13 @@ export default class LinkedRenderer extends Mappers {
     })
     this.isLoading = false
     this.params.api.refreshCells({ rowNodes: [this.params.node], force: true })
+  }
+
+  private onLinkedTable() {
+    this.params.context.parent.onLinkedTable(
+      this.params.data[this.params.pk.rowName],
+      this.colElem
+    )
   }
 
   private get colElem(): LinkedColumn {
@@ -93,7 +109,9 @@ export default class LinkedRenderer extends Mappers {
       if (!Array.isArray(data)) {
         return data
       }
-      return `<ul class="list_no_indent">${data.map((datum) => `<li>${datum}</li>`).join('')}</ul>`
+      return `<ul class="list_no_indent">${data
+        .map((datum) => `<li>${datum}</li>`)
+        .join('')}</ul>`
     }
     return ''
   }

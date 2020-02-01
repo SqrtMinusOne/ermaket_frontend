@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex">
     <b-spinner
-      v-b-tooltip.hover
+      v-b-tooltip.hover.noninteractive
       title="Загрузка вариантов из связанной таблицы"
       v-if="isLoading"
     />
