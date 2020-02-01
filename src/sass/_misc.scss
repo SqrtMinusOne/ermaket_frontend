@@ -3,3 +3,8 @@
 .darken_hover:hover {
   background-color: #cccccc;
 }
+
+.list_no_indent {
+  list-style-position: inside;
+  padding-left: 0;
+}

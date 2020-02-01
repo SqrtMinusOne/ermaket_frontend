@@ -37,6 +37,9 @@ const Mappers = Vue.extend({
         <font-awesome-icon :icon="['fas', 'sync']"/>
       </b-button>
     </div>
+    <div v-else v-b-tooltip.hover.html="recordTooltip">
+      {{ recordString }}
+    </div>
   `,
 })
 export default class LinkedRenderer extends Mappers {
@@ -71,6 +74,28 @@ export default class LinkedRenderer extends Mappers {
       this.params.table.id,
       this.params.data[this.params.pk.rowName]
     )
+  }
+
+  private get recordString() {
+    if (this.record) {
+      const data = this.record.data[this.colElem.rowName]
+      if (!Array.isArray(data)) {
+        return data
+      }
+      return data.join(', ')
+    }
+    return ''
+  }
+
+  private get recordTooltip() {
+    if (this.record) {
+      const data = this.record.data[this.colElem.rowName]
+      if (!Array.isArray(data)) {
+        return data
+      }
+      return `<ul class="list_no_indent">${data.map((datum) => `<li>${datum}</li>`).join('')}</ul>`
+    }
+    return ''
   }
 
   private get isFk(): boolean {

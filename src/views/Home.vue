@@ -3,7 +3,7 @@
     <Sidebar @on-collapse="onCollapse" />
     <div :style="contentStyle" class="d-flex flex-column min-vh-100">
       <Navbar />
-      <div class="d-flex flex-column justify-content-center flex-fill overflow-auto px-3 pt-2">
+      <div class="d-flex flex-column flex-fill overflow-auto px-3 pt-2">
         <router-view />
       </div>
     </div>
