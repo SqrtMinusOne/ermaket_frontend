@@ -1,6 +1,10 @@
 <template>
-  <div>
-    <TableComponent :id="Number($route.params.id)" />
+  <div class="d-flex flex-column flex-fill">
+    <TableComponent
+      :id="Number($route.params.id)"
+      class="d-flex flex-column flex-fill"
+      fill
+      />
   </div>
 </template>
 

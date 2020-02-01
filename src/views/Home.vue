@@ -1,9 +1,9 @@
 <template>
   <div>
     <Sidebar @on-collapse="onCollapse" />
-    <div :style="contentStyle">
+    <div :style="contentStyle" class="d-flex flex-column min-vh-100">
       <Navbar />
-      <div class="containt-fluid mx-3 mt-2">
+      <div class="d-flex flex-column justify-content-center flex-fill overflow-auto px-3 pt-2">
         <router-view />
       </div>
     </div>

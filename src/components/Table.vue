@@ -4,7 +4,7 @@
     :gridOptions="gridOptions"
     @grid-ready="onGridReady"
     class="ag-theme-material"
-    :style="tableStyle"
+    ref="table"
   />
 </template>
 
@@ -51,10 +51,12 @@ const Mappers = Vue.extend({
 })
 export default class TableComponent extends Mappers {
   @Prop({ type: Number, required: true }) private readonly id!: number
+  @Prop({ type: Boolean, default: false }) private fill!: boolean
 
   private error?: string
   private gridApi?: GridApi
   private columnApi?: ColumnApi
+  private onResize: any
 
   private gridOptions: GridOptions = {
     rowModelType: 'infinite',
@@ -77,6 +79,24 @@ export default class TableComponent extends Mappers {
   private onIdChanged() {
     this.initTable()
   }
+  
+  private created() {
+    if (!instanceOfTable(this.hierarchyElem(this.id))) {
+      this.$router.push('/page_not_exists')
+    }
+    this.onResize = this.setTableHeight.bind(this)
+  }
+
+  private onGridReady(params: GridReadyEvent) {
+    this.gridApi = params.api
+    this.columnApi = params.columnApi
+    this.initTable()
+    if (this.fill) {
+      this.setTableHeight()
+      window.addEventListener('resize', this.onResize, { passive: true })
+    }
+  }
+
 
   private initTable() {
     const elem = this.hierarchyElem(this.id)
@@ -90,10 +110,18 @@ export default class TableComponent extends Mappers {
     }
   }
 
-  private created() {
-    if (!instanceOfTable(this.hierarchyElem(this.id))) {
-      this.$router.push('/page_not_exists')
+  private setTableHeight() {
+    if (this.fill) {
+      window.scrollTo(0, 0)
+      const element = this.$el as any
+      const viewport = element.getBoundingClientRect()
+      const height = window.innerHeight - viewport.top - 20
+      element.style.height = `${height}px`
     }
+  }
+
+  private beforeDestroy() {
+    window.removeEventListener('resize', this.onResize)
   }
 
   private get columnDefs(): ColDef[] {
@@ -345,18 +373,6 @@ export default class TableComponent extends Mappers {
     ]
   }
 
-  private onGridReady(params: GridReadyEvent) {
-    this.gridApi = params.api
-    this.columnApi = params.columnApi
-    this.initTable()
-  }
-
-  private get tableStyle() {
-    return {
-      width: '100%',
-      height: '400px',
-    }
-  }
 }
 </script>
 
