@@ -11,34 +11,35 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
+import { Component, Model, Prop, Vue, Watch } from 'vue-property-decorator'
 import { AgGridVue } from 'ag-grid-vue'
 import {
+  CellValueChangedEvent,
+  ColDef,
+  ColumnApi,
+  GridApi,
+  GridOptions,
+  GridReadyEvent,
   IDatasource,
   IGetRowsParams,
-  GridOptions,
-  ColDef,
-  GridReadyEvent,
-  CellValueChangedEvent,
-  GridApi,
-  ColumnApi,
   RowNode,
 } from 'ag-grid-community'
 import _ from 'lodash'
 
-import { instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
-import { Table, Column, LinkedColumn, TableLinkType } from '@/types/user'
-import { FilterObject, Order, Operator, Criterion } from '@/types/tables'
+import { instanceOfLinkedColumn, instanceOfTable } from '@/types/user_guards'
+import { Column, LinkedColumn, Table, TableLinkType } from '@/types/user'
+import { Criterion, FilterObject, Operator, Order } from '@/types/tables'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
 
-import TableHeader from './table/header'
-import LinkedRenderer from './table/linked_renderer'
-import LinkedEditor, { MakeLinkedSelectSetter } from './table/linked_editor'
-import TimestampRenderer from './table/timestamp_renderer'
 import BootstrapEditor from './table/bootstrap_editor'
+import CheckboxRenderer from './table/checkbox_renderer'
 import DatePickerEditor from './table/datepicker_editor'
+import LinkedEditor, { MakeLinkedSelectSetter } from './table/linked_editor'
+import LinkedRenderer from './table/linked_renderer'
 import LinkedTableRenderer from './table/linked_table'
+import TableHeader from './table/header'
+import TimestampRenderer from './table/timestamp_renderer'
 
 const Mappers = Vue.extend({
   computed: {
@@ -62,6 +63,11 @@ export default class TableComponent extends Mappers {
   @Prop({ type: Object }) private readonly filterModel?: FilterObject
   @Prop({ type: Object }) private readonly sortModel?: Order
   @Prop({ type: Boolean, default: false }) private readonly noEdit!: boolean
+  @Model('change', { type: Array }) readonly keys?: any[]
+  @Prop({ type: Object }) private readonly keysParams?: {
+    edit: boolean
+    column: LinkedColumn
+  }
 
   private error?: string
   private gridApi?: GridApi
@@ -80,13 +86,14 @@ export default class TableComponent extends Mappers {
     paginationPageSize: 100,
     pagination: true,
     frameworkComponents: {
-      agColumnHeader: TableHeader,
-      LinkedRenderer,
-      LinkedEditor,
       BootstrapEditor,
+      CheckboxRenderer,
       DatePickerEditor,
-      TimestampRenderer,
+      LinkedEditor,
+      LinkedRenderer,
       LinkedTableRenderer,
+      TimestampRenderer,
+      agColumnHeader: TableHeader,
     },
     multiSortKey: 'ctrl',
     context: {
@@ -117,29 +124,16 @@ export default class TableComponent extends Mappers {
     return this.linkedOpened[key]
   }
 
-  private getRowHeight(node: RowNode) {
-    if (this.isFullWidth(node)) {
-      return 350
-    }
-    return this.defaultRowHeight
-  }
-
-  private onModelUpdated() {
-    if (this.resetHeight || !_.isEmpty(this.linkedOpened)) {
-      this.setRowsHeight()
-      this.resetHeight = false
-    }
-  }
-
   public setRowsHeight() {
     let gridHeight = 0
     let clipperHeight = 0
-    let delta = 0
     if (!this.gridOptions.api) {
       return
     }
 
-    const startIndex = this.gridOptions.api.paginationGetCurrentPage() * this.gridOptions.api.paginationGetPageSize()
+    const startIndex =
+      this.gridOptions.api.paginationGetCurrentPage() *
+      this.gridOptions.api.paginationGetPageSize()
     const endIndex = startIndex + this.gridOptions.api.paginationGetPageSize()
     this.gridOptions.api.forEachNode((node: RowNode) => {
       let rowHeight
@@ -164,9 +158,25 @@ export default class TableComponent extends Mappers {
       elements[0].style.height = `${gridHeight}px`
     }
 
-    const clippers = this.$el.getElementsByClassName('ag-center-cols-clipper') as any
+    const clippers = this.$el.getElementsByClassName(
+      'ag-center-cols-clipper'
+    ) as any
     if (clippers) {
       clippers[0].style.height = `${clipperHeight}px`
+    }
+  }
+
+  private getRowHeight(node: RowNode) {
+    if (this.isFullWidth(node)) {
+      return 350
+    }
+    return this.defaultRowHeight
+  }
+
+  private onModelUpdated() {
+    if (this.resetHeight || !_.isEmpty(this.linkedOpened)) {
+      this.setRowsHeight()
+      this.resetHeight = false
     }
   }
 
@@ -268,6 +278,19 @@ export default class TableComponent extends Mappers {
       return defs
     }
     const pk = this.pk
+    if (this.keys && this.keysParams && this.keysParams.edit) {
+      defs.push({
+        headerName: this.keysParams.column.text,
+        field: '_key',
+        resizable: true,
+        sortable: false,
+        filter: false,
+        headerComponentParams: { isPk: false, table, pk },
+        cellRendererParams: { table, pk },
+        cellRenderer: 'CheckboxRenderer',
+        editable: false
+      })
+    }
     for (const column of table.columns) {
       const def: ColDef = {
         headerName: column.text,
@@ -421,6 +444,9 @@ export default class TableComponent extends Mappers {
             if (!_.isEmpty(self.linkedOpened)) {
               data = self.injectLinkedRows(data)
             }
+            if (self.keys && self.keysParams && self.keysParams.edit) {
+              data = self.injectKeys(data)
+            }
             params.successCallback(data, this.rowCount)
           })
           .catch((err) => {
@@ -543,6 +569,16 @@ export default class TableComponent extends Mappers {
       }
     }
     return newData
+  }
+
+  private injectKeys(data: any[]): any[] {
+    const keys = new Set(this.keys)
+    return data.map((datum) => {
+      if (keys.has(datum[this.pk.rowName])) {
+        return { _key: true, ...datum }
+      }
+      return { _key: false, ...datum }
+    })
   }
 }
 </script>
