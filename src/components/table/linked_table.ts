@@ -36,9 +36,9 @@ const Mappers = Vue.extend({
           <b>{{ table.name }}</b>
           <div class="ml-auto">
             <b-button @click="toggleEdit" variant="outline-light" size="sm">
-              <font-awesome-icon :icon="['fas', 'pencil-alt']" v-if="!edit" />
+              <font-awesome-icon :icon="['fas', 'pencil-alt']" v-if="edit" />
               <font-awesome-icon :icon="['fas', 'eye']" v-else />
-              {{ edit ? 'View' : 'Edit' }}
+              {{ !edit ? 'View mode' : 'Edit mode' }}
             </b-button>
             <b-button 
               @click="resetTable" 
@@ -48,6 +48,17 @@ const Mappers = Vue.extend({
               title="Reset filters and sorting"
               v-if="wasSorted">
               <font-awesome-icon :icon="['fas', 'table']" />
+            </b-button>
+            <b-button 
+              @click="toggleAutoLoad" 
+              variant="outline-light" 
+              size="sm"
+              v-b-tooltip.hover.noninteractive
+              title="Toggle autoload of linked records"
+              >
+              <font-awesome-icon :icon="['fas', 'magnet']" v-if="autoLoad" />
+              <font-awesome-icon :icon="['fas', 'mouse']" v-else />
+              {{ autoLoad ? 'Auto' : 'Manual' }}
             </b-button>
             <b-button
               v-b-tooltip.hover.noninteractive title="Close linked table"
@@ -65,6 +76,7 @@ const Mappers = Vue.extend({
         style="height: 300px"
         :keys="record.data[this.column.rowName]"
         :keysParams="keysParams"
+        :autoLoad="autoLoad"
         @change="onKeysChange"
         @modelsChanged="onModelsChanged"
         ref="table"
@@ -77,6 +89,7 @@ export default class LinkedTableRenderer extends Mappers {
   private record!: LoadedRecord
   private wasSorted: boolean = false
   private edit: boolean = false
+  private autoLoad: boolean = false
 
   private created() {
     this.record = this.getRecord(this.params.table.id, this.key) as LoadedRecord
@@ -93,6 +106,10 @@ export default class LinkedTableRenderer extends Mappers {
         this.wasSorted = !_.isEmpty(api.getFilterModel()) || !_.isEmpty(api.getSortModel())
       }
     }
+  }
+
+  private toggleAutoLoad() {
+    this.autoLoad = !this.autoLoad
   }
 
   private resetTable() {

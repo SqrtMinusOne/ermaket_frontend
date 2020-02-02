@@ -20,6 +20,17 @@
               v-if="wasSorted">
               <font-awesome-icon :icon="['fas', 'table']" />
             </b-button>
+            <b-button 
+              @click="toggleAutoLoad" 
+              variant="outline-light" 
+              size="sm"
+              v-b-tooltip.hover.noninteractive
+              title="Toggle autoload of linked records"
+              >
+              <font-awesome-icon :icon="['fas', 'magnet']" v-if="autoLoad" />
+              <font-awesome-icon :icon="['fas', 'mouse']" v-else />
+              {{ autoLoad ? 'Auto' : 'Manual' }}
+            </b-button>
           </div>
         </div>
       </template>
@@ -27,6 +38,7 @@
         :id="Number($route.params.id)"
         class="d-flex flex-column flex-fill"
         @modelsChanged="onModelsChanged"
+        :autoLoadLinked="autoLoad"
         ref="table"
         fill
       />
@@ -51,6 +63,7 @@ const Mappers = Vue.extend({
 @Component({})
 export default class Table extends Mappers {
   private wasSorted: boolean = false
+  private autoLoad: boolean = false
 
   private get id() {
     return Number(this.$route.params.id)
@@ -64,6 +77,10 @@ export default class Table extends Mappers {
 
   private get table(): TableElem {
     return this.hierarchyElem(this.id) as TableElem
+  }
+  
+  private toggleAutoLoad() {
+    this.autoLoad = !this.autoLoad
   }
 
   private onModelsChanged() {

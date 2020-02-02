@@ -72,6 +72,9 @@ export default class LinkedRenderer extends Mappers {
       this.colElem.linkSchema,
       this.colElem.linkTableName
     ) as Table
+    if (this.params.context.parent.autoLoadLinked && !this.record) {
+      this.onSync()
+    }
   }
 
   private async onSync() {

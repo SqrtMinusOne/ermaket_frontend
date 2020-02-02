@@ -63,16 +63,19 @@ export default class TableComponent extends Mappers {
   public gridApi?: GridApi
   public columnApi?: ColumnApi
 
+  @Prop({ type: Boolean, default: false }) public readonly autoLoadLinked!: boolean
+
   @Prop({ type: Number, required: true }) private readonly id!: number
   @Prop({ type: Boolean, default: false }) private fill!: boolean
   @Prop({ type: Object }) private readonly filterModel?: FilterObject
   @Prop({ type: Object }) private readonly sortModel?: Order
   @Prop({ type: Boolean, default: false }) private readonly noEdit!: boolean
-  @Model('change', { type: Array }) readonly keys?: any[]
   @Prop({ type: Object }) private readonly keysParams?: {
     edit: boolean
     column: LinkedColumn
   }
+
+  @Model('change', { type: Array }) readonly keys?: any[]
 
   private error?: string
   private onResize: any
@@ -210,6 +213,13 @@ export default class TableComponent extends Mappers {
   private onKeysParamsChanged() {
     if (this.gridApi) {
       this.gridApi.refreshInfiniteCache()
+    }
+  }
+
+  @Watch('autoLoadLinked')
+  private onAutoLoadLinkedChanged() {
+    if (this.gridApi) {
+      this.gridApi.refreshCells({ force: true })
     }
   }
 
