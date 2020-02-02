@@ -5,6 +5,8 @@
     @grid-ready="onGridReady"
     @cell-value-changed="onValueChanged"
     @pagination-changed="onModelUpdated"
+    @sort-changed="onTableSortChanged"
+    @filter-changed="onTableFilterChanged"
     class="ag-theme-material"
     ref="table"
   />
@@ -58,6 +60,9 @@ const Mappers = Vue.extend({
   },
 })
 export default class TableComponent extends Mappers {
+  public gridApi?: GridApi
+  public columnApi?: ColumnApi
+  
   @Prop({ type: Number, required: true }) private readonly id!: number
   @Prop({ type: Boolean, default: false }) private fill!: boolean
   @Prop({ type: Object }) private readonly filterModel?: FilterObject
@@ -70,8 +75,6 @@ export default class TableComponent extends Mappers {
   }
 
   private error?: string
-  private gridApi?: GridApi
-  private columnApi?: ColumnApi
   private onResize: any
   private linkedOpened: {
     [key: string]: LinkedColumn
@@ -208,6 +211,14 @@ export default class TableComponent extends Mappers {
     if (this.gridApi) {
       this.gridApi.refreshInfiniteCache()
     }
+  }
+
+  private onTableSortChanged() {
+    this.$emit('modelsChanged')
+  }
+
+  private onTableFilterChanged() {
+    this.$emit('modelsChanged')
   }
 
   private created() {

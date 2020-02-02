@@ -6,6 +6,8 @@ import { LoadedRecord } from '@/types/tables'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
 
+import _ from 'lodash'
+
 interface Params extends ICellRendererParams {
   [key: string]: any
 }
@@ -38,6 +40,15 @@ const Mappers = Vue.extend({
               <font-awesome-icon :icon="['fas', 'eye']" v-else />
               {{ edit ? 'View' : 'Edit' }}
             </b-button>
+            <b-button 
+              @click="resetTable" 
+              variant="outline-light" 
+              size="sm"
+              v-b-tooltip.hover.noninteractive
+              title="Reset filters and sorting"
+              v-if="wasSorted">
+              <font-awesome-icon :icon="['fas', 'table']" />
+            </b-button>
             <b-button
               v-b-tooltip.hover.noninteractive title="Close linked table"
               @click="onClose"
@@ -55,6 +66,8 @@ const Mappers = Vue.extend({
         :keys="record.data[this.column.rowName]"
         :keysParams="keysParams"
         @change="onKeysChange"
+        @modelsChanged="onModelsChanged"
+        ref="table"
       />
     </b-card>
   `,
@@ -62,6 +75,7 @@ const Mappers = Vue.extend({
 export default class LinkedTableRenderer extends Mappers {
   private params!: Params
   private record!: LoadedRecord
+  private wasSorted: boolean = false
   private edit: boolean = false
 
   private created() {
@@ -70,6 +84,25 @@ export default class LinkedTableRenderer extends Mappers {
 
   private onKeysChange(event: any) {
     console.log(event)
+  }
+
+  private onModelsChanged() {
+    if (this.$refs.table) {
+      const api = (this.$refs.table as any).gridApi
+      if (api) {
+        this.wasSorted = !_.isEmpty(api.getFilterModel()) || !_.isEmpty(api.getSortModel())
+      }
+    }
+  }
+
+  private resetTable() {
+    if (this.$refs.table) {
+      const api = (this.$refs.table as any).gridApi
+      if (api) {
+        api.setFilterModel(null)
+        api.setSortModel(null)
+      }
+    }
   }
 
   private onClose() {
