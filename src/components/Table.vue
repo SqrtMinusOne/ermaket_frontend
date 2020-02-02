@@ -203,10 +203,14 @@ export default class TableComponent extends Mappers {
     }
   }
 
-  private created() {
-    if (!instanceOfTable(this.hierarchyElem(this.id))) {
-      this.$router.push('/page_not_exists')
+  @Watch('keysParams', { deep: true })
+  private onKeysParamsChanged() {
+    if (this.gridApi) {
+      this.gridApi.refreshInfiniteCache()
     }
+  }
+
+  private created() {
     this.onResize = this.setTableHeight.bind(this)
   }
 
@@ -484,6 +488,9 @@ export default class TableComponent extends Mappers {
         obj.or.push(...or)
       }
     }
+    if (this.keys && this.keysParams && !this.keysParams.edit) {
+      obj.or.push(...this.addKeysFilter())
+    }
     if (obj.and.length + obj.or.length === 0) {
       return undefined
     }
@@ -509,6 +516,19 @@ export default class TableComponent extends Mappers {
     } else {
       return { and: this.castCondition(column, filter) }
     }
+  }
+
+  private addKeysFilter(): Criterion[] {
+    if (this.keys) {
+      return this.keys.map((key) => {
+        return {
+          field_name: this.pk.rowName,
+          operator: Operator.equals,
+          field_value: key
+        }
+      })
+    }
+    return []
   }
 
   private castCondition(

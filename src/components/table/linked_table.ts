@@ -26,10 +26,28 @@ const Mappers = Vue.extend({
       border-variant="primary"
       header-bg-variant="primary"
       header-text-variant="white"
+      header-class="small_card_header"
       no-body
     >
       <template v-slot:header>
-        <b>{{ table.name }}</b>
+        <div class="d-flex flex-row align-items-center">
+          <b>{{ table.name }}</b>
+          <div class="ml-auto">
+            <b-button @click="toggleEdit" variant="outline-light" size="sm">
+              <font-awesome-icon :icon="['fas', 'pencil-alt']" v-if="!edit" />
+              <font-awesome-icon :icon="['fas', 'eye']" v-else />
+              {{ edit ? 'View' : 'Edit' }}
+            </b-button>
+            <b-button
+              v-b-tooltip.hover.noninteractive title="Close linked table"
+              @click="onClose"
+              variant="outline-light"
+              size="sm"
+              >
+              <font-awesome-icon :icon="['fas', 'times']" />
+            </b-button>
+          </div>
+        </div>
       </template>
       <TableComponent
         :id="table.id"
@@ -44,7 +62,7 @@ const Mappers = Vue.extend({
 export default class LinkedTableRenderer extends Mappers {
   private params!: Params
   private record!: LoadedRecord
-  private edit: boolean = true
+  private edit: boolean = false
 
   private created() {
     this.record = this.getRecord(this.params.table.id, this.key) as LoadedRecord
@@ -52,6 +70,14 @@ export default class LinkedTableRenderer extends Mappers {
 
   private onKeysChange(event: any) {
     console.log(event)
+  }
+
+  private onClose() {
+    this.params.context.parent.onLinkedClose(this.key)
+  }
+
+  private toggleEdit() {
+    this.edit = !this.edit
   }
 
   private get key() {
