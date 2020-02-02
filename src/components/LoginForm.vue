@@ -50,7 +50,7 @@ export default class LoginForm extends Mappers {
   public async onLogin(e: Event) {
     e.preventDefault()
     await this.login(this.form)
-    this.$router.push('/')
+    this.$router.push('/table/2')
   }
 }
 </script>

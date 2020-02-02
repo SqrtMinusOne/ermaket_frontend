@@ -62,7 +62,7 @@ const Mappers = Vue.extend({
 export default class TableComponent extends Mappers {
   public gridApi?: GridApi
   public columnApi?: ColumnApi
-  
+
   @Prop({ type: Number, required: true }) private readonly id!: number
   @Prop({ type: Boolean, default: false }) private fill!: boolean
   @Prop({ type: Object }) private readonly filterModel?: FilterObject
@@ -270,6 +270,9 @@ export default class TableComponent extends Mappers {
         this.gridApi.setSortModel(this.sortModel)
       }
     }
+    if (this.columnApi) {
+      this.columnApi.resetColumnState()
+    }
   }
 
   private setTableHeight() {
@@ -299,11 +302,13 @@ export default class TableComponent extends Mappers {
         field: '_key',
         resizable: true,
         sortable: false,
+        lockPinned: true,
+        pinned: 'left',
         filter: false,
         headerComponentParams: { isPk: false, table, pk },
         cellRendererParams: { table, pk },
         cellRenderer: 'CheckboxRenderer',
-        editable: false
+        editable: false,
       })
     }
     for (const column of table.columns) {
@@ -477,10 +482,13 @@ export default class TableComponent extends Mappers {
       return
     }
     return model.map((sort: any) => {
+      const column = (this.columnApi as ColumnApi)
+        .getColumn(sort.colId)
+        .getUserProvidedColDef().cellRendererParams.columnElem as Column
       if (sort.sort === 'asc') {
-        return sort.colId
+        return column.rowName
       } else {
-        return `-${sort.colId}`
+        return `-${column.rowName}`
       }
     })
   }
@@ -535,7 +543,7 @@ export default class TableComponent extends Mappers {
         return {
           field_name: this.pk.rowName,
           operator: Operator.equals,
-          field_value: key
+          field_value: key,
         }
       })
     }
