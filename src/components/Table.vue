@@ -377,8 +377,8 @@ export default class TableComponent extends Mappers {
     if (instanceOfLinkedColumn(column)) {
       const valueSetter = MakeLinkedSelectSetter(
         column,
-        (key: any, data: any) => {
-          this.setRecordUpdate({ id: table.id, key, data })
+        (key: any, data: any, index?: number) => {
+          this.setRecordUpdate({ id: table.id, key, data, index })
         },
         pk
       )
@@ -442,6 +442,9 @@ export default class TableComponent extends Mappers {
   }
 
   private onValueChanged(event: CellValueChangedEvent) {
+    if (event.oldValue === undefined && event.newValue === undefined) {
+      return
+    }
     this.setRowUpdate({ id: this.id, index: event.rowIndex, data: event.data })
   }
 
@@ -462,6 +465,7 @@ export default class TableComponent extends Mappers {
         self
           .fetchRows(payload)
           .then((data) => {
+            data = _.cloneDeep(data)
             if (!filter && self.loaded[self.id]) {
               this.rowCount = self.loaded[self.id].rowCount
             } else {
@@ -471,6 +475,7 @@ export default class TableComponent extends Mappers {
                 this.rowCount = undefined
               }
             }
+            self.injectIndices(data, params.startRow)
             if (!_.isEmpty(self.linkedOpened)) {
               data = self.injectLinkedRows(data)
             }
@@ -606,6 +611,12 @@ export default class TableComponent extends Mappers {
         field_value: condition.filter || condition.dateFrom,
       },
     ]
+  }
+
+  private injectIndices(data: any[], start: number) {
+    for (const i in data) {
+      data[i]._index = start + Number(i)
+    }
   }
 
   private injectLinkedRows(data: any[]): any[] {

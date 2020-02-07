@@ -44,14 +44,17 @@ export interface LoadedRecord {
   time: Date
 }
 
+export interface KeysMap<Type> {
+  [key: string]: Type
+  [key: number]: Type
+}
+
 export interface LoadedTable {
   data: RowData
   time: Date
+  keyField: string
   rowCount: number
-  records: {
-    [key: string]: LoadedRecord
-    [key: number]: LoadedRecord
-  }
+  records: KeysMap<LoadedRecord>
 }
 
 export interface TableResponse {
@@ -60,10 +63,25 @@ export interface TableResponse {
 }
 
 export interface Loaded {
-  [key: number]: LoadedTable
+  [id: number]: LoadedTable
 }
-
 
 export interface Transaction {
-  [key: string]: object[] // TODO
+  [id: number]: {
+    update: KeysMap<TableUpdate>
+    create: KeysMap<TableCreate>
+    delete: KeysMap<TableDelete>
+    mapKeys: KeysMap<any>
+  }
 }
+
+export interface TableUpdate {
+  newData: any
+  oldData: any
+}
+
+export interface TableCreate {
+  newData: any
+}
+
+export type TableDelete = boolean

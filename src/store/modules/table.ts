@@ -16,12 +16,14 @@ import {
   Order,
   Operator,
   Criterion,
+  KeysMap,
 } from '@/types/tables'
 import { instanceOfTable } from '@/types/user_guards'
 import { Table, Column } from '@/types/user'
 import TableAPI from '@/api/table'
 import { user } from './user'
 import moment from 'moment'
+import _ from 'lodash'
 
 /* tslint:disable:max-classes-per-file */
 
@@ -45,6 +47,13 @@ function makeKey(t: Table, filter: Filter) {
   return criterion.field_value
 }
 
+function mapKey(key: any, mapKeys: KeysMap<any>) {
+  if (mapKeys[key] !== undefined) {
+    return mapKeys[key]
+  }
+  return key
+}
+
 class TableState {
   public loaded: Loaded = {}
   public transaction: Transaction = {}
@@ -66,6 +75,10 @@ class TableGetters extends Getters<TableState> {
     return null
   }
 
+  public isLoaded(id: number) {
+    return this.state.loaded[id] !== undefined
+  }
+
   public getRecord(id: number, key: any) {
     if (!this.state.loaded[id]) {
       return null
@@ -76,6 +89,16 @@ class TableGetters extends Getters<TableState> {
 }
 
 class TableMutations extends Mutations<TableState> {
+  public initLoaded({ id, keyField }: { id: number; keyField: string }) {
+    this.state.loaded[id] = {
+      data: [],
+      rowCount: 0,
+      keyField,
+      time: new Date(),
+      records: {},
+    }
+  }
+
   public setRows({
     id,
     rowStart,
@@ -87,47 +110,48 @@ class TableMutations extends Mutations<TableState> {
     rowCount: number
     data: RowData
   }) {
-    if (!this.state.loaded[id]) {
-      this.state.loaded[id] = {
-        data: [],
-        rowCount,
-        time: new Date(),
-        records: {},
-      }
-    } else {
-      this.state.loaded[id].time = new Date()
-    }
+    this.state.loaded[id].time = new Date()
     rowStart = rowStart > 0 ? rowStart : 0
     data.forEach((datum, index) => {
       this.state.loaded[id].data[index + rowStart] = datum
     })
+    this.state.loaded[id].rowCount = rowCount
   }
 
   public setRecord({ id, key, data }: { id: number; key: any; data: any }) {
-    if (!this.state.loaded[id]) {
-      this.state.loaded[id] = {
-        data: [],
-        rowCount: 0,
-        time: new Date(),
-        records: {},
-      }
-    }
-
     this.state.loaded[id].records[key] = {
       data,
       time: new Date(),
     }
   }
 
-  public updateRecord({ id, key, data }: { id: number, key: any, data: any }) {
+  public updateRecord({ id, key, data }: { id: number; key: any; data: any }) {
     this.state.loaded[id].records[key].data = {
-      ...this.state.loaded[id].records[key].data, ...data
+      ...this.state.loaded[id].records[key].data,
+      ...data,
     }
   }
 
-  public updateRow({ id, index, data }: { id: number, index: number, data: any }) {
-    this.state.loaded[id].data[index] = {
-      ...this.state.loaded[id].data[index], ...data
+  public updateRow({
+    id,
+    index,
+    data,
+    scoped = false,
+  }: {
+    id: number
+    index: number
+    data: any
+    scoped?: boolean
+  }) {
+    if (!scoped) {
+      this.state.loaded[id].data[index] = {
+        ...this.state.loaded[id].data[index],
+        ...data,
+      }
+    } else {
+      for (const key of Object.keys(this.state.loaded[id].data[index])) {
+        this.state.loaded[id].data[index][key] = data[key]
+      }
     }
   }
 
@@ -156,6 +180,154 @@ class TableMutations extends Mutations<TableState> {
       ;(this.state as any)[key] = s[key]
     })
   }
+
+  public initTransaction(id: number) {
+    if (!this.state.transaction[id]) {
+      this.state.transaction[id] = {
+        update: {},
+        create: {},
+        delete: {},
+        mapKeys: {},
+      }
+    }
+  }
+
+  public setUpdate({
+    id,
+    oldData,
+    newData,
+  }: {
+    id: number
+    oldData: any
+    newData: any
+  }) {
+    const key = newData[this.state.loaded[id].keyField]
+    const oldKey = oldData ? oldData[this.state.loaded[id].keyField] : null
+    if (key === undefined) {
+      throw new Error('newData must have a key')
+    }
+    if (
+      oldKey !== null &&
+      oldKey !== key &&
+      this.state.transaction[id].update[oldKey]
+    ) {
+      this.state.transaction[id].update[key] = this.state.transaction[
+        id
+      ].update[oldKey]
+      this.state.transaction[id].mapKeys[oldKey] = key
+      delete this.state.transaction[id].update[oldKey]
+    }
+    newData = _.pickBy(newData, (v, k) => !k.startsWith('_'))
+
+    if (!this.state.transaction[id].update[key]) {
+      this.state.transaction[id].update[key] = { oldData, newData }
+    } else {
+      this.state.transaction[id].update[key].newData = {
+        ...this.state.transaction[id].update[key].newData,
+        ...newData,
+      }
+    }
+  }
+
+  public applyUpdateToRecord({
+    id,
+    key,
+    applyOld = true,
+  }: {
+    id: number
+    key: any
+    applyOld?: boolean
+  }) {
+    if (!this.state.transaction[id]) {
+      return
+    }
+    const newKey = this.state.transaction[id].mapKeys[key]
+    if (newKey !== undefined) {
+      this.state.loaded[id].records[newKey] = this.state.loaded[id].records[key]
+      delete this.state.transaction[id].mapKeys[key]
+      key = newKey
+    }
+
+    if (!this.state.loaded[id].records[key]) {
+      return
+    }
+
+    if (this.state.transaction[id].update[key]) {
+      if (applyOld) {
+        this.state.transaction[id].update[key].oldData = {
+          ...this.state.transaction[id].update[key].oldData,
+          ...this.state.loaded[id].records[key].data,
+        }
+      }
+
+      this.state.loaded[id].records[key].data = {
+        ...this.state.loaded[id].records[key].data,
+        ...this.state.transaction[id].update[key].newData,
+      }
+    }
+  }
+
+  public applyUpdatesToTable({ id, startRow, endRow }: { id: number, startRow: number, endRow: number }) {
+    if (!this.state.transaction[id]) {
+      return
+    }
+    const loaded = this.state.loaded[id]
+    for (let i = startRow; i < endRow; i++) {
+      if (loaded.data[i]) {
+        let key = loaded.data[i][loaded.keyField]
+        key = mapKey(key, this.state.transaction[id].mapKeys)
+        if (this.state.transaction[id].update[key]) {
+          loaded.data[i] = {
+            ...loaded.data[i],
+            ..._.pick(
+              this.state.transaction[id].update[key],
+              Object.keys(loaded.data[i])
+            ),
+          }
+        }
+      }
+    }
+  }
+
+  public applyOneUpdateToTable({
+    id,
+    key,
+    index,
+  }: {
+    id: number
+    key: any
+    index?: number
+  }) {
+    if (!this.state.transaction[id]) {
+      return
+    }
+    if (key === undefined && index === undefined) {
+      throw new Error('Key and index cannot be both undefined')
+    }
+    index =
+      index !== undefined
+        ? index
+        : this.state.loaded[id].data.find(
+            (datum) => datum[this.state.loaded[id].keyField] === key
+          )
+    if (index === undefined) {
+      return
+    }
+    key = mapKey(key, this.state.transaction[id].mapKeys)
+    if (
+      !this.state.transaction[id] ||
+      !this.state.transaction[id].update[key]
+    ) {
+      return
+    }
+    this.state.loaded[id].data[index] = {
+      ...this.state.loaded[id].data[index],
+      ..._.pick(
+        this.state.transaction[id].update[key],
+        Object.keys(this.state.loaded[id].data[index])
+      ),
+    }
+  }
 }
 
 class TableActions extends Actions<
@@ -168,6 +340,37 @@ class TableActions extends Actions<
 
   public $init(store: Store<any>): void {
     this.user = user.context(store)
+  }
+
+  public checkLoaded(elem: Table) {
+    if (!this.getters.isLoaded(elem.id)) {
+      this.mutations.initLoaded({
+        id: elem.id,
+        keyField: elem.columns.find((column) => column.isPk)!.rowName,
+      })
+    }
+  }
+
+  public setRows({
+    elem,
+    rowStart,
+    data,
+    rowCount,
+  }: {
+    elem: Table
+    rowStart: number
+    data: any[]
+    rowCount: number
+  }) {
+    this.actions.checkLoaded(elem)
+    this.mutations.setRows({
+      id: elem.id,
+      rowStart,
+      rowCount,
+      data,
+    })
+    this.mutations.makeCasts({ id: elem.id, columns: elem.columns })
+    this.mutations.applyUpdatesToTable({ id: elem.id, startRow: rowStart, endRow: rowStart + data.length })
   }
 
   public async fetchRows({
@@ -204,13 +407,12 @@ class TableActions extends Actions<
       order
     )
     if (!filter && !order) {
-      this.mutations.setRows({
-        id,
+      this.actions.setRows({
+        elem,
         rowStart,
         rowCount: data.data.total,
         data: data.data.data,
       })
-      this.mutations.makeCasts({ id, columns: elem.columns })
     }
     return data.data.data
   }
@@ -242,16 +444,47 @@ class TableActions extends Actions<
       filter = makeFilter(elem, key)
     }
     const data = await TableAPI.get_entry(elem.tableName, elem.schema, filter)
+    this.actions.checkLoaded(elem)
     this.mutations.setRecord({ id, key, data: data.data })
+    this.mutations.applyUpdateToRecord({ id, key })
     return this.getters.getRecord(id, key)
   }
 
-  public setRecordUpdate({ id, key, data }: { id: number, key: any, data: any }) {
-    this.mutations.updateRecord({ id, key, data })
+  public setRowUpdate({
+    id,
+    index,
+    data,
+  }: {
+    id: number
+    index: number
+    data: any
+  }) {
+    const oldData = this.state.loaded[id].data[index]
+    const keyField = this.state.loaded[id].keyField
+    data[keyField] =
+      data[keyField] !== undefined ? data[keyField] : oldData[keyField]
+    this.mutations.initTransaction(id)
+    this.mutations.setUpdate({ id, oldData, newData: data })
+    this.mutations.updateRow({ id, index, data })
+    this.mutations.applyUpdateToRecord({ id, key: data[keyField], applyOld: false })
   }
 
-  public setRowUpdate({ id, index, data }: { id: number, index: number, data: any }) {
-    this.mutations.updateRow({ id, index, data })
+  public setRecordUpdate({
+    id,
+    key,
+    data,
+    index,
+  }: {
+    id: number
+    key: any
+    data: any
+    index?: number
+  }) {
+    const oldData = this.state.loaded[id].records[key].data
+    this.mutations.initTransaction(id)
+    this.mutations.setUpdate({ id, oldData, newData: data })
+    this.mutations.updateRecord({ id, key, data })
+    this.mutations.applyOneUpdateToTable({ id, key, index })
   }
 }
 

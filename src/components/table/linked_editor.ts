@@ -22,7 +22,7 @@ const Mappers = Vue.extend({
 
 export function MakeLinkedSelectSetter(
   column: LinkedColumn,
-  setRecord: (key: any, data: any) => void,
+  setRecord: (key: any, data: any, index?: number) => void,
   pk: Column,
 ): ((params: ValueSetterParams) => boolean) | string | undefined {
   if (column.fkName) {
@@ -34,8 +34,10 @@ export function MakeLinkedSelectSetter(
     return (params: ValueSetterParams) => {
       const data: any = {}
       const key = params.data[pk.rowName]
+      const index = params.data._index
       data[column.rowName] = params.newValue
-      setRecord(key, data)
+      data[pk.rowName] = key // 100% pk won't change here
+      setRecord(key, data, index)
       return true
     }
   }
