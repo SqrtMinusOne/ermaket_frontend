@@ -86,6 +86,20 @@ class TableGetters extends Getters<TableState> {
     const record = this.state.loaded[id].records[key]
     return record || null
   }
+
+  public isToDelete(id: number, key: any) {
+    return (
+      this.state.transaction[id] &&
+      this.state.transaction[id].delete[key] !== undefined
+    )
+  }
+
+  public isToUpdate(id: number, key: any) {
+    return (
+      this.state.transaction[id] &&
+      this.state.transaction[id].update[key] !== undefined
+    )
+  }
 }
 
 class TableMutations extends Mutations<TableState> {
@@ -267,7 +281,15 @@ class TableMutations extends Mutations<TableState> {
     }
   }
 
-  public applyUpdatesToTable({ id, startRow, endRow }: { id: number, startRow: number, endRow: number }) {
+  public applyUpdatesToTable({
+    id,
+    startRow,
+    endRow,
+  }: {
+    id: number
+    startRow: number
+    endRow: number
+  }) {
     if (!this.state.transaction[id]) {
       return
     }
@@ -370,7 +392,11 @@ class TableActions extends Actions<
       data,
     })
     this.mutations.makeCasts({ id: elem.id, columns: elem.columns })
-    this.mutations.applyUpdatesToTable({ id: elem.id, startRow: rowStart, endRow: rowStart + data.length })
+    this.mutations.applyUpdatesToTable({
+      id: elem.id,
+      startRow: rowStart,
+      endRow: rowStart + data.length,
+    })
   }
 
   public async fetchRows({
@@ -466,7 +492,11 @@ class TableActions extends Actions<
     this.mutations.initTransaction(id)
     this.mutations.setUpdate({ id, oldData, newData: data })
     this.mutations.updateRow({ id, index, data })
-    this.mutations.applyUpdateToRecord({ id, key: data[keyField], applyOld: false })
+    this.mutations.applyUpdateToRecord({
+      id,
+      key: data[keyField],
+      applyOld: false,
+    })
   }
 
   public setRecordUpdate({

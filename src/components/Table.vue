@@ -46,6 +46,7 @@ import TimestampRenderer from './table/timestamp_renderer'
 const Mappers = Vue.extend({
   computed: {
     ...tableMapper.mapState(['loaded', 'transaction']),
+    ...tableMapper.mapGetters(['isToDelete', 'isToUpdate']),
     ...userMapper.mapGetters(['hierarchyElem']),
   },
   methods: {
@@ -102,6 +103,7 @@ export default class TableComponent extends Mappers {
       agColumnHeader: TableHeader,
     },
     multiSortKey: 'ctrl',
+    getRowClass: this.getRowClass,
     context: {
       parent: this,
     },
@@ -440,12 +442,23 @@ export default class TableComponent extends Mappers {
     }
     return 'agTextColumnFilter'
   }
+  
+  private getRowClass(params: any) {
+    const key = params.data[this.pk.rowName]
+    if (this.isToDelete(this.id, key)) {
+      return 'bg-danger'
+    }
+    if (this.isToUpdate(this.id, key)) {
+      return 'bg-warning'
+    }
+    return ''
+  }
 
   private onValueChanged(event: CellValueChangedEvent) {
-    if (event.oldValue === undefined && event.newValue === undefined) {
-      return
+    if (!(event.oldValue !== undefined && event.oldValue === event.newValue)) {
+      this.setRowUpdate({ id: this.id, index: event.rowIndex, data: event.data })
     }
-    this.setRowUpdate({ id: this.id, index: event.rowIndex, data: event.data })
+    this.gridApi!.redrawRows({ rowNodes: [event.node] })
   }
 
   private makeDataSource(): IDatasource {
