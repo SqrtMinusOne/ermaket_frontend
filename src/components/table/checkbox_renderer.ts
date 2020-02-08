@@ -15,15 +15,12 @@ interface Params extends ICellRendererParams {
 export default class CheckboxRenderer extends Vue {
   private params!: Params
 
-  private get colElem(): Column {
-    return this.params.columnElem
-  }
-
   private get key() {
     return this.params.data[this.params.pk.rowName]
   }
 
   private onChange(event: boolean) {
-    console.log(event)
+    this.params.data._key = event
+    this.params.context.parent.onKeySet(this.key, event)
   }
 }

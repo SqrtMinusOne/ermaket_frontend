@@ -59,6 +59,10 @@ const Mappers = Vue.extend({
   components: {
     AgGridVue,
   },
+  model: {
+    prop: 'keys',
+    event: 'change'
+  }
 })
 export default class TableComponent extends Mappers {
   public gridApi?: GridApi
@@ -76,7 +80,7 @@ export default class TableComponent extends Mappers {
     column: LinkedColumn
   }
 
-  @Model('change', { type: Array }) readonly keys?: any[]
+  @Prop({ type: Array }) readonly keys?: any[]
 
   private error?: string
   private onResize: any
@@ -105,7 +109,7 @@ export default class TableComponent extends Mappers {
     multiSortKey: 'ctrl',
     getRowClass: this.getRowClass,
     context: {
-      parent: this,
+      parent: this
     },
     fullWidthCellRenderer: 'LinkedTableRenderer',
     isFullWidthCell: this.isFullWidth,
@@ -171,6 +175,26 @@ export default class TableComponent extends Mappers {
     ) as any
     if (clippers) {
       clippers[0].style.height = `${clipperHeight}px`
+    }
+  }
+
+  public onKeySet(key: any, state: boolean) {
+    if (this.keys === undefined) {
+      return
+    }
+    if (!state) {
+      const index = this.keys.indexOf(key)
+      if (index >= 0) {
+        const newKeys = this.keys.filter((v) => v !== key)
+        this.$emit('change', newKeys)
+      }
+    } else {
+      const index = this.keys.indexOf(key)
+      if (index < 0) {
+        const newKeys = this.keys.slice()
+        newKeys.push(key)
+        this.$emit('change', newKeys)
+      }
     }
   }
 
@@ -442,8 +466,11 @@ export default class TableComponent extends Mappers {
     }
     return 'agTextColumnFilter'
   }
-  
+
   private getRowClass(params: any) {
+    if (!params) {
+      return ''
+    }
     const key = params.data[this.pk.rowName]
     if (this.isToDelete(this.id, key)) {
       return 'bg-danger'

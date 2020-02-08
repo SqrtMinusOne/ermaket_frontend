@@ -1,7 +1,7 @@
 import TableComponent from '@/components/Table.vue'
 import TableControls from '@/mixins/table_controls'
-import { Component, Vue, Mixins } from 'vue-property-decorator'
-import { ICellRendererParams } from 'ag-grid-community'
+import { Component, Vue, Mixins, Watch } from 'vue-property-decorator'
+import { ICellRendererParams, GridApi } from 'ag-grid-community'
 import { LinkedColumn, Table, TableLinkType } from '@/types/user'
 import { LoadedRecord } from '@/types/tables'
 import { tableMapper } from '@/store/modules/table'
@@ -19,7 +19,7 @@ const Mappers = Mixins(TableControls).extend({
     ...tableMapper.mapGetters(['getRecord']),
   },
   methods: {
-    ...tableMapper.mapActions(['fetchRecord']),
+    ...tableMapper.mapActions(['fetchRecord', 'setRecordUpdate']),
   },
 })
 
@@ -75,10 +75,9 @@ const Mappers = Mixins(TableControls).extend({
       <TableComponent
         :id="table.id"
         style="height: 300px"
-        :keys="record.data[this.column.rowName]"
+        v-model="keys"
         :keysParams="keysParams"
         :autoLoad="autoLoad"
-        @change="onKeysChange"
         @modelsChanged="onModelsChanged"
         ref="table"
       />
@@ -87,15 +86,32 @@ const Mappers = Mixins(TableControls).extend({
 })
 export default class LinkedTableRenderer extends Mappers {
   private params!: Params
-  private record!: LoadedRecord
+  private record: LoadedRecord = null as unknown as LoadedRecord
   private edit: boolean = false
+  private keys: any[] = []
 
   private created() {
     this.record = this.getRecord(this.params.table.id, this.key) as LoadedRecord
+    this.keys = this.record.data[this.column.rowName]
   }
 
-  private onKeysChange(event: any) {
-    console.log(event)
+  @Watch('keys')
+  private onKeysChange(event: any[]) {
+    const data: any = {}
+    data[this.params.pk.rowName] = this.key
+    data[this.column.rowName] = event
+    this.keys = event
+    this.setRecordUpdate({
+      id: this.params.table.id,
+      key: this.key,
+      data,
+      index: this.index,
+    })
+    const api = this.params.context.parent.gridOptions.api as GridApi
+    const node = api.getDisplayedRowAtIndex(this.params.node.rowIndex - 1)
+    api.redrawRows({
+      rowNodes: [node]
+    })
   }
 
   private onClose() {
@@ -108,6 +124,10 @@ export default class LinkedTableRenderer extends Mappers {
 
   private get key() {
     return this.params.data[this.params.pk.rowName]
+  }
+
+  private get index() {
+    return this.params.data._index
   }
 
   private get keysParams() {
