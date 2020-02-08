@@ -201,6 +201,10 @@ export default class TableComponent extends Mappers {
     }
   }
 
+  public onUpdate() {
+    this.setActionColumnWidth()
+  }
+
   private getRowHeight(node: RowNode) {
     if (this.isFullWidth(node)) {
       return 350
@@ -382,6 +386,7 @@ export default class TableComponent extends Mappers {
   private getActionColumn() {
     return {
       headerName: 'Actions',
+      colId: '_actions',
       resizable: true,
       sortable: false,
       lockPinned: true,
@@ -391,6 +396,7 @@ export default class TableComponent extends Mappers {
       cellRendererParams: { table: this.elem, pk: this.pk },
       cellRenderer: 'ActionRenderer',
       editable: false,
+      width: 42 * this.getActionNumber() + 50
     }
   }
 
@@ -527,9 +533,20 @@ export default class TableComponent extends Mappers {
 
   private onValueChanged(event: CellValueChangedEvent) {
     if (!(event.oldValue !== undefined && event.oldValue === event.newValue)) {
-      this.setRowUpdate({ id: this.id, index: event.rowIndex, data: event.data })
+      if (event.data._index !== undefined) {
+        this.setRowUpdate({ id: this.id, index: event.data._index, data: event.data })
+      } else {
+        const oldData = { ...event.data }
+        oldData[event.column.getUserProvidedColDef().cellRendererParams.columnElem.rowName] = event.oldValue
+        this.setRowUpdate({ id: this.id, oldData, data: event.data })
+      }
     }
+    this.setActionColumnWidth()
     this.gridApi!.redrawRows({ rowNodes: [event.node] })
+  }
+
+  private setActionColumnWidth() {
+    this.columnApi!.setColumnWidth('_actions', 42 * this.getActionNumber() + 50)
   }
 
   private makeDataSource(): IDatasource {

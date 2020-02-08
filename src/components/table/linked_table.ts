@@ -85,10 +85,11 @@ const Mappers = Mixins(TableControls).extend({
   `,
 })
 export default class LinkedTableRenderer extends Mappers {
+  // TODO Turn off key editing in linked tables
   private params!: Params
   private record: LoadedRecord = null as unknown as LoadedRecord
   private edit: boolean = false
-  private keys: any[] = []
+  private keys: any[] | null = null
 
   private created() {
     this.record = this.getRecord(this.params.table.id, this.key) as LoadedRecord
@@ -96,7 +97,10 @@ export default class LinkedTableRenderer extends Mappers {
   }
 
   @Watch('keys')
-  private onKeysChange(event: any[]) {
+  private onKeysChange(event: any[], oldKeys: any[] | null) {
+    if (oldKeys === null) {
+      return
+    }
     const data: any = {}
     data[this.params.pk.rowName] = this.key
     data[this.column.rowName] = event

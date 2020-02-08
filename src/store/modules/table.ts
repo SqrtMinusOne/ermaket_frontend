@@ -231,14 +231,17 @@ class TableMutations extends Mutations<TableState> {
     }
     if (
       oldKey !== null &&
-      oldKey !== key &&
-      this.state.transaction[id].update[oldKey]
+      oldKey !== key
     ) {
-      this.state.transaction[id].update[key] = this.state.transaction[
-        id
-      ].update[oldKey]
-      this.state.transaction[id].mapKeys[oldKey] = key
-      delete this.state.transaction[id].update[oldKey]
+      if(this.state.transaction[id].update[oldKey]) {
+        this.state.transaction[id].update[key] = this.state.transaction[
+          id
+        ].update[oldKey]
+        this.state.transaction[id].mapKeys[oldKey] = key
+        delete this.state.transaction[id].update[oldKey]
+      } else {
+        this.state.transaction[id].mapKeys[oldKey] = key
+      }
     }
     newData = _.pickBy(newData, (v, k) => !k.startsWith('_'))
 
@@ -311,7 +314,7 @@ class TableMutations extends Mutations<TableState> {
           loaded.data[i] = {
             ...loaded.data[i],
             ..._.pick(
-              this.state.transaction[id].update[key],
+              this.state.transaction[id].update[key].newData,
               Object.keys(loaded.data[i])
             ),
           }
@@ -498,6 +501,7 @@ class TableActions extends Actions<
       rowEnd > 0 ? rowEnd - rowStart : -1,
       order
     )
+    this.actions.checkLoaded(elem)
     if (!filter && !order) {
       this.actions.setRows({
         elem,
@@ -505,6 +509,7 @@ class TableActions extends Actions<
         rowCount: data.data.total,
         data: data.data.data,
       })
+      return this.getters.getRows(id, rowStart, rowEnd)
     }
     return data.data.data
   }
@@ -545,19 +550,26 @@ class TableActions extends Actions<
   public setRowUpdate({
     id,
     index,
+    oldData,
     data,
   }: {
     id: number
-    index: number
+    index?: number
+    oldData: any
     data: any
   }) {
-    const oldData = this.state.loaded[id].data[index]
+    if (index === undefined && oldData === undefined) {
+      throw new Error('index and oldData can\'t both be undefined')
+    }
+    oldData = oldData ? oldData : this.state.loaded[id].data[index!]
     const keyField = this.state.loaded[id].keyField
     data[keyField] =
       data[keyField] !== undefined ? data[keyField] : oldData[keyField]
     this.mutations.initTransaction(id)
     this.mutations.setUpdate({ id, oldData, newData: data })
-    this.mutations.updateRow({ id, index, data })
+    if (index !== undefined) {
+      this.mutations.updateRow({ id, index, data })
+    }
     this.mutations.applyUpdateToRecord({
       id,
       key: data[keyField],

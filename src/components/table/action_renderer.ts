@@ -56,6 +56,7 @@ export default class ActionRenderer extends Mappers {
       })
     }
     this.params.api.redrawRows({ rowNodes: [this.params.node] })
+    this.params.context.parent.onUpdate()
   }
 
   private get table() {
