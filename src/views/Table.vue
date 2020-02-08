@@ -36,7 +36,6 @@
       </template>
       <TableComponent
         :id="Number($route.params.id)"
-        class="d-flex flex-column flex-fill"
         @modelsChanged="onModelsChanged"
         :autoLoadLinked="autoLoad"
         ref="table"
@@ -47,14 +46,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Mixins } from 'vue-property-decorator'
 import { userMapper } from '@/store/modules/user'
 import { instanceOfTable } from '@/types/user_guards'
 import { Table as TableElem } from '@/types/user'
 import TableComponent from '@/components/Table.vue'
-import _ from 'lodash'
+import TableControls from '@/mixins/table_controls'
 
-const Mappers = Vue.extend({
+const Mappers = Mixins(TableControls).extend({
   computed: {
     ...userMapper.mapGetters(['hierarchyElem']),
   },
@@ -62,9 +61,6 @@ const Mappers = Vue.extend({
 
 @Component({})
 export default class Table extends Mappers {
-  private wasSorted: boolean = false
-  private autoLoad: boolean = false
-
   private get id() {
     return Number(this.$route.params.id)
   }
@@ -77,29 +73,6 @@ export default class Table extends Mappers {
 
   private get table(): TableElem {
     return this.hierarchyElem(this.id) as TableElem
-  }
-  
-  private toggleAutoLoad() {
-    this.autoLoad = !this.autoLoad
-  }
-
-  private onModelsChanged() {
-    if (this.$refs.table) {
-      const api = (this.$refs.table as TableComponent).gridApi
-      if (api) {
-        this.wasSorted = !_.isEmpty(api.getFilterModel()) || !_.isEmpty(api.getSortModel())
-      }
-    }
-  }
-  
-  private resetTable() {
-    if (this.$refs.table) {
-      const api = (this.$refs.table as TableComponent).gridApi
-      if (api) {
-        api.setFilterModel(null)
-        api.setSortModel(null)
-      }
-    }
   }
 }
 </script>

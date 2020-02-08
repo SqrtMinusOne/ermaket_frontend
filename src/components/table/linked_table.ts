@@ -1,5 +1,6 @@
 import TableComponent from '@/components/Table.vue'
-import { Component, Vue } from 'vue-property-decorator'
+import TableControls from '@/mixins/table_controls'
+import { Component, Vue, Mixins } from 'vue-property-decorator'
 import { ICellRendererParams } from 'ag-grid-community'
 import { LinkedColumn, Table, TableLinkType } from '@/types/user'
 import { LoadedRecord } from '@/types/tables'
@@ -12,7 +13,7 @@ interface Params extends ICellRendererParams {
   [key: string]: any
 }
 
-const Mappers = Vue.extend({
+const Mappers = Mixins(TableControls).extend({
   computed: {
     ...userMapper.mapGetters(['getTable']),
     ...tableMapper.mapGetters(['getRecord']),
@@ -40,18 +41,18 @@ const Mappers = Vue.extend({
               <font-awesome-icon :icon="['fas', 'eye']" v-else />
               {{ !edit ? 'View mode' : 'Edit mode' }}
             </b-button>
-            <b-button 
-              @click="resetTable" 
-              variant="outline-light" 
+            <b-button
+              @click="resetTable"
+              variant="outline-light"
               size="sm"
               v-b-tooltip.hover.noninteractive
               title="Reset filters and sorting"
               v-if="wasSorted">
               <font-awesome-icon :icon="['fas', 'table']" />
             </b-button>
-            <b-button 
-              @click="toggleAutoLoad" 
-              variant="outline-light" 
+            <b-button
+              @click="toggleAutoLoad"
+              variant="outline-light"
               size="sm"
               v-b-tooltip.hover.noninteractive
               title="Toggle autoload of linked records"
@@ -87,9 +88,7 @@ const Mappers = Vue.extend({
 export default class LinkedTableRenderer extends Mappers {
   private params!: Params
   private record!: LoadedRecord
-  private wasSorted: boolean = false
   private edit: boolean = false
-  private autoLoad: boolean = false
 
   private created() {
     this.record = this.getRecord(this.params.table.id, this.key) as LoadedRecord
@@ -97,29 +96,6 @@ export default class LinkedTableRenderer extends Mappers {
 
   private onKeysChange(event: any) {
     console.log(event)
-  }
-
-  private onModelsChanged() {
-    if (this.$refs.table) {
-      const api = (this.$refs.table as any).gridApi
-      if (api) {
-        this.wasSorted = !_.isEmpty(api.getFilterModel()) || !_.isEmpty(api.getSortModel())
-      }
-    }
-  }
-
-  private toggleAutoLoad() {
-    this.autoLoad = !this.autoLoad
-  }
-
-  private resetTable() {
-    if (this.$refs.table) {
-      const api = (this.$refs.table as any).gridApi
-      if (api) {
-        api.setFilterModel(null)
-        api.setSortModel(null)
-      }
-    }
   }
 
   private onClose() {
@@ -137,7 +113,7 @@ export default class LinkedTableRenderer extends Mappers {
   private get keysParams() {
     return {
       edit: this.edit,
-      column: this.column
+      column: this.column,
     }
   }
 
