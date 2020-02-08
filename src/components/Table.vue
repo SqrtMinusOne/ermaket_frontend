@@ -29,11 +29,12 @@ import {
 import _ from 'lodash'
 
 import { instanceOfLinkedColumn, instanceOfTable } from '@/types/user_guards'
-import { Column, LinkedColumn, Table, TableLinkType } from '@/types/user'
+import { Column, LinkedColumn, Table, TableLinkType, Access } from '@/types/user'
 import { Criterion, FilterObject, Operator, Order } from '@/types/tables'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
 
+import ActionRenderer from './table/action_renderer'
 import BootstrapEditor from './table/bootstrap_editor'
 import CheckboxRenderer from './table/checkbox_renderer'
 import DatePickerEditor from './table/datepicker_editor'
@@ -90,6 +91,7 @@ export default class TableComponent extends Mappers {
   } = {}
   private resetHeight: boolean = false
   private defaultRowHeight: number = 48
+  private actionNumber: number = 0
 
   private gridOptions: GridOptions = {
     rowModelType: 'infinite',
@@ -97,6 +99,7 @@ export default class TableComponent extends Mappers {
     paginationPageSize: 100,
     pagination: true,
     frameworkComponents: {
+      ActionRenderer,
       BootstrapEditor,
       CheckboxRenderer,
       DatePickerEditor,
@@ -259,6 +262,7 @@ export default class TableComponent extends Mappers {
 
   private created() {
     this.onResize = this.setTableHeight.bind(this)
+    this.actionNumber = this.getActionNumber()
   }
 
   private onGridReady(params: GridReadyEvent) {
@@ -324,7 +328,6 @@ export default class TableComponent extends Mappers {
   private beforeDestroy() {
     window.removeEventListener('resize', this.onResize)
   }
-
   private get columnDefs(): ColDef[] {
     const defs: ColDef[] = []
     const table = this.elem
@@ -333,19 +336,7 @@ export default class TableComponent extends Mappers {
     }
     const pk = this.pk
     if (this.keys && this.keysParams && this.keysParams.edit) {
-      defs.push({
-        headerName: this.keysParams.column.text,
-        field: '_key',
-        resizable: true,
-        sortable: false,
-        lockPinned: true,
-        pinned: 'left',
-        filter: false,
-        headerComponentParams: { isPk: false, table, pk },
-        cellRendererParams: { table, pk },
-        cellRenderer: 'CheckboxRenderer',
-        editable: false,
-      })
+      defs.push(this.getCheckboxColumn())
     }
     for (const column of table.columns) {
       const def: ColDef = {
@@ -360,14 +351,58 @@ export default class TableComponent extends Mappers {
           table,
           pk,
         },
-        cellRendererParams: { columnElem: column, table, pk },
-        cellRenderer: this.getRenderer(column),
+        ...this.getRenderer(column),
         editable: this.getIsEditable(column),
         ...this.getEditor(column, table),
       }
       defs.push(def)
     }
+    if (this.getActionNumber() > 0) {
+      defs.push(this.getActionColumn())
+    }
     return defs
+  }
+
+  private getCheckboxColumn() {
+    return {
+      headerName: this.keysParams!.column.text,
+      field: '_key',
+      resizable: true,
+      sortable: false,
+      lockPinned: true,
+      pinned: 'left',
+      filter: false,
+      headerComponentParams: { isPk: false, table: this.elem, pk: this.pk },
+      cellRendererParams: { table: this.elem, pk: this.pk },
+      cellRenderer: 'CheckboxRenderer',
+      editable: false,
+    }
+  }
+
+  private getActionColumn() {
+    return {
+      headerName: 'Actions',
+      resizable: true,
+      sortable: false,
+      lockPinned: true,
+      pinned: 'right',
+      filter: false,
+      headerComponentParams: { isPk: false, table: this.elem, pk: this.pk },
+      cellRendererParams: { table: this.elem, pk: this.pk },
+      cellRenderer: 'ActionRenderer',
+      editable: false,
+    }
+  }
+
+  private getActionNumber() {
+    let n = 0
+    if (this.elem.userAccess.has(Access.delete)) {
+      n++
+    }
+    if (this.transaction[this.elem.id]) {
+      n++
+    }
+    return n
   }
 
   private getIsEditable(column: Column) {
@@ -384,16 +419,25 @@ export default class TableComponent extends Mappers {
   }
 
   private getRenderer(column: Column) {
+    const params = {
+      columnElem: column,
+      table: this.elem,
+      pk: this.pk
+    }
+    let renderer: string | undefined = undefined
     if (instanceOfLinkedColumn(column)) {
-      return 'LinkedRenderer'
+      renderer = 'LinkedRenderer'
     }
     switch (column.type) {
       case 'date':
       case 'time':
       case 'timestamp':
-        return 'TimestampRenderer'
+        renderer = 'TimestampRenderer'
     }
-    return undefined
+    return {
+      cellRendererParams: params,
+      cellRenderer: renderer
+    }
   }
 
   private getEditor(column: Column, table: Table) {
@@ -468,7 +512,7 @@ export default class TableComponent extends Mappers {
   }
 
   private getRowClass(params: any) {
-    if (!params) {
+    if (!params.data) {
       return ''
     }
     const key = params.data[this.pk.rowName]
@@ -515,7 +559,9 @@ export default class TableComponent extends Mappers {
                 this.rowCount = undefined
               }
             }
-            self.injectIndices(data, params.startRow)
+            if (!filter && !order) {
+              self.injectIndices(data, params.startRow)
+            }
             if (!_.isEmpty(self.linkedOpened)) {
               data = self.injectLinkedRows(data)
             }

@@ -24,6 +24,7 @@ export interface HierarchyElem {
   id: number
   name: string
   accessRights: AccessRight[]
+  userAccess: Set<Access>
   buttonList: any[] // TODO 19-01-20 21:12:30
   triggerList: any[] // TODO 19-01-20 21:12:30
   _tag_name?: string

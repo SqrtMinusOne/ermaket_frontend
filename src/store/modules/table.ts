@@ -87,6 +87,15 @@ class TableGetters extends Getters<TableState> {
     return record || null
   }
 
+  public isTransactee(id: number, key: any) {
+    return (
+      this.state.transaction[id] &&
+      (this.state.transaction[id].update[key] ||
+        this.state.transaction[id].create[key] ||
+        this.state.transaction[id].delete[key])
+    )
+  }
+
   public isToDelete(id: number, key: any) {
     return (
       this.state.transaction[id] &&
@@ -350,6 +359,63 @@ class TableMutations extends Mutations<TableState> {
       ),
     }
   }
+
+  public setDelete({ id, key }: { id: number; key: any }) {
+    this.state.transaction[id].delete[key] = true
+  }
+
+  public revertChanges({
+    id,
+    index,
+    key,
+  }: {
+    id: number
+    index: number
+    key: any
+  }) {
+    if (this.state.transaction[id].delete[key]) {
+      delete this.state.transaction[id].delete[key]
+    }
+    if (this.state.transaction[id].create[key]) {
+      delete this.state.transaction[id].create[key]
+    }
+    if (!this.state.transaction[id].update[key]) {
+      return
+    }
+
+    const update = this.state.transaction[id].update[key]
+    delete this.state.transaction[id].update[key]
+    const oldKey = _.findKey(
+      this.state.transaction[id].mapKeys,
+      (k) => k === key
+    )
+
+    if (this.state.loaded[id].records[key]) {
+      delete this.state.loaded[id].records[key].data
+      key = oldKey === undefined ? key : oldKey
+      this.state.loaded[id].records[key].data = update.oldData
+    }
+
+    if (this.state.loaded[id].data[index]) {
+      this.state.loaded[id].data[index] = _.pick(
+        update.oldData,
+        Object.keys(this.state.loaded[id].data[index])
+      )
+    }
+  }
+
+  public tryToCloseTransaction(id: number) {
+    if (this.state.transaction[id]) {
+      const t = this.state.transaction[id]
+      if (
+        Object.keys(t.update).length === 0 &&
+        Object.keys(t.delete).length === 0 &&
+        Object.keys(t.create).length === 0
+      ) {
+        delete this.state.transaction[id]
+      }
+    }
+  }
 }
 
 class TableActions extends Actions<
@@ -515,6 +581,29 @@ class TableActions extends Actions<
     this.mutations.setUpdate({ id, oldData, newData: data })
     this.mutations.updateRecord({ id, key, data })
     this.mutations.applyOneUpdateToTable({ id, key, index })
+  }
+
+  public setDelete({ id, key }: { id: number; key: any }) {
+    this.mutations.initTransaction(id)
+    this.mutations.setDelete({ id, key })
+  }
+
+  public revert({ id, index, key }: { id: number; key: any; index?: number }): { row: any, record: any } {
+    if (index === undefined && this.getters.isToUpdate(id, key)) {
+      index = this.state.loaded[id].data.findIndex(
+        (datum) => datum[this.state.loaded[id].keyField] === key
+      )
+    }
+    this.mutations.revertChanges({ id, index, key } as {
+      id: number
+      index: number
+      key: any
+    })
+    this.mutations.tryToCloseTransaction(id)
+    return {
+      row: index !== undefined ? this.state.loaded[id].data[index] : null,
+      record: this.state.loaded[id].records[key]
+    }
   }
 }
 

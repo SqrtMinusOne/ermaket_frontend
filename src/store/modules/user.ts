@@ -1,14 +1,36 @@
-import { Getters, Mutations, Actions, Module, createMapper } from 'vuex-smart-module'
+import {
+  Getters,
+  Mutations,
+  Actions,
+  Module,
+  createMapper,
+} from 'vuex-smart-module'
 import { $enum } from 'ts-enum-util'
-import { User, Hierarchy, HierarchyElem, Access, TableLinkType, FormLinkType, FormDescription, Table } from '@/types/user'
-import { instanceOfTable, instanceOfForm, instanceOfLinkedColumn, instanceOfLinkedField } from '@/types/user_guards'
+import {
+  User,
+  Hierarchy,
+  HierarchyElem,
+  Access,
+  TableLinkType,
+  FormLinkType,
+  FormDescription,
+  Table,
+} from '@/types/user'
+import {
+  instanceOfTable,
+  instanceOfForm,
+  instanceOfLinkedColumn,
+  instanceOfLinkedField,
+} from '@/types/user_guards'
 import UserAPI from '@/api/user'
 
 /* tslint:disable:max-classes-per-file */
 
 function setEnums(elem: HierarchyElem) {
   for (const access of elem.accessRights) {
-    access.access = access.access.map((acc) => $enum(Access).asValueOrThrow(acc))
+    access.access = access.access.map((acc) =>
+      $enum(Access).asValueOrThrow(acc)
+    )
   }
   if (instanceOfTable(elem)) {
     for (const column of elem.columns) {
@@ -44,7 +66,9 @@ class UserGetters extends Getters<UserState> {
 
   public hierarchyElem(id: number): HierarchyElem | undefined {
     if (this.state.hierarchy) {
-      return this.state.hierarchy.hierarchy.find((elem: HierarchyElem) => elem.id === id)
+      return this.state.hierarchy.hierarchy.find(
+        (elem: HierarchyElem) => elem.id === id
+      )
     }
   }
 
@@ -80,11 +104,25 @@ class UserMutations extends Mutations<UserState> {
     }
   }
 
-  public reset () {
-      const s: any = new UserState()
-      Object.keys(s).forEach((key: any) => {
-        (this.state as any)[key] = s[key]
-      })
+  public resolveAccess() {
+    const roles = new Set(this.state.user!.roles)
+    for (const elem of this.state.hierarchy!.hierarchy) {
+      elem.userAccess = new Set()
+      for (const access of elem.accessRights) {
+        if (roles.has(access.role)) {
+          for (const accessType of access.access) {
+            elem.userAccess.add(accessType)
+          }
+        }
+      }
+    }
+  }
+
+  public reset() {
+    const s: any = new UserState()
+    Object.keys(s).forEach((key: any) => {
+      ;(this.state as any)[key] = s[key]
+    })
   }
 }
 
@@ -99,6 +137,7 @@ class UserActions extends Actions<
       const response = await UserAPI.current()
       this.mutations.setUser(response.data.user)
       this.mutations.setHierarchy(response.data.hierarchy)
+      this.mutations.resolveAccess()
     } catch {
       this.mutations.reset()
     }
