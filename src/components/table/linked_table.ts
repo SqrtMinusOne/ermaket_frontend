@@ -1,3 +1,4 @@
+import MainCard from '@/components/ui/MainCard.vue'
 import TableComponent from '@/components/Table.vue'
 import TableControls from '@/mixins/table_controls'
 import { Component, Vue, Mixins, Watch } from 'vue-property-decorator'
@@ -25,52 +26,41 @@ const Mappers = Mixins(TableControls).extend({
 
 @Component({
   template: `
-    <b-card
-      border-variant="primary"
-      header-bg-variant="primary"
-      header-text-variant="white"
-      header-class="small_card_header"
-      no-body
-    >
-      <template v-slot:header>
-        <div class="d-flex flex-row align-items-center">
-          <b>{{ table.name }}</b>
-          <div class="ml-auto">
-            <b-button @click="toggleEdit" variant="outline-light" size="sm">
-              <font-awesome-icon :icon="['fas', 'pencil-alt']" v-if="edit" />
-              <font-awesome-icon :icon="['fas', 'eye']" v-else />
-              {{ !edit ? 'View mode' : 'Edit mode' }}
-            </b-button>
-            <b-button
-              @click="resetTable"
-              variant="outline-light"
-              size="sm"
-              v-b-tooltip.hover.noninteractive
-              title="Reset filters and sorting"
-              v-if="wasSorted">
-              <font-awesome-icon :icon="['fas', 'table']" />
-            </b-button>
-            <b-button
-              @click="toggleAutoLoad"
-              variant="outline-light"
-              size="sm"
-              v-b-tooltip.hover.noninteractive
-              title="Toggle autoload of linked records"
-              >
-              <font-awesome-icon :icon="['fas', 'magnet']" v-if="autoLoad" />
-              <font-awesome-icon :icon="['fas', 'mouse']" v-else />
-              {{ autoLoad ? 'Auto' : 'Manual' }}
-            </b-button>
-            <b-button
-              v-b-tooltip.hover.noninteractive title="Close linked table"
-              @click="onClose"
-              variant="outline-light"
-              size="sm"
-              >
-              <font-awesome-icon :icon="['fas', 'times']" />
-            </b-button>
-          </div>
-        </div>
+    <main-card :name="table.name">
+      <template v-slot:controls>
+        <b-button @click="toggleEdit" variant="outline-light" size="sm">
+          <font-awesome-icon :icon="['fas', 'pencil-alt']" v-if="edit" />
+          <font-awesome-icon :icon="['fas', 'eye']" v-else />
+          {{ !edit ? 'View mode' : 'Edit mode' }}
+        </b-button>
+        <b-button
+          @click="resetTable"
+          variant="outline-light"
+          size="sm"
+          v-b-tooltip.hover.noninteractive
+          title="Reset filters and sorting"
+          v-if="wasSorted">
+          <font-awesome-icon :icon="['fas', 'table']" />
+        </b-button>
+        <b-button
+          @click="toggleAutoLoad"
+          variant="outline-light"
+          size="sm"
+          v-b-tooltip.hover.noninteractive
+          title="Toggle autoload of linked records"
+          >
+          <font-awesome-icon :icon="['fas', 'magnet']" v-if="autoLoad" />
+          <font-awesome-icon :icon="['fas', 'mouse']" v-else />
+          {{ autoLoad ? 'Auto' : 'Manual' }}
+        </b-button>
+        <b-button
+          v-b-tooltip.hover.noninteractive title="Close linked table"
+          @click="onClose"
+          variant="outline-light"
+          size="sm"
+          >
+          <font-awesome-icon :icon="['fas', 'times']" />
+        </b-button>
       </template>
       <TableComponent
         :id="table.id"
@@ -81,8 +71,9 @@ const Mappers = Mixins(TableControls).extend({
         @modelsChanged="onModelsChanged"
         ref="table"
       />
-    </b-card>
+    </main-card>
   `,
+  components: { MainCard }
 })
 export default class LinkedTableRenderer extends Mappers {
   // TODO Turn off key editing in linked tables
