@@ -88,11 +88,11 @@ export default class TableHeader extends Mappers {
   }
 
   private get isLinked() {
-    return instanceOfLinkedColumn(this.params.columnElem)
+    return this.params.columnElem && instanceOfLinkedColumn(this.params.columnElem)
   }
 
   private get column(): Column {
-    return this.params.columnElem
+    return this.params.columnElem || null
   }
 
   private get linkTooltip() {

@@ -89,7 +89,6 @@ class TableGetters extends Getters<TableState> {
   }
 
   public get hasChanges() {
-    console.log(Object.keys(this.state.transaction))
     return Object.keys(this.state.transaction).length > 0
   }
 
@@ -119,12 +118,12 @@ class TableGetters extends Getters<TableState> {
   public get breakdown() {
     const res = {
       create: 0,
-      change: 0,
+      update: 0,
       delete: 0
     }
     for (const data of Object.values(this.state.transaction)) {
       res.create += Object.keys(data.create).length
-      res.change += Object.keys(data.update).length
+      res.update += Object.keys(data.update).length
       res.delete += Object.keys(data.delete).length
     }
     return res
@@ -214,8 +213,7 @@ class TableMutations extends Mutations<TableState> {
   }
 
   public clearRows(id: number) {
-    delete this.state.loaded[id]
-    this.state.loaded = { ...this.state.loaded }
+    Vue.delete(this.state.loaded, id)
   }
 
   public reset() {
@@ -259,7 +257,7 @@ class TableMutations extends Mutations<TableState> {
           id
         ].update[oldKey]
         this.state.transaction[id].mapKeys[oldKey] = key
-        delete this.state.transaction[id].update[oldKey]
+        Vue.delete(this.state.transaction[id].update, oldKey)
       } else {
         this.state.transaction[id].mapKeys[oldKey] = key
       }
@@ -291,7 +289,7 @@ class TableMutations extends Mutations<TableState> {
     const newKey = this.state.transaction[id].mapKeys[key]
     if (newKey !== undefined) {
       Vue.set(this.state.loaded[id].records, newKey, this.state.loaded[id].records[key])
-      delete this.state.transaction[id].mapKeys[key]
+      Vue.delete(this.state.transaction[id].mapKeys, key)
       key = newKey
     }
 
@@ -398,24 +396,24 @@ class TableMutations extends Mutations<TableState> {
     key: any
   }) {
     if (this.state.transaction[id].delete[key]) {
-      delete this.state.transaction[id].delete[key]
+      Vue.delete(this.state.transaction[id].delete, key)
     }
     if (this.state.transaction[id].create[key]) {
-      delete this.state.transaction[id].create[key]
+      Vue.delete(this.state.transaction[id].create, key)
     }
     if (!this.state.transaction[id].update[key]) {
       return
     }
 
     const update = this.state.transaction[id].update[key]
-    delete this.state.transaction[id].update[key]
+    Vue.delete(this.state.transaction[id].update, key)
     const oldKey = _.findKey(
       this.state.transaction[id].mapKeys,
       (k) => k === key
     )
 
     if (this.state.loaded[id].records[key]) {
-      delete this.state.loaded[id].records[key].data
+      Vue.delete(this.state.loaded[id].records[key], 'data')
       key = oldKey === undefined ? key : oldKey
       this.state.loaded[id].records[key].data = update.oldData
     }
@@ -436,8 +434,7 @@ class TableMutations extends Mutations<TableState> {
         Object.keys(t.delete).length === 0 &&
         Object.keys(t.create).length === 0
       ) {
-        delete this.state.transaction[id]
-        this.state.transaction = { ...this.state.transaction }
+        Vue.delete(this.state.transaction, id)
       }
     }
   }

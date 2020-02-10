@@ -67,12 +67,20 @@ export interface Loaded {
 }
 
 export interface Transaction {
-  [id: number]: {
-    update: KeysMap<TableUpdate>
-    create: KeysMap<TableCreate>
-    delete: KeysMap<TableDelete>
-    mapKeys: KeysMap<any>
-  }
+  [id: number]: TransactionUnit
+}
+
+export enum TransactionType {
+  update,
+  create,
+  delete
+}
+
+export interface TransactionUnit {
+  update: KeysMap<TableUpdate>
+  create: KeysMap<TableCreate>
+  delete: KeysMap<TableDelete>
+  mapKeys: KeysMap<any>
 }
 
 export interface TableUpdate {

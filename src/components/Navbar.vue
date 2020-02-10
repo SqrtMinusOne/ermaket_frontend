@@ -52,10 +52,6 @@ export default class Navbar extends Mappers {
     await this.logout()
     this.$router.push('/login')
   }
-
-  mounted() {
-    console.log(this.hasChanges)
-  }
 }
 </script>
 
