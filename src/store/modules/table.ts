@@ -555,7 +555,7 @@ class TableActions extends Actions<
   }: {
     id: number
     index?: number
-    oldData: any
+    oldData?: any
     data: any
   }) {
     if (index === undefined && oldData === undefined) {

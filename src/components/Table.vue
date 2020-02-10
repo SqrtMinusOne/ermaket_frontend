@@ -81,7 +81,7 @@ export default class TableComponent extends Mappers {
     column: LinkedColumn
   }
 
-  @Prop({ type: Array }) readonly keys?: any[]
+  @Prop({ type: Array }) private readonly keys?: any[]
 
   private error?: string
   private onResize: any
@@ -430,7 +430,7 @@ export default class TableComponent extends Mappers {
       table: this.elem,
       pk: this.pk
     }
-    let renderer: string | undefined = undefined
+    let renderer: string | undefined
     if (instanceOfLinkedColumn(column)) {
       renderer = 'LinkedRenderer'
     }
@@ -717,9 +717,9 @@ export default class TableComponent extends Mappers {
   }
 
   private injectIndices(data: any[], start: number) {
-    for (const i in data) {
-      data[i]._index = start + Number(i)
-    }
+    data.forEach((datum, i) => {
+      datum._index = start + Number(i)
+    })
   }
 
   private injectLinkedRows(data: any[]): any[] {
