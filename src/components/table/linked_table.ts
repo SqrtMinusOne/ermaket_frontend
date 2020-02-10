@@ -26,7 +26,7 @@ const Mappers = Mixins(TableControls).extend({
 
 @Component({
   template: `
-    <main-card :name="table.name">
+    <main-card :name="table.name" no-body>
       <template v-slot:controls>
         <b-button @click="toggleEdit" variant="outline-light" size="sm">
           <font-awesome-icon :icon="['fas', 'pencil-alt']" v-if="edit" />

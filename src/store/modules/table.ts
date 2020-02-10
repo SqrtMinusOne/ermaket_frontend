@@ -7,6 +7,7 @@ import {
   Context,
 } from 'vuex-smart-module'
 import { Store } from 'vuex'
+import { Vue } from 'vue-property-decorator'
 
 import {
   Loaded,
@@ -87,6 +88,11 @@ class TableGetters extends Getters<TableState> {
     return record || null
   }
 
+  public get hasChanges() {
+    console.log(Object.keys(this.state.transaction))
+    return Object.keys(this.state.transaction).length > 0
+  }
+
   public isTransactee(id: number, key: any) {
     return (
       this.state.transaction[id] &&
@@ -108,6 +114,20 @@ class TableGetters extends Getters<TableState> {
       this.state.transaction[id] &&
       this.state.transaction[id].update[key] !== undefined
     )
+  }
+
+  public get breakdown() {
+    const res = {
+      create: 0,
+      change: 0,
+      delete: 0
+    }
+    for (const data of Object.values(this.state.transaction)) {
+      res.create += Object.keys(data.create).length
+      res.change += Object.keys(data.update).length
+      res.delete += Object.keys(data.delete).length
+    }
+    return res
   }
 }
 
@@ -142,10 +162,10 @@ class TableMutations extends Mutations<TableState> {
   }
 
   public setRecord({ id, key, data }: { id: number; key: any; data: any }) {
-    this.state.loaded[id].records[key] = {
+    Vue.set(this.state.loaded[id].records, key, {
       data,
       time: new Date(),
-    }
+    })
   }
 
   public updateRecord({ id, key, data }: { id: number; key: any; data: any }) {
@@ -195,6 +215,7 @@ class TableMutations extends Mutations<TableState> {
 
   public clearRows(id: number) {
     delete this.state.loaded[id]
+    this.state.loaded = { ...this.state.loaded }
   }
 
   public reset() {
@@ -206,12 +227,12 @@ class TableMutations extends Mutations<TableState> {
 
   public initTransaction(id: number) {
     if (!this.state.transaction[id]) {
-      this.state.transaction[id] = {
+      Vue.set(this.state.transaction, id, {
         update: {},
         create: {},
         delete: {},
         mapKeys: {},
-      }
+      })
     }
   }
 
@@ -246,7 +267,7 @@ class TableMutations extends Mutations<TableState> {
     newData = _.pickBy(newData, (v, k) => !k.startsWith('_'))
 
     if (!this.state.transaction[id].update[key]) {
-      this.state.transaction[id].update[key] = { oldData, newData }
+      Vue.set(this.state.transaction[id].update, key, { oldData, newData })
     } else {
       this.state.transaction[id].update[key].newData = {
         ...this.state.transaction[id].update[key].newData,
@@ -269,7 +290,7 @@ class TableMutations extends Mutations<TableState> {
     }
     const newKey = this.state.transaction[id].mapKeys[key]
     if (newKey !== undefined) {
-      this.state.loaded[id].records[newKey] = this.state.loaded[id].records[key]
+      Vue.set(this.state.loaded[id].records, newKey, this.state.loaded[id].records[key])
       delete this.state.transaction[id].mapKeys[key]
       key = newKey
     }
@@ -416,6 +437,7 @@ class TableMutations extends Mutations<TableState> {
         Object.keys(t.create).length === 0
       ) {
         delete this.state.transaction[id]
+        this.state.transaction = { ...this.state.transaction }
       }
     }
   }

@@ -5,7 +5,7 @@
       header-bg-variant="primary"
       header-text-variant="white"
       header-class="small_card_header"
-      no-body
+      :no-body="noBody"
     >
     <template v-slot:header>
       <div class="d-flex flex-row align-items-center">
@@ -27,6 +27,7 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
 export default class MainCard extends Vue {
   @Prop({ type: String, required: true }) private readonly name!: string
   @Prop({ type: Boolean, default: false }) private readonly noflex!: boolean
+  @Prop({ type: Boolean, default: false }) private readonly 'no-body'!: boolean
 }
 
 </script>

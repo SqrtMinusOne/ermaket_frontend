@@ -1,5 +1,5 @@
 <template>
-  <main-card :name="table.name">
+  <main-card :name="table.name" no-body>
     <template v-slot:controls>
       <b-button
         @click="resetTable"
