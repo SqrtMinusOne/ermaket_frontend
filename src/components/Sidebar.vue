@@ -69,7 +69,7 @@ interface Menu extends Array<Item|HeaderItem|ComponentItem> {}
 })
 export default class Home extends Mappers {
   private makeMenuElem(element: HierarchyElem): Item {
-    if (instanceOfTable(element)) {
+    if (instanceOfTable(element) && !element.hidden) {
       return this.makeTable(element as Table)
     }
     if (instanceOfSection(element)) {

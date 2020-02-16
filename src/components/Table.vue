@@ -343,28 +343,34 @@ export default class TableComponent extends Mappers {
       defs.push(this.getCheckboxColumn())
     }
     for (const column of table.columns) {
-      const def: ColDef = {
-        headerName: column.text,
-        field: column.rowName,
-        resizable: true,
-        sortable: column.isSort && Boolean(column.type),
-        filter: this.getFilter(column),
-        headerComponentParams: {
-          isPk: column.isPk,
-          columnElem: column,
-          table,
-          pk,
-        },
-        ...this.getRenderer(column),
-        editable: this.getIsEditable(column),
-        ...this.getEditor(column, table),
+      if (!column.isVisible) {
+        continue
       }
-      defs.push(def)
+      defs.push(this.getColDef(column))
     }
     if (this.getActionNumber() > 0) {
       defs.push(this.getActionColumn())
     }
     return defs
+  }
+
+  private getColDef(column: Column): ColDef {
+    return {
+      headerName: column.text,
+      field: column.rowName,
+      resizable: true,
+      sortable: column.isSort && Boolean(column.type),
+      filter: this.getFilter(column),
+      headerComponentParams: {
+        isPk: column.isPk,
+        columnElem: column,
+        table: this.elem,
+        pk: this.pk,
+      },
+      editable: this.getIsEditable(column),
+      ...this.getRenderer(column),
+      ...this.getEditor(column, this.elem),
+    }
   }
 
   private getCheckboxColumn() {
@@ -412,7 +418,7 @@ export default class TableComponent extends Mappers {
   }
 
   private getIsEditable(column: Column) {
-    if (this.noEdit) {
+    if (this.noEdit || column.isAuto) {
       return false
     }
     if (!instanceOfLinkedColumn(column)) {

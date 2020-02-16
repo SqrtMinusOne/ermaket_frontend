@@ -41,15 +41,19 @@ export interface Column {
   isSort: boolean
   isFilter: boolean
   isEditable: boolean
+  isVisible: boolean
+  isUnique: boolean
   isPk: boolean
   isRequired: boolean
   dateFormat?: string
+  isAuto: boolean
 }
 
 export enum TableLinkType {
   simple = 'simple',
   dropdown = 'dropdown',
   linked = 'linked',
+  combined = 'combined'
 }
 
 export interface LinkedColumn extends Column {
@@ -63,21 +67,19 @@ export interface LinkedColumn extends Column {
 export enum FormLinkType {
   simple = 'simple',
   dropdown = 'dropdown',
-  linkedTable = 'linkTable',
+  linkedTable = 'linkedTable',
   linkedForm = 'linkedForm',
   groupedForm = 'groupedForm'
 }
 
 export interface Field {
-  tableField: string
+  rowName: string
   text: string
   isEditable: boolean
 }
 
 export interface LinkedField extends Field {
   linkType: FormLinkType
-  linkSchema: string
-  linkTableName: string
 }
 
 export interface FormDescription {
@@ -92,6 +94,7 @@ export interface Table extends HierarchyElem {
   linesOnPage: number
   columns: Column[]
   formDescription: FormDescription
+  hidden: boolean
 }
 
 export interface Form extends HierarchyElem {

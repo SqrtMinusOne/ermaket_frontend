@@ -138,7 +138,8 @@ class UserActions extends Actions<
       this.mutations.setUser(response.data.user)
       this.mutations.setHierarchy(response.data.hierarchy)
       this.mutations.resolveAccess()
-    } catch {
+    } catch (err) {
+      // console.error(err)
       this.mutations.reset()
     }
   }
