@@ -93,3 +93,12 @@ export interface TableCreate {
 }
 
 export type TableDelete = boolean
+
+export interface ValidationError {
+  rowName: string
+  message: string
+}
+
+export interface TransactionErrors {
+  [key: number]: KeysMap<ValidationError[]>
+}

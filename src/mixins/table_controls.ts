@@ -6,11 +6,11 @@ import _ from 'lodash'
 export default class TableControls extends Vue {
   public wasSorted: boolean = false
   public autoLoad: boolean = false
-  
+
   public toggleAutoLoad() {
     this.autoLoad = !this.autoLoad
   }
-  
+
   private onModelsChanged(table: TableComponent) {
     if (this.$refs.table) {
       const api = (this.$refs.table as any).gridApi

@@ -18,10 +18,12 @@ import {
   Operator,
   Criterion,
   KeysMap,
+  TransactionErrors,
 } from '@/types/tables'
 import { instanceOfTable } from '@/types/user_guards'
 import { Table, Column } from '@/types/user'
 import TableAPI from '@/api/table'
+import Validator from '@/api/validation'
 import { user } from './user'
 import moment from 'moment'
 import _ from 'lodash'
@@ -58,6 +60,7 @@ function mapKey(key: any, mapKeys: KeysMap<any>) {
 class TableState {
   public loaded: Loaded = {}
   public transaction: Transaction = {}
+  public errors: TransactionErrors = {}
 }
 
 class TableGetters extends Getters<TableState> {
@@ -88,6 +91,10 @@ class TableGetters extends Getters<TableState> {
     return record || null
   }
 
+  public getError(id: number, key: any) {
+    return this.state.errors[id] && this.state.errors[id][key]
+  }
+
   public get hasChanges() {
     return Object.keys(this.state.transaction).length > 0
   }
@@ -113,6 +120,9 @@ class TableGetters extends Getters<TableState> {
       this.state.transaction[id] &&
       this.state.transaction[id].update[key] !== undefined
     )
+  }
+  public hasErrors(id: number, key: any) {
+    return this.state.errors[id] && this.state.errors[id][key]
   }
 
   public get breakdown() {
@@ -197,6 +207,16 @@ class TableMutations extends Mutations<TableState> {
     }
   }
 
+  public validateUpdate({ id, key, t }: { id: number, key: any, t: Table }) {
+    const data = this.state.transaction[id].update[key]
+    const errors = Validator.validateChange(data, t)
+    if (!_.isEmpty(errors)) {
+      Vue.set(this.state.errors[id], key, errors)
+    } else {
+      Vue.delete(this.state.errors[id], key)
+    }
+  }
+
   public makeCasts({ id, columns }: { id: number; columns: Column[] }) {
     const casts: Array<(col: any[]) => void> = []
     columns.forEach((column, index) => {
@@ -231,6 +251,7 @@ class TableMutations extends Mutations<TableState> {
         delete: {},
         mapKeys: {},
       })
+      Vue.set(this.state.errors, id, {})
     }
   }
 
@@ -401,6 +422,9 @@ class TableMutations extends Mutations<TableState> {
     if (this.state.transaction[id].create[key]) {
       Vue.delete(this.state.transaction[id].create, key)
     }
+    if (this.state.errors[id][key]) {
+      Vue.delete(this.state.errors[id], key)
+    }
     if (!this.state.transaction[id].update[key]) {
       return
     }
@@ -435,6 +459,7 @@ class TableMutations extends Mutations<TableState> {
         Object.keys(t.create).length === 0
       ) {
         Vue.delete(this.state.transaction, id)
+        Vue.delete(this.state.errors, id)
       }
     }
   }
@@ -566,6 +591,14 @@ class TableActions extends Actions<
     return this.getters.getRecord(id, key)
   }
 
+  public validateUpdate({ id, key }: { id: number, key: any }) {
+    const elem = this.user.getters.hierarchyElem(id)
+    if (!instanceOfTable(elem)) {
+      return
+    }
+    this.mutations.validateUpdate({ id, key, t: elem })
+  }
+
   public setRowUpdate({
     id,
     index,
@@ -594,6 +627,7 @@ class TableActions extends Actions<
       key: data[keyField],
       applyOld: false,
     })
+    this.actions.validateUpdate({ id, key: data[keyField] })
   }
 
   public setRecordUpdate({
@@ -612,6 +646,7 @@ class TableActions extends Actions<
     this.mutations.setUpdate({ id, oldData, newData: data })
     this.mutations.updateRecord({ id, key, data })
     this.mutations.applyOneUpdateToTable({ id, key, index })
+    this.actions.validateUpdate({ id, key })
   }
 
   public setDelete({ id, key }: { id: number; key: any }) {

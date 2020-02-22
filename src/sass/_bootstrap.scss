@@ -1,5 +1,6 @@
 @import "variables.scss";
 $primary: $ermaket_secondary;
+$secondary: lighten($ermaket_secondary, 15%);
 $body-bg: $ermaket_main;
 
 $warning: $ermaket_warning;

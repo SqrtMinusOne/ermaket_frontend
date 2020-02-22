@@ -38,6 +38,7 @@ import ActionRenderer from './table/action_renderer'
 import BootstrapEditor from './table/bootstrap_editor'
 import CheckboxRenderer from './table/checkbox_renderer'
 import DatePickerEditor from './table/datepicker_editor'
+import GeneralRenderer from './table/general_renderer'
 import LinkedEditor, { MakeLinkedSelectSetter } from './table/linked_editor'
 import LinkedRenderer from './table/linked_renderer'
 import LinkedTableRenderer from './table/linked_table'
@@ -46,8 +47,8 @@ import TimestampRenderer from './table/timestamp_renderer'
 
 const Mappers = Vue.extend({
   computed: {
-    ...tableMapper.mapState(['loaded', 'transaction']),
-    ...tableMapper.mapGetters(['isToDelete', 'isToUpdate']),
+    ...tableMapper.mapState(['loaded', 'transaction', 'errors']),
+    ...tableMapper.mapGetters(['isToDelete', 'isToUpdate', 'hasErrors']),
     ...userMapper.mapGetters(['hierarchyElem']),
   },
   methods: {
@@ -107,6 +108,7 @@ export default class TableComponent extends Mappers {
       LinkedRenderer,
       LinkedTableRenderer,
       TimestampRenderer,
+      GeneralRenderer,
       agColumnHeader: TableHeader,
     },
     multiSortKey: 'ctrl',
@@ -414,6 +416,9 @@ export default class TableComponent extends Mappers {
     if (this.transaction[this.elem.id]) {
       n++
     }
+    if (this.errors[this.elem.id]) {
+      n++
+    }
     return n
   }
 
@@ -436,7 +441,7 @@ export default class TableComponent extends Mappers {
       table: this.elem,
       pk: this.pk
     }
-    let renderer: string | undefined
+    let renderer: string = 'GeneralRenderer'
     if (instanceOfLinkedColumn(column)) {
       renderer = 'LinkedRenderer'
     }
@@ -528,11 +533,14 @@ export default class TableComponent extends Mappers {
       return ''
     }
     const key = params.data[this.pk.rowName]
-    if (this.isToDelete(this.id, key)) {
+    if (this.hasErrors(this.id, key)) {
       return 'bg-danger'
     }
-    if (this.isToUpdate(this.id, key)) {
+    if (this.isToDelete(this.id, key)) {
       return 'bg-warning'
+    }
+    if (this.isToUpdate(this.id, key)) {
+      return 'bg-secondary text-light'
     }
     return ''
   }

@@ -3,14 +3,14 @@ import {
   KeysMap,
   TransactionUnit,
   LoadedTable,
+  TableUpdate,
+  TableCreate,
+  ValidationError,
+  TransactionErrors,
 } from '@/types/tables'
 import { instanceOfLinkedColumn } from '@/types/user_guards'
 import { Table, Column, LinkedColumn } from '@/types/user'
 import _ from 'lodash'
-
-export interface TransactionErrors {
-  [key: number]: KeysMap<ValidationError[]>
-}
 
 function pushError(
   errors: KeysMap<ValidationError[]>,
@@ -24,6 +24,10 @@ function pushError(
   }
 }
 
+function isNil(data: any) {
+  return _.isNil(data) || data === ''
+}
+
 function getTable(
   slice: LoadedSlice,
   schema: string,
@@ -35,19 +39,13 @@ function getTable(
   )
 }
 
-function getLoaded(
-  loaded: LoadedEntry,
-  key: any
-) {
+function getLoaded(loaded: LoadedEntry, key: any) {
   return {
-    ...loaded.loaded.data.find((datum) => datum[loaded.loaded.keyField] === key),
-    ...loaded.loaded.records[key]
+    ...loaded.loaded.data.find(
+      (datum) => datum[loaded.loaded.keyField] === key
+    ),
+    ...loaded.loaded.records[key],
   }
-}
-
-export interface ValidationError {
-  rowName: string
-  message: string
 }
 
 interface LoadedEntry {
@@ -69,8 +67,23 @@ export default class Validator {
       const [ids, unit]: [string, TransactionUnit] = t
       const id = Number(ids)
       errors[id] = this.check_changes(unit, loaded[id])
-      errors[id] = {...errors[id], ...this.check_deletes(transaction, id, loaded)}
+      errors[id] = {
+        ...errors[id],
+        ...this.check_deletes(transaction, id, loaded),
+      }
     }
+    return errors
+  }
+
+  public static validateChange(
+    data: TableUpdate | TableCreate,
+    table: Table
+  ): ValidationError[] {
+    const errors: ValidationError[] = []
+    const requiredChecks = table.columns.filter(
+      (column) => column.isRequired && !column.isAuto
+    )
+    errors.push(...this.check_required(requiredChecks, data))
     return errors
   }
 
@@ -122,36 +135,46 @@ export default class Validator {
           })
         }
       }
-
-      for (const column of requiredChecks) {
-        if (instanceOfLinkedColumn(column)) {
-          if (!column.fkName) {
-            if (
-              !_.isNil(change.newData[column.rowName]) &&
-              _.isEmpty(change.newData[column.rowName])
-            ) {
-              pushError(errors, key, {
-                rowName: column.rowName,
-                message: `"${column.text}" cannot be empty`,
-              })
-            }
-          } else if (_.isNil(change.newData[column.fkName])) {
-            pushError(errors, key, {
-              rowName: column.rowName,
-              message: `"${column.text}" is a required field`,
-            })
-          }
-        } else if (_.isNil(change.newData[column.rowName])) {
-          pushError(errors, key, {
-            rowName: column.rowName,
-            message: `"${column.text}" is a required field`,
-          })
-        }
+      for (const err of this.check_required(requiredChecks, change)) {
+        pushError(errors, key, err)
       }
     }
     return errors
   }
-  
+
+  private static check_required(
+    requiredChecks: Column[],
+    change: TableCreate | TableUpdate
+  ) {
+    const errors: ValidationError[] = []
+    for (const column of requiredChecks) {
+      if (instanceOfLinkedColumn(column)) {
+        if (!column.fkName) {
+          if (
+            !isNil(change.newData[column.rowName]) &&
+            _.isEmpty(change.newData[column.rowName])
+          ) {
+            errors.push({
+              rowName: column.rowName,
+              message: `"${column.text}" cannot be empty`,
+            })
+          }
+        } else if (isNil(change.newData[column.fkName])) {
+          errors.push({
+            rowName: column.rowName,
+            message: `"${column.text}" is a required field`,
+          })
+        }
+      } else if (isNil(change.newData[column.rowName])) {
+        errors.push({
+          rowName: column.rowName,
+          message: `"${column.text}" is a required field`,
+        })
+      }
+    }
+    return errors
+  }
+
   private static check_deletes(
     transaction: Transaction,
     id: number,
@@ -172,7 +195,7 @@ export default class Validator {
           if (!transaction[assertion.table.id].delete[fkValue]) {
             pushError(errors, key, {
               rowName,
-              message: `This entry cannot be deleted because an entry from ${assertion.table.name} depends on it. Delete the linked entry as well.`
+              message: `This entry cannot be deleted because an entry from ${assertion.table.name} depends on it. Delete the linked entry as well.`,
             })
           }
         } else {
@@ -180,19 +203,18 @@ export default class Validator {
         }
       }
     }
-    
+
     return errors
   }
 
-  private static get_delete_assertions(
-    id: number,
-    slice: LoadedSlice
-  ) {
+  private static get_delete_assertions(id: number, slice: LoadedSlice) {
     const fks = slice[id].table.columns.filter(
       (column) => instanceOfLinkedColumn(column) && column.fkName
     ) as LinkedColumn[]
-    
-    const assertions: {[key: string]: {fk: LinkedColumn, table: Table, column: LinkedColumn}} = {}
+
+    const assertions: {
+      [key: string]: { fk: LinkedColumn; table: Table; column: LinkedColumn }
+    } = {}
     for (const fk of fks) {
       const loaded = getTable(slice, fk.linkSchema, fk.linkTableName)
       if (!loaded) {
