@@ -23,6 +23,7 @@ import {
   instanceOfLinkedField,
 } from '@/types/user_guards'
 import UserAPI from '@/api/user'
+import SchemaGenerator from '@/api/form'
 
 /* tslint:disable:max-classes-per-file */
 
@@ -98,8 +99,16 @@ class UserMutations extends Mutations<UserState> {
   public setHierarchy(hierarchy: Hierarchy | null) {
     this.state.hierarchy = hierarchy
     if (this.state.hierarchy) {
+      const generator = new SchemaGenerator(hierarchy!)
       for (const elem of this.state.hierarchy.hierarchy) {
         setEnums(elem)
+
+        if (instanceOfTable(elem)) {
+          elem.formDescription.formSchema = generator.makeSchema(elem.formDescription)
+        }
+        if (instanceOfForm(elem)) {
+          elem.formDescription.formSchema = generator.makeSchema(elem.formDescription)
+        }
       }
     }
   }

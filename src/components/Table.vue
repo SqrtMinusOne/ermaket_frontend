@@ -334,6 +334,7 @@ export default class TableComponent extends Mappers {
   private beforeDestroy() {
     window.removeEventListener('resize', this.onResize)
   }
+
   private get columnDefs(): ColDef[] {
     const defs: ColDef[] = []
     const table = this.elem

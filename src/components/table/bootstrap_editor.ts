@@ -30,7 +30,7 @@ export default class BootstrapEditor extends Mappers {
   public getValue() {
     return this.value
   }
-  
+
   public isCancelBeforeStart() {
     return !this.params.data
   }

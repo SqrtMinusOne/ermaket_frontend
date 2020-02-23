@@ -113,8 +113,8 @@ export default class ChangeTable extends Mappers {
   private get rowData() {
     const data: any[] = []
     for (const t of Object.entries(this.transaction)) {
-      let [id, unit]: [any, TransactionUnit] = t
-      id = Number(id)
+      const [idS, unit]: [any, TransactionUnit] = t
+      const id = Number(idS)
       const elem = this.hierarchyElem(id)!
       const local = { name: elem.name, id }
 

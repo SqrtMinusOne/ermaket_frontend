@@ -47,6 +47,7 @@ export interface Column {
   isRequired: boolean
   dateFormat?: string
   isAuto: boolean
+  default: any
 }
 
 export enum TableLinkType {
@@ -76,16 +77,39 @@ export interface Field {
   rowName: string
   text: string
   isEditable: boolean
+  isVisible: boolean
+  hint: string | null,
+  help: string | null
 }
 
 export interface LinkedField extends Field {
   linkType: FormLinkType
 }
 
+export interface FormGroup {
+  legend: string
+  rows: string[]
+}
+
+// TODO
+export type GenField = any
+
+export interface Group {
+  legend: string
+  fields: GenField[]
+}
+
+export interface FormSchema {
+  fields?: GenField[]
+  groups?: Group[]
+}
+
 export interface FormDescription {
   schema: string
   tableName: string
   fields: Array<Field|LinkedField>
+  groups: FormGroup[]
+  formSchema: FormSchema
 }
 
 export interface Table extends HierarchyElem {
