@@ -9,7 +9,7 @@ export interface User {
   roles: string[]
 }
 
-export enum Access {
+export enum Access { // TODO Create?
   view = 'view',
   change = 'change',
   delete = 'delete',

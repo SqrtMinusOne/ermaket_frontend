@@ -13,6 +13,18 @@
         <font-awesome-icon :icon="['fas', 'table']" />
       </b-button>
       <b-button
+        v-if="canAdd"
+        variant="outline-light"
+        class="mr-1"
+        size="sm"
+        v-b-tooltip.hover.noninteractive
+        title="Add new record"
+        @click="onAdd"
+      >
+        <font-awesome-icon :icon="['fas', 'plus']" />
+        New
+      </b-button>
+      <b-button
         @click="toggleAutoLoad"
         variant="outline-light"
         class="mr-1"
@@ -33,6 +45,13 @@
       ref="table"
       fill
     />
+    <FormModal
+      :form="table.formDescription"
+      v-model="formData"
+      ref="addModal"
+      :key="key"
+      @ok="onOk"
+    />
   </main-card>
 </template>
 
@@ -40,7 +59,9 @@
 import { Component, Vue, Mixins } from 'vue-property-decorator'
 import { userMapper } from '@/store/modules/user'
 import { instanceOfTable } from '@/types/user_guards'
-import { Table as TableElem } from '@/types/user'
+import { Table as TableElem, Access } from '@/types/user'
+
+import FormModal from '@/components/FormModal.vue'
 import MainCard from '@/components/ui/MainCard.vue'
 import RightsBreakdown from '@/components/ui/RightsBreakdown.vue'
 import TableComponent from '@/components/Table.vue'
@@ -53,9 +74,12 @@ const Mappers = Mixins(TableControls).extend({
 })
 
 @Component({
-  components: { MainCard, RightsBreakdown },
+  components: { MainCard, RightsBreakdown, FormModal },
 })
 export default class Table extends Mappers {
+  private formData: any
+  private key: number = 0
+
   private get id() {
     return Number(this.$route.params.id)
   }
@@ -64,6 +88,24 @@ export default class Table extends Mappers {
     if (!instanceOfTable(this.hierarchyElem(this.id))) {
       this.$router.push('/page_not_exists')
     }
+    this.formData = {}
+  }
+
+  private onAdd() {
+    this.$set(this, 'formData', {})
+    this.key++
+    this.$nextTick(() => {
+      const modal = this.$refs.addModal as any
+      modal.show()
+    })
+  }
+
+  private onOk() {
+    console.log(this.formData)
+  }
+
+  private get canAdd() {
+    return this.table.userAccess.has(Access.change)
   }
 
   private get table(): TableElem {
