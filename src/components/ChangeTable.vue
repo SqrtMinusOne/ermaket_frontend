@@ -21,11 +21,12 @@ import { userMapper } from '@/store/modules/user'
 import ActionRenderer from './change_table/action_render'
 import TableHeader from './table/header'
 import TableRenderer from './change_table/table_renderer'
+import StatusRenderer from './change_table/status_renderer'
 import TransactionTypeRenderer from './change_table/type_renderer'
 
 const Mappers = Vue.extend({
   computed: {
-    ...tableMapper.mapGetters(['breakdown']),
+    ...tableMapper.mapGetters(['breakdown', 'getError']),
     ...tableMapper.mapState(['transaction']),
     ...userMapper.mapGetters(['hierarchyElem'])
   }
@@ -47,6 +48,7 @@ export default class ChangeTable extends Mappers {
       ActionRenderer,
       TransactionTypeRenderer,
       TableRenderer,
+      StatusRenderer,
     },
     defaultColDef: {
       resizable: true,
@@ -76,6 +78,11 @@ export default class ChangeTable extends Mappers {
       headerComponentParams: { isPk: true }
     },
     {
+      headerName: 'Status',
+      field: 'errors',
+      cellRenderer: 'StatusRenderer'
+    },
+    {
       headerName: 'Actions',
       sortable: false,
       filter: false,
@@ -89,14 +96,17 @@ export default class ChangeTable extends Mappers {
     if (!params.data) {
       return ''
     }
+    if (params.data.errors) {
+      return 'bg-danger'
+    }
     switch (params.data.type) {
       case TransactionType.create:
         return 'bg-info'
       case TransactionType.update:
-        return 'bg-warning'
+        return 'bg-secondary text-light'
       case TransactionType.delete:
-        return 'bg-danger'
-    } 
+        return 'bg-warning'
+    }
     return ''
   }
 
@@ -109,13 +119,13 @@ export default class ChangeTable extends Mappers {
       const local = { name: elem.name, id }
 
       for (const [key, update] of Object.entries(unit.update)) {
-        data.push({ ...local, key, type: TransactionType.update })
+        data.push({ ...local, key, type: TransactionType.update, errors: this.getError(id, key) })
       }
       for (const [key, del] of Object.entries(unit.delete)) {
         data.push({ ...local, key, type: TransactionType.delete })
       }
       for (const [key, create] of Object.entries(unit.create)) {
-        data.push({ ...local, key, type: TransactionType.create })
+        data.push({ ...local, key, type: TransactionType.create, errors: this.getError(id, key) })
       }
     }
 

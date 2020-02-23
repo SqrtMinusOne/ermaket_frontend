@@ -121,6 +121,7 @@ class TableGetters extends Getters<TableState> {
       this.state.transaction[id].update[key] !== undefined
     )
   }
+
   public hasErrors(id: number, key: any) {
     return this.state.errors[id] && this.state.errors[id][key]
   }
@@ -129,13 +130,19 @@ class TableGetters extends Getters<TableState> {
     const res = {
       create: 0,
       update: 0,
-      delete: 0
+      delete: 0,
+      sum: 0,
+      errors: 0,
     }
     for (const data of Object.values(this.state.transaction)) {
       res.create += Object.keys(data.create).length
       res.update += Object.keys(data.update).length
       res.delete += Object.keys(data.delete).length
     }
+    for (const data of Object.values(this.state.errors)) {
+      res.errors += Object.keys(data).length
+    }
+    res.sum = res.create + res.update + res.delete
     return res
   }
 }
@@ -177,6 +184,10 @@ class TableMutations extends Mutations<TableState> {
     })
   }
 
+  public setErrors(errors: TransactionErrors) {
+    Vue.set(this.state, 'errors', errors)
+  }
+
   public updateRecord({ id, key, data }: { id: number; key: any; data: any }) {
     this.state.loaded[id].records[key].data = {
       ...this.state.loaded[id].records[key].data,
@@ -207,7 +218,7 @@ class TableMutations extends Mutations<TableState> {
     }
   }
 
-  public validateUpdate({ id, key, t }: { id: number, key: any, t: Table }) {
+  public validateUpdate({ id, key, t }: { id: number; key: any; t: Table }) {
     const data = this.state.transaction[id].update[key]
     const errors = Validator.validateChange(data, t)
     if (!_.isEmpty(errors)) {
@@ -269,11 +280,8 @@ class TableMutations extends Mutations<TableState> {
     if (key === undefined) {
       throw new Error('newData must have a key')
     }
-    if (
-      oldKey !== null &&
-      oldKey !== key
-    ) {
-      if(this.state.transaction[id].update[oldKey]) {
+    if (oldKey !== null && oldKey !== key) {
+      if (this.state.transaction[id].update[oldKey]) {
         this.state.transaction[id].update[key] = this.state.transaction[
           id
         ].update[oldKey]
@@ -309,7 +317,11 @@ class TableMutations extends Mutations<TableState> {
     }
     const newKey = this.state.transaction[id].mapKeys[key]
     if (newKey !== undefined) {
-      Vue.set(this.state.loaded[id].records, newKey, this.state.loaded[id].records[key])
+      Vue.set(
+        this.state.loaded[id].records,
+        newKey,
+        this.state.loaded[id].records[key]
+      )
       Vue.delete(this.state.transaction[id].mapKeys, key)
       key = newKey
     }
@@ -591,12 +603,25 @@ class TableActions extends Actions<
     return this.getters.getRecord(id, key)
   }
 
-  public validateUpdate({ id, key }: { id: number, key: any }) {
+  public validateUpdate({ id, key }: { id: number; key: any }) {
     const elem = this.user.getters.hierarchyElem(id)
     if (!instanceOfTable(elem)) {
       return
     }
     this.mutations.validateUpdate({ id, key, t: elem })
+  }
+
+  public validateTransaction() {
+    const slice: { [key: number]: any } = {}
+    for (const [key, loaded] of Object.entries(this.state.loaded)) {
+      slice[Number(key)] = {
+        loaded,
+        table: this.user.getters.hierarchyElem(Number(key)) as Table,
+      }
+    }
+    this.mutations.setErrors(
+      Validator.validateTransaction(this.state.transaction, slice)
+    )
   }
 
   public setRowUpdate({
@@ -654,7 +679,15 @@ class TableActions extends Actions<
     this.mutations.setDelete({ id, key })
   }
 
-  public revert({ id, index, key }: { id: number; key: any; index?: number }): { row: any, record: any } {
+  public revert({
+    id,
+    index,
+    key,
+  }: {
+    id: number
+    key: any
+    index?: number
+  }): { row: any; record: any } {
     if (index === undefined && this.getters.isToUpdate(id, key)) {
       index = this.state.loaded[id].data.findIndex(
         (datum) => datum[this.state.loaded[id].keyField] === key
@@ -668,7 +701,7 @@ class TableActions extends Actions<
     this.mutations.tryToCloseTransaction(id)
     return {
       row: index !== undefined ? this.state.loaded[id].data[index] : null,
-      record: this.state.loaded[id].records[key]
+      record: this.state.loaded[id].records[key],
     }
   }
 }

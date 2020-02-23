@@ -15,7 +15,9 @@ const Mappers = Vue.extend({
   template: `
   <div>
     <b-link :to="link" v-b-tooltip.hover.noninteractive title="Go to table">
+      <div :class="linkClass">
       {{ table.name }}
+      </div>
     </b-link>
   </div>
   `
@@ -25,6 +27,13 @@ export default class TableRenderer extends Mappers {
 
   private get table() {
     return this.hierarchyElem(this.params.data.id) as Table
+  }
+
+  private get linkClass() {
+    if (this.params.data.type === TransactionType.update) {
+      return 'text-light'
+    }
+    return ''
   }
 
   private get link() {

@@ -1,7 +1,11 @@
 <template>
   <main-card name="Changes">
-    <p>
-    You have uncommited changes: <b>{{ breakdown.update }} changed</b> records, <b>{{ breakdown.create }} created</b> records and <b>{{ breakdown.delete }} deleted</b> records.
+    <p v-if="breakdown.sum > 0">
+      You have uncommited changes: <b>{{ breakdown.update }} changed</b> records, <b>{{ breakdown.create }} created</b> records and <b>{{ breakdown.delete }} deleted</b> records.
+      <span v-if="breakdown.errors > 0"><b>{{ breakdown.errors }}</b> records have <b>errors</b>.</span>
+    </p>
+    <p v-else>
+      You have no uncommited changes.
     </p>
     <ChangeTable />
   </main-card>
