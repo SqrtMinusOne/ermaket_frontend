@@ -39,10 +39,11 @@ Vue.use(VueFormGenerator)
 
 /* Custom components */
 import TableComponent from '@/components/Table.vue'
-Vue.component('TableComponent', TableComponent)
-
 import fieldDatepicker from '@/components/form/FieldDatepicker.vue'
+import fieldLinkedSelect from '@/components/form/FieldLinkedSelect.vue'
+Vue.component('TableComponent', TableComponent)
 Vue.component('fieldDatepicker', fieldDatepicker)
+Vue.component('fieldLinkedSelect', fieldLinkedSelect)
 
 store.dispatch('user/fetchUser').then(() => {
   new Vue({

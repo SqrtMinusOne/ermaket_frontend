@@ -1,4 +1,7 @@
 import {
+  FormLinkType,
+  LinkedField,
+  LinkedColumn,
   Hierarchy,
   FormDescription,
   Field,
@@ -7,7 +10,7 @@ import {
   FormSchema,
   GenField,
 } from '@/types/user'
-import { instanceOfLinkedField, instanceOfTable } from '@/types/user_guards'
+import { instanceOfLinkedField, instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
 import _ from 'lodash'
 
 // tslint:disable-next-line:no-var-requires
@@ -30,11 +33,12 @@ export default class SchemaGenerator {
     const fields: GenField[] = []
     let miscGroup = false
     for (const field of form.fields) {
-      if (!instanceOfLinkedField(field)) {
-        fields.push(this.makeSimpleField(form, field))
-      }
-      if (_.isNil(groups[field.rowName])) {
-        miscGroup = true
+      const f = this.makeGenField(form, field)
+      if (f) {
+        fields.push(f)
+        if (_.isNil(groups[field.rowName])) {
+          miscGroup = true
+        }
       }
     }
 
@@ -53,13 +57,37 @@ export default class SchemaGenerator {
       schema.groups!.push({ legend: 'Misc', fields: [] })
     }
     for (const field of fields) {
-      schema.groups![_.get(groups, field.model, form.fields.length)].fields.push(field)
+      schema.groups![_.get(groups, field.model, schema.groups!.length - 1)].fields.push(field)
     }
     return schema
   }
 
-  private makeSimpleField(form: FormDescription, field: Field): GenField {
-    const column = this.getTableField(form.schema, form.tableName, field)
+  private makeGenField(form: FormDescription, field: Field) {
+    if (!instanceOfLinkedField(field)) {
+      const column = this.getTableField(form.schema, form.tableName, field.rowName)
+      return this.makeSimpleField(column, field)
+    } else {
+      const column = this.getTableField(form.schema, form.tableName, field.rowName) as LinkedColumn
+      const fkColumn = this.getTableField(form.schema, form.tableName, column.fkName)
+      switch (field.linkType) {
+        case FormLinkType.simple:
+          return {
+            ...this.makeSimpleField(fkColumn, field),
+          }
+        case FormLinkType.dropdown:
+          return {
+            type: 'linkedSelect',
+            schema: column.linkSchema,
+            table: column.linkTableName,
+            multiple: column.isMultiple,
+            validator: this.getValidator(form, column),
+            ...this.getAttrs(column, field)
+          }
+      }
+    }
+  }
+
+  private makeSimpleField(column: Column, field: Field): GenField {
     let gen: GenField = {}
 
     switch (column.type.split('(')[0]) {
@@ -122,26 +150,20 @@ export default class SchemaGenerator {
 
     gen = {
       ...gen,
-      model: field.rowName,
-      label: field.text || column.text,
-      disabled: !column.isEditable,
-      readonly: !column.isEditable || column.isAuto,
-      visible: column.isVisible,
-      required: column.isRequired,
-      default: column.default,
+      ...this.getAttrs(column, field)
     }
 
     return gen
   }
 
-  private getTableField(schema: string, tableName: string, field: Field) {
+  private getTableField(schema: string, tableName: string, rowName?: string) {
     const table = this.hierarchy.hierarchy.find(
       (elem) =>
         instanceOfTable(elem) &&
         elem.schema === schema &&
         elem.tableName === tableName
     ) as Table
-    return table.columns.find((column) => column.rowName === field.rowName)!
+    return table.columns.find((column) => column.rowName === rowName)!
   }
 
   private makeEnum(column: Column) {
@@ -152,6 +174,46 @@ export default class SchemaGenerator {
     return {
       type: 'select',
       values: opts,
+    }
+  }
+
+  private getValidator(form: FormDescription, column: LinkedColumn) {
+    const fkColumn = this.getTableField(form.schema, form.tableName, column.fkName)
+    if (!fkColumn) {
+      if (column.isMultiple) {
+        return validators.array
+      }
+      return validators.required
+    }
+    const type = fkColumn.type
+    switch (type.split('(')[0]) {
+      case 'decimal':
+      case 'int2':
+      case 'int4':
+      case 'int8':
+        return validators.integer
+      case 'float4':
+      case 'float8':
+        return validators.double
+      case 'varchar':
+      case 'text':
+        return validators.string
+      case 'date':
+      case 'time':
+      case 'timestamp':
+        return validators.date
+    }
+  }
+  
+  private getAttrs(column: Column, field: Field) {
+    return {
+      model: field.rowName,
+      label: field.text || column.text,
+      disabled: !column.isEditable,
+      readonly: !column.isEditable || column.isAuto,
+      visible: column.isVisible,
+      required: column.isRequired,
+      default: column.default,
     }
   }
 }

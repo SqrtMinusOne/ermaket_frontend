@@ -13,6 +13,7 @@ import { Component, Mixins, Watch } from 'vue-property-decorator'
 const abstractField = require('vue-form-generator').abstractField
 import moment from 'moment'
 
+@Component
 export default class FieldDatepicker extends Mixins(abstractField) {
   private val?: Date
   private value!: any
@@ -31,7 +32,13 @@ export default class FieldDatepicker extends Mixins(abstractField) {
   }
 
   private created() {
-    this.val = this.value.toDate()
+    if (this.value) {
+      this.val = this.value.toDate()
+    } else if (this.schema.default) {
+      this.val = this.schema.default.toDate()
+    } else {
+      this.val = undefined
+    }
     this.options.format = this.schema.dateFormat
   }
 
