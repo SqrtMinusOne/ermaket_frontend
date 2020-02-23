@@ -140,7 +140,7 @@ export default class SchemaGenerator {
           ...gen,
           type: 'datepicker',
           dateFormat: column.dateFormat,
-          validator: validators.date,
+          validator: validators.required, // TODO
         }
         break
       case 'json':
@@ -201,10 +201,10 @@ export default class SchemaGenerator {
       case 'date':
       case 'time':
       case 'timestamp':
-        return validators.date
+        return validators.required // TODO
     }
   }
-  
+
   private getAttrs(column: Column, field: Field) {
     return {
       model: field.rowName,

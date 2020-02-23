@@ -49,7 +49,7 @@
       :form="table.formDescription"
       v-model="formData"
       ref="addModal"
-      :key="key"
+      :key="formKey"
       @ok="onOk"
     />
   </main-card>
@@ -57,6 +57,7 @@
 
 <script lang="ts">
 import { Component, Vue, Mixins } from 'vue-property-decorator'
+import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
 import { instanceOfTable } from '@/types/user_guards'
 import { Table as TableElem, Access } from '@/types/user'
@@ -71,6 +72,9 @@ const Mappers = Mixins(TableControls).extend({
   computed: {
     ...userMapper.mapGetters(['hierarchyElem']),
   },
+  methods: {
+    ...tableMapper.mapActions(['addRecord'])
+  }
 })
 
 @Component({
@@ -78,7 +82,7 @@ const Mappers = Mixins(TableControls).extend({
 })
 export default class Table extends Mappers {
   private formData: any
-  private key: number = 0
+  private formKey: number = 0
 
   private get id() {
     return Number(this.$route.params.id)
@@ -93,7 +97,7 @@ export default class Table extends Mappers {
 
   private onAdd() {
     this.$set(this, 'formData', {})
-    this.key++
+    this.formKey++
     this.$nextTick(() => {
       const modal = this.$refs.addModal as any
       modal.show()
@@ -101,7 +105,9 @@ export default class Table extends Mappers {
   }
 
   private onOk() {
-    console.log(this.formData)
+    this.addRecord({ id: this.id, data: this.formData })
+    const table = this.$refs.table as any
+    table.update()
   }
 
   private get canAdd() {

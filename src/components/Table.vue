@@ -48,7 +48,7 @@ import TimestampRenderer from './table/timestamp_renderer'
 const Mappers = Vue.extend({
   computed: {
     ...tableMapper.mapState(['loaded', 'transaction', 'errors']),
-    ...tableMapper.mapGetters(['isToDelete', 'isToUpdate', 'hasErrors']),
+    ...tableMapper.mapGetters(['isToDelete', 'isToUpdate', 'hasErrors', 'isToCreate']),
     ...userMapper.mapGetters(['hierarchyElem']),
   },
   methods: {
@@ -124,6 +124,10 @@ export default class TableComponent extends Mappers {
 
   public onLinkedTable(key: any, column: LinkedColumn) {
     this.linkedOpened[key] = column
+    this.update()
+  }
+
+  public update() {
     if (this.gridApi) {
       this.gridApi.refreshInfiniteCache()
     }
@@ -542,6 +546,9 @@ export default class TableComponent extends Mappers {
     }
     if (this.isToUpdate(this.id, key)) {
       return 'bg-secondary text-light'
+    }
+    if (this.isToCreate(this.id, key)) {
+      return 'bg-info'
     }
     return ''
   }

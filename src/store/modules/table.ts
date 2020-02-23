@@ -122,6 +122,13 @@ class TableGetters extends Getters<TableState> {
     )
   }
 
+  public isToCreate(id: number, key: any) {
+    return (
+      this.state.transaction[id] &&
+      this.state.transaction[id].create[key] !== undefined
+    )
+  }
+
   public hasErrors(id: number, key: any) {
     return this.state.errors[id] && this.state.errors[id][key]
   }
@@ -218,8 +225,24 @@ class TableMutations extends Mutations<TableState> {
     }
   }
 
+  public setNewRecord({
+    id,
+    key,
+    data,
+  }: {
+    id: number
+    key: number
+    data: any
+  }) {
+    this.state.transaction[id].create[key] = {
+      newData: data,
+    }
+
+    this.state.loaded[id].records[key] = data
+  }
+
   public validateUpdate({ id, key, t }: { id: number; key: any; t: Table }) {
-    const data = this.state.transaction[id].update[key]
+    const data = this.state.transaction[id].update[key] || this.state.transaction[id].create[key]
     const errors = Validator.validateChange(data, t)
     if (!_.isEmpty(errors)) {
       Vue.set(this.state.errors[id], key, errors)
@@ -524,6 +547,44 @@ class TableActions extends Actions<
     })
   }
 
+  public getRows({
+    id,
+    rowStart,
+    rowEnd,
+    injectNew,
+  }: {
+    id: number
+    rowStart: number
+    rowEnd: number
+    injectNew: boolean
+  }) {
+    if (!injectNew || !this.state.transaction[id]) {
+      return this.getters.getRows(id, rowStart, rowEnd)
+    }
+
+    const created = Object.values(this.state.transaction[id].create)
+    rowStart -= created.length
+    rowEnd -= created.length
+
+    let loaded: RowData | null = []
+    if (rowEnd > 0) {
+      loaded = this.getters.getRows(id, Math.max(rowStart, 0), rowEnd)
+    }
+
+    if (_.isNil(loaded)) {
+      return null
+    }
+
+    const rowDelta = 0 - rowStart
+    if (rowDelta > 0) {
+      return [
+        ...created.slice(created.length - rowDelta, created.length),
+        ...loaded,
+      ]
+    }
+    return loaded
+  }
+
   public async fetchRows({
     id,
     rowStart,
@@ -531,6 +592,7 @@ class TableActions extends Actions<
     filter,
     order,
     reload,
+    skipAdded,
   }: {
     id: number
     rowStart: number
@@ -538,13 +600,14 @@ class TableActions extends Actions<
     filter?: Filter
     order?: Order
     reload?: boolean
+    skipAdded?: boolean
   }) {
     const elem = this.user.getters.hierarchyElem(id)
     if (!instanceOfTable(elem)) {
       return
     }
     if (!reload && !filter && !order) {
-      const rows = this.getters.getRows(id, rowStart, rowEnd)
+      const rows = await this.actions.getRows({ id, rowStart, rowEnd, injectNew: !skipAdded })
       if (rows) {
         return rows
       }
@@ -601,6 +664,20 @@ class TableActions extends Actions<
     this.mutations.setRecord({ id, key, data: data.data })
     this.mutations.applyUpdateToRecord({ id, key })
     return this.getters.getRecord(id, key)
+  }
+
+  public addRecord({ id, key, data }: { id: number; key?: any; data: any }) {
+    const elem = this.user.getters.hierarchyElem(id) as Table
+    this.actions.checkLoaded(elem)
+    if (!key) {
+      key = data[this.state.loaded[id].keyField]
+    }
+    if (!key) {
+      key = _.random(10**10, 10**11, false)
+    }
+    this.mutations.initTransaction(id)
+    this.mutations.setNewRecord({ id, key, data })
+    this.actions.validateUpdate({ id, key })
   }
 
   public validateUpdate({ id, key }: { id: number; key: any }) {
