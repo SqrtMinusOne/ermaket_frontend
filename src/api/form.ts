@@ -68,11 +68,10 @@ export default class SchemaGenerator {
       return this.makeSimpleField(column, field)
     } else {
       const column = this.getTableField(form.schema, form.tableName, field.rowName) as LinkedColumn
-      const fkColumn = this.getTableField(form.schema, form.tableName, column.fkName)
       switch (field.linkType) {
         case FormLinkType.simple:
           return {
-            ...this.makeSimpleField(fkColumn, field),
+            ...this.makeSimpleField(column, field),
           }
         case FormLinkType.dropdown:
           return {
@@ -81,7 +80,7 @@ export default class SchemaGenerator {
             table: column.linkTableName,
             multiple: column.isMultiple,
             validator: this.getValidator(form, column),
-            ...this.getAttrs(column, field)
+            ...this.getAttrs(column, field),
           }
       }
     }
@@ -207,7 +206,7 @@ export default class SchemaGenerator {
 
   private getAttrs(column: Column, field: Field) {
     return {
-      model: field.rowName,
+      model: (column as LinkedColumn).fkName || field.rowName,
       label: field.text || column.text,
       disabled: !column.isEditable,
       readonly: !column.isEditable || column.isAuto,

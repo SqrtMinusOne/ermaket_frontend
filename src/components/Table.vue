@@ -409,7 +409,7 @@ export default class TableComponent extends Mappers {
       cellRendererParams: { table: this.elem, pk: this.pk },
       cellRenderer: 'ActionRenderer',
       editable: false,
-      width: 42 * this.getActionNumber() + 50
+      width: 49 * this.getActionNumber() + 43
     }
   }
 
@@ -421,9 +421,10 @@ export default class TableComponent extends Mappers {
     if (this.transaction[this.elem.id]) {
       n++
     }
-    if (this.errors[this.elem.id]) {
+    if (!_.isEmpty(this.errors[this.elem.id])) {
       n++
     }
+    console.log(n)
     return n
   }
 

@@ -13,7 +13,7 @@ const Mappers = Mixins(TableErrors).extend({
   computed: {
     ...tableMapper.mapState(['errors']),
     ...userMapper.mapGetters(['getTable']),
-    ...tableMapper.mapGetters(['isTransactee', 'isToDelete', 'hasErrors', 'getError']),
+    ...tableMapper.mapGetters(['isTransactee', 'isToDelete', 'hasErrors', 'getError', 'isToCreate']),
   },
   methods: {
     ...tableMapper.mapActions(['fetchRecord', 'setDelete', 'revert']),
@@ -36,7 +36,7 @@ const Mappers = Mixins(TableErrors).extend({
     >
       <font-awesome-icon :icon="['fas', 'history']" />
     </b-button>
-    <b-button v-if="canDelete"
+    <b-button v-if="canDelete && !isCreate"
       variant="primary"
       v-b-tooltip.hover.noninteractive
       title="Mark the entry for deletion"
@@ -57,6 +57,7 @@ export default class ActionRenderer extends Mappers {
   }
 
   private async onRevert() {
+    const wasCreated = this.isToCreate(this.table.id, this.key)
     const { row } = (await this.revert({
       id: this.table.id,
       key: this.key,
@@ -68,12 +69,20 @@ export default class ActionRenderer extends Mappers {
         ...row,
       })
     }
-    this.params.api.redrawRows({ rowNodes: [this.params.node] })
+    if (!wasCreated) {
+      this.params.api.redrawRows({ rowNodes: [this.params.node] })
+    } else {
+      this.params.context.parent.update()
+    }
     this.params.context.parent.onUpdate()
   }
 
   private get showErrors() {
     return this.hasErrors(this.table.id, this.key)
+  }
+
+  private get isCreate() {
+    return this.isToCreate(this.table.id, this.key)
   }
 
   private get errorPopover() {
