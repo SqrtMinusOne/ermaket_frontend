@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
-import LinkedSelect from '@/components/LinkedSelect'
+import LinkedSelect from '@/components/LinkedSelect.vue'
 // tslint:disable-next-line:no-var-requires
 const abstractField = require('vue-form-generator').abstractField
 
