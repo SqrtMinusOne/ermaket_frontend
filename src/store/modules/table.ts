@@ -10,15 +10,16 @@ import { Store } from 'vuex'
 import { Vue } from 'vue-property-decorator'
 
 import {
-  Loaded,
-  Transaction,
-  RowData,
-  Filter,
-  Order,
-  Operator,
   Criterion,
+  Filter,
   KeysMap,
+  Loaded,
+  Operator,
+  Order,
+  RowData,
+  Transaction,
   TransactionErrors,
+  TransactionUnit,
 } from '@/types/tables'
 import { instanceOfTable } from '@/types/user_guards'
 import { Table, Column } from '@/types/user'
@@ -337,7 +338,7 @@ class TableMutations extends Mutations<TableState> {
     }
   }
 
-  public  applyUpdateToRecord({
+  public applyUpdateToRecord({
     id,
     key,
     applyOld = true,
@@ -747,7 +748,7 @@ class TableActions extends Actions<
       ? oldData
       : {
           ...this.state.loaded[id].data[index!],
-          ...this.getters.getRecord(id, key)?.data
+          ...this.getters.getRecord(id, key)?.data,
         }
     this.mutations.initTransaction(id)
     this.mutations.setUpdate({ id, oldData, newData: data })
@@ -813,6 +814,24 @@ class TableActions extends Actions<
     return {
       row: index !== undefined ? this.state.loaded[id].data[index] : null,
       record: this.state.loaded[id].records[key],
+    }
+  }
+
+  public async revertAll() {
+    const unitKeys = Object.entries(
+      this.state.transaction
+    ).map(([id, unit]: [string, TransactionUnit]) => [
+      id,
+      new Set([
+        ...Object.keys(unit.create),
+        ...Object.keys(unit.delete),
+        ...Object.keys(unit.update),
+      ]),
+    ])
+    for (const [id, keys] of unitKeys) {
+      for (const key of keys) {
+        await this.actions.revert({ id: Number(id), key })
+      }
     }
   }
 }

@@ -9,7 +9,7 @@ interface Params extends ICellRendererParams {
 
 @Component({
   template: `<div v-if="_.isEmpty(params.data.errors)">
-    <font-awesome-icon :icon="['fas', 'check']" >
+    <font-awesome-icon :icon="['fas', 'check']" />
   </div>
   <div v-else>
     <font-awesome-icon
