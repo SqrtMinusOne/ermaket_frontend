@@ -1,6 +1,7 @@
 <template>
   <date-picker
-    v-model="value"
+    v-model="val"
+    @dp-change="onValChanged"
     :config="options"
     :readonly="schema.readonly"
     :disabled="disabled"
@@ -42,9 +43,8 @@ export default class FieldDatepicker extends Mixins(abstractField) {
     this.options.format = this.schema.dateFormat
   }
 
-  @Watch('val')
-  private onValChanged() {
-    this.value = moment(this.value, this.options.format)
+  private onValChanged(e: any) {
+    this.value = e.date
   }
 }
 </script>

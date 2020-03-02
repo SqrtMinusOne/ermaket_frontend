@@ -299,6 +299,15 @@ class TableMutations extends Mutations<TableState> {
     newData: any
   }) {
     const key = newData[this.state.loaded[id].keyField]
+    newData = _.pickBy(newData, (v, k) => !k.startsWith('_'))
+    if (this.state.transaction[id].create[key]) {
+      this.state.transaction[id].create[key].newData = {
+        ...this.state.transaction[id].create[key].newData,
+        ...newData,
+      }
+      return
+    }
+
     const oldKey = oldData ? oldData[this.state.loaded[id].keyField] : null
     if (key === undefined) {
       throw new Error('newData must have a key')
@@ -314,7 +323,6 @@ class TableMutations extends Mutations<TableState> {
         this.state.transaction[id].mapKeys[oldKey] = key
       }
     }
-    newData = _.pickBy(newData, (v, k) => !k.startsWith('_'))
 
     if (!this.state.transaction[id].update[key]) {
       Vue.set(this.state.transaction[id].update, key, { oldData, newData })
@@ -442,6 +450,12 @@ class TableMutations extends Mutations<TableState> {
     this.state.transaction[id].delete[key] = true
   }
 
+  public removeCreated({ id, key }: { id: number, key: any }) {
+    if (this.state.transaction[id].create[key]) {
+      Vue.delete(this.state.transaction[id].create, key)
+    }
+  }
+
   public revertChanges({
     id,
     index,
@@ -562,7 +576,7 @@ class TableActions extends Actions<
       return this.getters.getRows(id, rowStart, rowEnd)
     }
 
-    const created = Object.values(this.state.transaction[id].create)
+    const created = Object.values(this.state.transaction[id].create).map((c) => c.newData)
     rowStart -= created.length
     rowEnd -= created.length
 
@@ -674,6 +688,7 @@ class TableActions extends Actions<
     }
     if (!key) {
       key = _.random(10**10, 10**11, false)
+      data[this.state.loaded[id].keyField] = key
     }
     this.mutations.initTransaction(id)
     this.mutations.setNewRecord({ id, key, data })
@@ -753,7 +768,11 @@ class TableActions extends Actions<
 
   public setDelete({ id, key }: { id: number; key: any }) {
     this.mutations.initTransaction(id)
-    this.mutations.setDelete({ id, key })
+    if (this.getters.isToCreate(id, key)) {
+      this.mutations.removeCreated({ id, key })
+    } else {
+      this.mutations.setDelete({ id, key })
+    }
   }
 
   public revert({
