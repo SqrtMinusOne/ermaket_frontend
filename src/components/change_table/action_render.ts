@@ -27,7 +27,7 @@ const Mappers = Vue.extend({
 })
 export default class ActionRenderer extends Mappers {
   private params!: ICellRendererParams
-  
+
   private async onRevert() {
     const { row } = await this.revert({ id: this.table.id, key: this.key, index: this.params.data._index }) as any
     if (row) {

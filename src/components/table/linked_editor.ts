@@ -1,8 +1,9 @@
 import { ICellEditorParams, ValueSetterParams } from 'ag-grid-community'
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Mixins } from 'vue-property-decorator'
 import { LinkedColumn, TableLinkType, Column } from '@/types/user'
 import { LoadedRecord } from '@/types/tables'
 import LinkedSelect from '@/components/LinkedSelect.vue'
+import TableEditMixin from '@/mixins/table_edit'
 import { userMapper } from '@/store/modules/user'
 import { tableMapper } from '@/store/modules/table'
 
@@ -10,7 +11,7 @@ interface Params extends ICellEditorParams {
   [key: string]: any
 }
 
-const Mappers = Vue.extend({
+const Mappers = Mixins(TableEditMixin).extend({
   computed: {
     ...userMapper.mapGetters(['getTable']),
     ...tableMapper.mapGetters(['getRecord']),
@@ -59,6 +60,7 @@ export function MakeLinkedSelectSetter(
 export default class LinkedEditor extends Mappers {
   private params!: Params
   private value: any = null
+  private canEditRecord!: any
 
   public getValue() {
     return this.value
@@ -69,7 +71,7 @@ export default class LinkedEditor extends Mappers {
   }
 
   public isCancelBeforeStart() {
-    return !this.column.fkName && !this.record
+    return !this.record && !this.canEditRecord(this.key, this.params)
   }
 
   private created() {
@@ -81,6 +83,10 @@ export default class LinkedEditor extends Mappers {
         this.value = rec.data[this.column.rowName]
       }
     }
+  }
+
+  private get key() {
+    return this.params.data[this.params.pk.rowName]
   }
 
   private get column(): LinkedColumn {

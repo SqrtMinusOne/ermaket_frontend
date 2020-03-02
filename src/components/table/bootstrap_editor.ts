@@ -1,14 +1,15 @@
 import { ICellEditorParams } from 'ag-grid-community'
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Mixins } from 'vue-property-decorator'
 import { Column, TableLinkType, Table, LinkedColumn } from '@/types/user'
 import { instanceOfLinkedColumn } from '@/types/user_guards'
 import { userMapper } from '@/store/modules/user'
+import TableEditMixin from '@/mixins/table_edit'
 
 interface Params extends ICellEditorParams {
   [key: string]: any
 }
 
-const Mappers = Vue.extend({
+const Mappers = Mixins(TableEditMixin).extend({
   computed: {
     ...userMapper.mapGetters(['getTable']),
   },
@@ -27,16 +28,22 @@ export default class BootstrapEditor extends Mappers {
   private step: number = 1
   private type: string = 'text'
 
+  private canEditRecord!: any
+
   public getValue() {
     return this.value
   }
 
   public isCancelBeforeStart() {
-    return !this.params.data
+    return !this.canEditRecord(this.key, this.params)
   }
 
   private get column(): Column {
     return this.params.columnElem
+  }
+
+  private get key() {
+    return this.params.data[this.params.pk.rowName]
   }
 
   private created() {

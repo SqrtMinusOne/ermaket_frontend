@@ -1,5 +1,6 @@
 import { ICellEditorParams } from 'ag-grid-community'
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Mixins } from 'vue-property-decorator'
+import TableEditMixin from '@/mixins/table_edit'
 import moment from 'moment'
 
 interface Params extends ICellEditorParams {
@@ -11,7 +12,7 @@ interface Params extends ICellEditorParams {
     <date-picker v-model="value" :config="options" />
   `,
 })
-export default class DatePickerEditor extends Vue {
+export default class DatePickerEditor extends Mixins(TableEditMixin) {
   private params!: Params
   private value?: Date
   private options: any = {
@@ -31,7 +32,7 @@ export default class DatePickerEditor extends Vue {
   }
 
   public isCancelBeforeStart() {
-    return !this.params.data
+    return !this.canEditRecord(this.key, this.params)
   }
 
   public isPopup() {
@@ -43,5 +44,9 @@ export default class DatePickerEditor extends Vue {
     if (this.params.columnElem.dateFormat) {
       this.options.format = this.params.columnElem.dateFormat
     }
+  }
+
+  private get key() {
+    return this.params.data[this.params.pk.rowName]
   }
 }

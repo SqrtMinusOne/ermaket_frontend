@@ -52,7 +52,11 @@ export default class ActionRenderer extends Mappers {
 
   private onDelete() {
     this.setDelete({ id: this.table.id, key: this.key })
-    this.params.api.redrawRows({ rowNodes: [this.params.node] })
+    if (this.params.context.parent.getLinked(this.key)) {
+      this.params.context.parent.onLinkedClose(this.key)
+    } else {
+      this.params.api.redrawRows({ rowNodes: [this.params.node] })
+    }
     this.params.context.parent.onUpdate()
   }
 
@@ -69,7 +73,9 @@ export default class ActionRenderer extends Mappers {
         ...row,
       })
     }
-    if (!wasCreated) {
+    if (this.params.context.parent.getLinked(this.key)) {
+      this.params.context.parent.onLinkedClose(this.key)
+    } else if (!wasCreated) {
       this.params.api.redrawRows({ rowNodes: [this.params.node] })
     } else {
       this.params.context.parent.update()

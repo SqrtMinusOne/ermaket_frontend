@@ -1,14 +1,15 @@
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Mixins } from 'vue-property-decorator'
 import { ICellRendererParams } from 'ag-grid-community'
 import { LinkedColumn, TableLinkType, Table } from '@/types/user'
 import { userMapper } from '@/store/modules/user'
 import { tableMapper } from '@/store/modules/table'
+import TableEditMixin from '@/mixins/table_edit'
 
 interface Params extends ICellRendererParams {
   [key: string]: any
 }
 
-const Mappers = Vue.extend({
+const Mappers = Mixins(TableEditMixin).extend({
   computed: {
     ...userMapper.mapGetters(['getTable']),
     ...tableMapper.mapGetters(['getRecord']),
@@ -45,6 +46,7 @@ const Mappers = Vue.extend({
         title="Open linked table"
         class="mr-1"
         v-if="!isLinkOpened"
+        :disabled="!canOpenLinked"
       >
         <font-awesome-icon :icon="['fas', 'arrow-down']"/>
       </b-button>
@@ -66,6 +68,7 @@ export default class LinkedRenderer extends Mappers {
   private value!: any
   private linked!: Table
   private isLoading: boolean = false
+  private canEditRecord!: any
 
   private created() {
     this.linked = this.getTable(
@@ -75,6 +78,15 @@ export default class LinkedRenderer extends Mappers {
     if (this.params.context.parent.autoLoadLinked && !this.record) {
       this.onSync()
     }
+  }
+
+  private get canOpenLinked() {
+    // TODO dropdown toggle in settings
+    return this.canEditRecord(this.key, this.params)
+  }
+
+  private get key() {
+    return this.params.data[this.params.pk.rowName]
   }
 
   private async onSync() {
