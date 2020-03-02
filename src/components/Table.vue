@@ -739,8 +739,9 @@ export default class TableComponent extends Mappers {
   }
 
   private injectIndices(data: any[], start: number) {
+    const delta = this.transaction[this.id] ? Object.keys(this.transaction[this.id].create).length : 0
     data.forEach((datum, i) => {
-      datum._index = start + Number(i)
+      datum._index = start + Number(i) - delta
     })
   }
 

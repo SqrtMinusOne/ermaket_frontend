@@ -71,7 +71,7 @@ class TableGetters extends Getters<TableState> {
     }
     rowStart = rowStart > 0 ? rowStart : 0
     rowEnd = rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length - 1
-    if (this.state.loaded[id].data.length >= rowEnd) {
+    if (this.state.loaded[id].data.length >= rowEnd || this.state.loaded[id].rowCount <= rowEnd) {
       const slice = this.state.loaded[id].data.slice(rowStart, rowEnd)
       if (slice.every((datum) => datum !== undefined && datum !== null)) {
         return slice
@@ -581,7 +581,7 @@ class TableActions extends Actions<
     }
 
     const created = Object.values(this.state.transaction[id].create).map(
-      (c) => c.newData
+      (c) => ({ ...c.newData, _new: true })
     )
     rowStart -= created.length
     rowEnd -= created.length
