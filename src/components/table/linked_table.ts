@@ -102,6 +102,7 @@ export default class LinkedTableRenderer extends Mappers {
       data,
       index: this.index,
     })
+    console.log(event, oldKeys)
     const api = this.params.context.parent.gridOptions.api as GridApi
     const node = api.getDisplayedRowAtIndex(this.params.node.rowIndex - 1)
     api.redrawRows({

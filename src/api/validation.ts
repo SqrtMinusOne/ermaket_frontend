@@ -24,6 +24,12 @@ function pushError(
   }
 }
 
+function instanceOfTableUpdate(
+  obj?: TableCreate | TableUpdate
+): obj is TableUpdate {
+  return obj ? 'oldData' in obj : false
+}
+
 function isNil(data: any) {
   return _.isNil(data) || data === ''
 }
@@ -146,26 +152,29 @@ export default class Validator {
     requiredChecks: Column[],
     change: TableCreate | TableUpdate
   ) {
+    const upd = instanceOfTableUpdate(change)
+      ? { ...change.oldData, ...change.oldData }
+      : change.newData
     const errors: ValidationError[] = []
     for (const column of requiredChecks) {
       if (instanceOfLinkedColumn(column)) {
         if (!column.fkName) {
           if (
-            !isNil(change.newData[column.rowName]) &&
-            _.isEmpty(change.newData[column.rowName])
+            !isNil(upd[column.rowName]) &&
+            _.isEmpty(upd[column.rowName])
           ) {
             errors.push({
               rowName: column.rowName,
               message: `"${column.text}" cannot be empty`,
             })
           }
-        } else if (isNil(change.newData[column.fkName])) {
+        } else if (isNil(upd[column.fkName])) {
           errors.push({
             rowName: column.rowName,
             message: `"${column.text}" is a required field`,
           })
         }
-      } else if (isNil(change.newData[column.rowName])) {
+      } else if (isNil(upd[column.rowName])) {
         errors.push({
           rowName: column.rowName,
           message: `"${column.text}" is a required field`,

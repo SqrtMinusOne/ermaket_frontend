@@ -424,7 +424,6 @@ export default class TableComponent extends Mappers {
     if (!_.isEmpty(this.errors[this.elem.id])) {
       n++
     }
-    console.log(n)
     return n
   }
 
