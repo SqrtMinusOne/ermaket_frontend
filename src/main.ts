@@ -41,9 +41,11 @@ Vue.use(VueFormGenerator)
 import TableComponent from '@/components/Table.vue'
 import fieldDatepicker from '@/components/form/FieldDatepicker.vue'
 import fieldLinkedSelect from '@/components/form/FieldLinkedSelect.vue'
+import fieldLinkedTableModal from '@/components/form/FieldLinkedTableModal.vue'
 Vue.component('TableComponent', TableComponent)
 Vue.component('fieldDatepicker', fieldDatepicker)
 Vue.component('fieldLinkedSelect', fieldLinkedSelect)
+Vue.component('fieldLinkedTableModal', fieldLinkedTableModal)
 
 store.dispatch('user/fetchUser').then(() => {
   new Vue({

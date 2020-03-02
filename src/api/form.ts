@@ -64,10 +64,11 @@ export default class SchemaGenerator {
 
   private makeGenField(form: FormDescription, field: Field) {
     if (!instanceOfLinkedField(field)) {
-      const column = this.getTableField(form.schema, form.tableName, field.rowName)
+      const { column } = this.getTableField(form.schema, form.tableName, field.rowName)
       return this.makeSimpleField(column, field)
     } else {
-      const column = this.getTableField(form.schema, form.tableName, field.rowName) as LinkedColumn
+      const { column } = this.getTableField(form.schema, form.tableName, field.rowName) as unknown as { column: LinkedColumn, table: Table }
+      const linkedTable = this.getTable(column.linkSchema, column.linkTableName)
       switch (field.linkType) {
         case FormLinkType.simple:
           return {
@@ -79,6 +80,14 @@ export default class SchemaGenerator {
             schema: column.linkSchema,
             table: column.linkTableName,
             multiple: column.isMultiple,
+            validator: this.getValidator(form, column),
+            ...this.getAttrs(column, field),
+          }
+        case FormLinkType.linkedTable:
+          return {
+            type: 'linkedTableModal',
+            column,
+            table: linkedTable,
             validator: this.getValidator(form, column),
             ...this.getAttrs(column, field),
           }
@@ -155,14 +164,18 @@ export default class SchemaGenerator {
     return gen
   }
 
-  private getTableField(schema: string, tableName: string, rowName?: string) {
-    const table = this.hierarchy.hierarchy.find(
+  private getTable(schema: string, tableName: string) {
+    return this.hierarchy.hierarchy.find(
       (elem) =>
         instanceOfTable(elem) &&
         elem.schema === schema &&
         elem.tableName === tableName
     ) as Table
-    return table.columns.find((column) => column.rowName === rowName)!
+  }
+
+  private getTableField(schema: string, tableName: string, rowName?: string) {
+    const table = this.getTable(schema, tableName)
+    return { table, column: table.columns.find((column) => column.rowName === rowName)! }
   }
 
   private makeEnum(column: Column) {
@@ -177,7 +190,7 @@ export default class SchemaGenerator {
   }
 
   private getValidator(form: FormDescription, column: LinkedColumn) {
-    const fkColumn = this.getTableField(form.schema, form.tableName, column.fkName)
+    const { column: fkColumn } = this.getTableField(form.schema, form.tableName, column.fkName)
     if (!fkColumn) {
       if (column.isMultiple) {
         return validators.array
