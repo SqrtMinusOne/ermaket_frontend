@@ -24,6 +24,7 @@ import {
 import { instanceOfTable } from '@/types/user_guards'
 import { Table, Column } from '@/types/user'
 import TableAPI from '@/api/table'
+import TransactionAPI from '@/api/transaction'
 import Validator from '@/api/validation'
 import { user } from './user'
 import moment from 'moment'
@@ -832,6 +833,15 @@ class TableActions extends Actions<
       for (const key of keys) {
         await this.actions.revert({ id: Number(id), key })
       }
+    }
+  }
+
+  public async commitAll() {
+    try {
+      TransactionAPI.sendTransaction(this.state.transaction)
+      this.mutations.reset()
+    } catch (err) {
+      console.error(err)
     }
   }
 }

@@ -53,7 +53,7 @@ const Mappers = Vue.extend({
     ...tableMapper.mapGetters(['breakdown']),
   },
   methods: {
-    ...tableMapper.mapActions(['revertAll'])
+    ...tableMapper.mapActions(['revertAll', 'commitAll'])
   }
 })
 
@@ -65,6 +65,7 @@ const Mappers = Vue.extend({
 })
 export default class Changes extends Mappers {
   private onCommit() {
+    this.commitAll()
   }
 
   private onRevert() {
