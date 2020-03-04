@@ -67,12 +67,12 @@ class TableState {
 
 class TableGetters extends Getters<TableState> {
   public getRows(id: number, rowStart: number, rowEnd: number): RowData | null {
-    if (!this.state.loaded[id]) {
+    if (!this.state.loaded[id] || this.state.loaded[id].rowCount === null) {
       return null
     }
     rowStart = rowStart > 0 ? rowStart : 0
     rowEnd = rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length - 1
-    if (this.state.loaded[id].data.length >= rowEnd || this.state.loaded[id].rowCount <= rowEnd) {
+    if (this.state.loaded[id].data.length >= rowEnd || this.state.loaded[id].rowCount! <= rowEnd) {
       const slice = this.state.loaded[id].data.slice(rowStart, rowEnd)
       if (slice.every((datum) => datum !== undefined && datum !== null)) {
         return slice
@@ -160,7 +160,7 @@ class TableMutations extends Mutations<TableState> {
   public initLoaded({ id, keyField }: { id: number; keyField: string }) {
     this.state.loaded[id] = {
       data: [],
-      rowCount: 0,
+      rowCount: null,
       keyField,
       time: new Date(),
       records: {},

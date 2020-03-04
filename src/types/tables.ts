@@ -53,7 +53,7 @@ export interface LoadedTable {
   data: RowData
   time: Date
   keyField: string
-  rowCount: number
+  rowCount: number | null
   records: KeysMap<LoadedRecord>
 }
 

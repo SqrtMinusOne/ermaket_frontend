@@ -406,7 +406,7 @@ export default class TableComponent extends Mappers {
       pinned: 'right',
       filter: false,
       headerComponentParams: { isPk: false, table: this.elem, pk: this.pk },
-      cellRendererParams: { table: this.elem, pk: this.pk },
+      cellRendererParams: { table: this.elem, pk: this.pk, isLinked: !_.isNil(this.keys) },
       cellRenderer: 'ActionRenderer',
       editable: false,
       width: 49 * this.getActionNumber() + 43
@@ -422,6 +422,9 @@ export default class TableComponent extends Mappers {
       n++
     }
     if (!_.isEmpty(this.errors[this.elem.id])) {
+      n++
+    }
+    if (!_.isNil(this.keys)) {
       n++
     }
     return n
@@ -590,7 +593,7 @@ export default class TableComponent extends Mappers {
           .then((data) => {
             data = _.cloneDeep(data)
             if (!filter && self.loaded[self.id]) {
-              this.rowCount = self.loaded[self.id].rowCount
+              this.rowCount = self.loaded[self.id].rowCount!
             } else {
               if (data.length < params.endRow - params.startRow) {
                 this.rowCount = params.startRow + data.length

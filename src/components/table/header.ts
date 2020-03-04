@@ -24,8 +24,11 @@ const Mappers = Vue.extend({
       </div>
       <div>{{ params.displayName }}</div>
       <div v-if="params.enableSorting" v-html="sortIcon" class="ml-2" />
-      <div class="ml-auto mr-2 d-flex darken_hover" :style="filterStyle" @click.stop="onFilterClicked" v-if="params.enableMenu">
-        <i class="fas fa-filter my-auto mx-auto"></i>
+      <div class="ml-auto d-flex darken_hover" :style="filterStyle" @click.stop="onFilterClicked" v-if="params.enableMenu">
+        <font-awesome-icon :icon="['fas', 'filter']" class="my-auto mx-auto" />
+      </div>
+      <div class="d-flex darken_hover" :style="hoverIconStyle" @click.stop="onFilterRemove" v-if="isFilter">
+        <font-awesome-icon :icon="['fas', 'times']" class="my-auto mx-auto" />
       </div>
     </div>
   `,
@@ -34,9 +37,15 @@ export default class TableHeader extends Mappers {
   private params!: any
   private sortIcon: string = ''
   private sort: string = ''
+  private isFilter: boolean = false
+  private hoverIconStyle = {
+    width: '30px',
+    height: '30px',
+  }
 
   private mounted() {
     this.params.column.addEventListener('sortChanged', this.onSortChanged)
+    this.params.column.addEventListener('filterChanged', this.onFilterChanged)
   }
 
   private setSortIcon() {
@@ -65,6 +74,16 @@ export default class TableHeader extends Mappers {
     this.setSortIcon()
   }
 
+  private onFilterRemove() {
+    const model = this.params.api.getFilterModel()
+    delete model[this.params.column.colId]
+    this.params.api.setFilterModel(model)
+  }
+
+  private onFilterChanged() {
+    this.isFilter = this.params.column.isFilterActive()
+  }
+
   private onSortClicked(event: any) {
     if (!this.params.enableSorting) {
       return
@@ -82,9 +101,9 @@ export default class TableHeader extends Mappers {
 
   private get filterStyle() {
     return {
-      width: '30px',
-      height: '30px',
-    } 
+      'background-color': this.isFilter ? '#cccccc' : undefined,
+      ...this.hoverIconStyle,
+    }
   }
 
   private get isLinked() {

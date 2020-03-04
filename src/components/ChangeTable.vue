@@ -15,10 +15,12 @@ import { ColDef, GridOptions } from 'ag-grid-community'
 import { Component, Vue, Mixins } from 'vue-property-decorator'
 
 import { TransactionUnit, TransactionType } from '@/types/tables'
+import { Table } from '@/types/user'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
 
 import ActionRenderer from './change_table/action_render'
+import KeyRenderer from './change_table/key_renderer'
 import TableHeader from './table/header'
 import TableRenderer from './change_table/table_renderer'
 import StatusRenderer from './change_table/status_renderer'
@@ -46,6 +48,7 @@ export default class ChangeTable extends Mappers {
     frameworkComponents: {
       agColumnHeader: TableHeader,
       ActionRenderer,
+      KeyRenderer,
       TransactionTypeRenderer,
       TableRenderer,
       StatusRenderer,
@@ -75,6 +78,7 @@ export default class ChangeTable extends Mappers {
     {
       headerName: 'Record key',
       field: 'key',
+      cellRenderer: 'KeyRenderer',
       headerComponentParams: { isPk: true }
     },
     {
@@ -115,8 +119,9 @@ export default class ChangeTable extends Mappers {
     for (const t of Object.entries(this.transaction)) {
       const [idS, unit]: [any, TransactionUnit] = t
       const id = Number(idS)
-      const elem = this.hierarchyElem(id)!
+      const elem = this.hierarchyElem(id)! as Table
       const local = { name: elem.name, id }
+      const isAuto = elem.columns.find((col) => col.isPk)!.isAuto
 
       for (const [key, update] of Object.entries(unit.update)) {
         data.push({ ...local, key, type: TransactionType.update, errors: this.getError(id, key) })
@@ -125,7 +130,7 @@ export default class ChangeTable extends Mappers {
         data.push({ ...local, key, type: TransactionType.delete })
       }
       for (const [key, create] of Object.entries(unit.create)) {
-        data.push({ ...local, key, type: TransactionType.create, errors: this.getError(id, key) })
+        data.push({ ...local, key, isAuto, type: TransactionType.create, errors: this.getError(id, key) })
       }
     }
 

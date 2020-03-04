@@ -36,6 +36,14 @@ const Mappers = Mixins(TableErrors).extend({
     >
       <font-awesome-icon :icon="['fas', 'history']" />
     </b-button>
+    <b-button v-if="canUnlink"
+      variant="primary"
+      v-b-tooltip.noninteractive
+      title="Remove the link"
+      @click="onUnlink"
+    >
+      <font-awesome-icon :icon="['fas', 'minus-square']" />
+    </b-button>
     <b-button v-if="canDelete && !isCreate"
       variant="primary"
       v-b-tooltip.hover.noninteractive
@@ -83,6 +91,11 @@ export default class ActionRenderer extends Mappers {
     this.params.context.parent.onUpdate()
   }
 
+  private onUnlink() {
+    this.params.context.parent.onKeySet(this.key, false)
+    this.params.context.parent.update()
+  }
+
   private get showErrors() {
     return this.hasErrors(this.table.id, this.key)
   }
@@ -93,6 +106,10 @@ export default class ActionRenderer extends Mappers {
 
   private get errorPopover() {
     return this.getErrorsPopover(this.getError(this.table.id, this.key))
+  }
+
+  private get canUnlink() {
+    return this.params.isLinked
   }
 
   private get table() {
