@@ -24,7 +24,7 @@ import {
   TransactionUnit,
 } from '@/types/tables'
 import { instanceOfTable } from '@/types/user_guards'
-import { Table, Column } from '@/types/user'
+import { Table, Column, SortedTables } from '@/types/user'
 import TableAPI from '@/api/table'
 import TransactionAPI from '@/api/transaction'
 import Validator from '@/api/validation'
@@ -73,7 +73,7 @@ class TableGetters extends Getters<TableState> {
       return null
     }
     rowStart = rowStart > 0 ? rowStart : 0
-    rowEnd = rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length - 1
+    rowEnd = rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length
     if (
       this.state.loaded[id].data.length >= rowEnd ||
       this.state.loaded[id].rowCount! <= rowEnd
@@ -214,6 +214,13 @@ class TableMutations extends Mutations<TableState> {
 
   public setErrors(errors: TransactionErrors) {
     Vue.set(this.state, 'errors', errors)
+    if (!_.isNil(errors)) {
+      for (const key of Object.keys(this.state.transaction)) {
+        if (_.isNil(errors[Number(key)])) {
+          Vue.set(this.state.errors, key, {})
+        }
+      }
+    }
   }
 
   public updateRecord({ id, key, data }: { id: number; key: any; data: any }) {
@@ -263,7 +270,7 @@ class TableMutations extends Mutations<TableState> {
     })
   }
 
-  public validateUpdate({ id, key, t }: { id: number; key: any; t: Table }) {
+  public validateUpdate({ id, key, t, tables }: { id: number; key: any; t: Table, tables: SortedTables }) {
     const data =
       this.state.transaction[id].update[key] ||
       this.state.transaction[id].create[key]
@@ -271,7 +278,7 @@ class TableMutations extends Mutations<TableState> {
     const errors = []
 
     if (!_.isNil(data)) {
-      errors.push(...Validator.validateChange(data, t))
+      errors.push(...Validator.validateChange(data, t, this.state.transaction, tables))
     }
     if (!_.isNil(deleteData)) {
       errors.push(...Validator.validateDelete(deleteData, t))
@@ -611,16 +618,17 @@ class TableActions extends Actions<
     const created = Object.values(
       this.state.transaction[id].create
     ).map((c) => ({ ...c.newData, _new: true }))
+    rowStart = rowStart > 0 ? rowStart : 0
+    rowEnd = rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length + created.length
     rowStart -= created.length
     rowEnd -= created.length
 
     let loaded: RowData | null = []
     if (rowEnd > 0) {
       loaded = this.getters.getRows(id, Math.max(rowStart, 0), rowEnd)
-    }
-
-    if (_.isNil(loaded)) {
-      return null
+      if (_.isNil(loaded)) {
+        return null
+      }
     }
 
     const rowDelta = 0 - rowStart
@@ -739,7 +747,7 @@ class TableActions extends Actions<
     if (!instanceOfTable(elem)) {
       return
     }
-    this.mutations.validateUpdate({ id, key, t: elem })
+    this.mutations.validateUpdate({ id, key, t: elem, tables: this.user.state.hierarchy!.tables })
   }
 
   public validateTransaction() {
@@ -751,7 +759,7 @@ class TableActions extends Actions<
       }
     }
     this.mutations.setErrors(
-      Validator.validateTransaction(this.state.transaction, slice)
+      Validator.validateTransaction(this.state.transaction, slice, this.user.state.hierarchy!.tables)
     )
   }
 

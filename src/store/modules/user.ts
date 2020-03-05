@@ -15,6 +15,7 @@ import {
   FormLinkType,
   FormDescription,
   Table,
+  SortedTables,
 } from '@/types/user'
 import {
   instanceOfTable,
@@ -54,6 +55,13 @@ function setEnumsForm(elem: FormDescription) {
   }
 }
 
+function setTable(sorted: SortedTables, table: Table) {
+  if (!(table.schema in sorted)) {
+    sorted[table.schema] = {}
+  }
+  sorted[table.schema][table.tableName] = table
+}
+
 class UserState {
   public user: User | null = null
   public hierarchy: Hierarchy | null = null
@@ -77,13 +85,11 @@ class UserGetters extends Getters<UserState> {
     if (!this.state.hierarchy) {
       return
     }
-    return this.state.hierarchy.hierarchy.find((elem: HierarchyElem) => {
-      if (instanceOfTable(elem)) {
-        if (elem.schema === schema && elem.tableName === name) {
-          return true
-        }
-      }
-    }) as Table | undefined
+    try {
+      return this.state.hierarchy.tables[schema][name]
+    } catch {
+      return undefined
+    }
   }
 }
 
@@ -99,11 +105,13 @@ class UserMutations extends Mutations<UserState> {
   public setHierarchy(hierarchy: Hierarchy | null) {
     this.state.hierarchy = hierarchy
     if (this.state.hierarchy) {
+      this.state.hierarchy.tables = {}
       const generator = new SchemaGenerator(hierarchy!)
       for (const elem of this.state.hierarchy.hierarchy) {
         setEnums(elem)
 
         if (instanceOfTable(elem)) {
+          setTable(this.state.hierarchy.tables, elem)
           elem.formDescription.formSchema = generator.makeSchema(elem.formDescription)
         }
         if (instanceOfForm(elem)) {

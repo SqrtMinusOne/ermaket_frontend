@@ -65,6 +65,7 @@ export interface LinkedColumn extends Column {
   isMultiple: boolean
   linkMultiple: boolean
   linkRequired: boolean
+  linkName: string
 }
 
 export enum FormLinkType {
@@ -123,6 +124,12 @@ export interface Table extends HierarchyElem {
   hidden: boolean
 }
 
+export interface SortedTables {
+  [key: string]: {
+    [key: string]: Table
+  }
+}
+
 export interface Form extends HierarchyElem {
   formDescription: FormDescription
 }
@@ -137,5 +144,6 @@ export interface PrebuiltPage extends HierarchyElem {
 
 export interface Hierarchy {
   hierarchy: Array<Section|Table|Form|Page|PrebuiltPage>
+  tables: SortedTables
   root: number[]
 }
