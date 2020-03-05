@@ -14,7 +14,12 @@ import { AgGridVue } from 'ag-grid-vue'
 import { ColDef, GridOptions } from 'ag-grid-community'
 import { Component, Vue, Mixins } from 'vue-property-decorator'
 
-import { TransactionUnit, TransactionType, ValidationError, ErrorSeverity } from '@/types/tables'
+import {
+  TransactionUnit,
+  TransactionType,
+  ValidationError,
+  ErrorSeverity,
+} from '@/types/tables'
 import { Table } from '@/types/user'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
@@ -100,7 +105,12 @@ export default class ChangeTable extends Mappers {
     if (!params.data) {
       return ''
     }
-    if (params.data.errors && params.data.errors.some((err: ValidationError) => err.severity === ErrorSeverity.error)) {
+    if (
+      params.data.errors &&
+      params.data.errors.some(
+        (err: ValidationError) => err.severity === ErrorSeverity.error
+      )
+    ) {
       return 'bg-danger'
     }
     switch (params.data.type) {

@@ -4,6 +4,7 @@ import {
   TransactionUnit,
   LoadedTable,
   ErrorSeverity,
+  TableDelete,
   TableUpdate,
   TableCreate,
   ValidationError,
@@ -95,6 +96,15 @@ export default class Validator {
     )
     errors.push(...this.check_required(requiredChecks, data))
     return errors
+  }
+
+  public static validateDelete(
+    data: TableDelete, table: Table
+  ): ValidationError[] {
+    if (data) {
+      return this.get_cascade_errors(table)
+    }
+    return []
   }
 
   private static get_duplicates(unit: TransactionUnit, data: LoadedEntry) {
@@ -200,20 +210,27 @@ export default class Validator {
     const errors: KeysMap<ValidationError[]> = {}
     const deletes = transaction[id].delete
 
-    const cascades = slice[id].table.columns.filter(
-      (column) => instanceOfLinkedColumn(column) && column.linkRequired && !column.linkMultiple
-    ) as LinkedColumn[]
-
     for (const key of Object.keys(deletes)) {
-      for (const cascade of cascades) {
-        pushError(errors, key, {
-          rowName: cascade.rowName,
-          message: `Linked records from the table <b>"${cascade.linkTableName}"</b> may be <b>deleted</b> as well`,
-          severity: ErrorSeverity.warning
-        })
+      for (const error of this.get_cascade_errors(slice[id].table)) {
+        pushError(errors, key, error)
       }
     }
 
+    return errors
+  }
+
+  private static get_cascade_errors(table: Table) {
+    const cascades = table.columns.filter(
+      (column) => instanceOfLinkedColumn(column) && column.linkRequired && !column.linkMultiple
+    ) as LinkedColumn[]
+    const errors: ValidationError[] = []
+    for (const cascade of cascades) {
+      errors.push({
+        rowName: cascade.rowName,
+        message: `Records in column <b>"${cascade.text}"</b> will be <b>deleted</b> with this record`,
+        severity: ErrorSeverity.warning
+      })
+    }
     return errors
   }
 }

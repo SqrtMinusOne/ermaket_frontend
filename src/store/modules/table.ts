@@ -14,6 +14,7 @@ import {
   Filter,
   KeysMap,
   Loaded,
+  ValidationError,
   ErrorSeverity,
   Operator,
   Order,
@@ -73,7 +74,10 @@ class TableGetters extends Getters<TableState> {
     }
     rowStart = rowStart > 0 ? rowStart : 0
     rowEnd = rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length - 1
-    if (this.state.loaded[id].data.length >= rowEnd || this.state.loaded[id].rowCount! <= rowEnd) {
+    if (
+      this.state.loaded[id].data.length >= rowEnd ||
+      this.state.loaded[id].rowCount! <= rowEnd
+    ) {
       const slice = this.state.loaded[id].data.slice(rowStart, rowEnd)
       if (slice.every((datum) => datum !== undefined && datum !== null)) {
         return slice
@@ -133,7 +137,13 @@ class TableGetters extends Getters<TableState> {
   }
 
   public hasErrors(id: number, key: any) {
-    return this.state.errors[id] && this.state.errors[id][key] && this.state.errors[id][key].filter((err) => err.severity === ErrorSeverity.error).length > 0
+    return (
+      this.state.errors[id] &&
+      this.state.errors[id][key] &&
+      this.state.errors[id][key].filter(
+        (err) => err.severity === ErrorSeverity.error
+      ).length > 0
+    )
   }
 
   public hasInfo(id: number, key: any) {
@@ -154,7 +164,11 @@ class TableGetters extends Getters<TableState> {
       res.delete += Object.keys(data.delete).length
     }
     for (const data of Object.values(this.state.errors)) {
-      res.errors += Object.keys(data).length
+      res.errors += Object.values(data).filter((errors) =>
+        (errors as ValidationError[]).some(
+          (error) => error.severity === ErrorSeverity.error
+        )
+      ).length
     }
     res.sum = res.create + res.update + res.delete
     return res
@@ -253,7 +267,15 @@ class TableMutations extends Mutations<TableState> {
     const data =
       this.state.transaction[id].update[key] ||
       this.state.transaction[id].create[key]
-    const errors = Validator.validateChange(data, t)
+    const deleteData = this.state.transaction[id].delete[key]
+    const errors = []
+
+    if (!_.isNil(data)) {
+      errors.push(...Validator.validateChange(data, t))
+    }
+    if (!_.isNil(deleteData)) {
+      errors.push(...Validator.validateDelete(deleteData, t))
+    }
     if (!_.isEmpty(errors)) {
       Vue.set(this.state.errors[id], key, errors)
     } else {
@@ -586,9 +608,9 @@ class TableActions extends Actions<
       return this.getters.getRows(id, rowStart, rowEnd)
     }
 
-    const created = Object.values(this.state.transaction[id].create).map(
-      (c) => ({ ...c.newData, _new: true })
-    )
+    const created = Object.values(
+      this.state.transaction[id].create
+    ).map((c) => ({ ...c.newData, _new: true }))
     rowStart -= created.length
     rowEnd -= created.length
 
@@ -794,6 +816,7 @@ class TableActions extends Actions<
       this.mutations.removeCreated({ id, key })
     } else {
       this.mutations.setDelete({ id, key })
+      this.actions.validateUpdate({ id, key })
     }
   }
 

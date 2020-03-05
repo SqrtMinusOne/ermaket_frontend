@@ -101,7 +101,7 @@ export default class ActionRenderer extends Mappers {
     return this.hasInfo(this.table.id, this.key)
   }
 
-  private isError(){
+  private get isError(){
     return this.hasErrors(this.table.id, this.key)
   }
 

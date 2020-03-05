@@ -13,14 +13,16 @@ interface Params extends ICellRendererParams {
     <font-awesome-icon :icon="['fas', 'check']" />
   </div>
   <div v-else>
-    <font-awesome-icon v-if="isError"
-      :icon="['fas', 'exclamation-triangle']"
+    <div v-if="isError"
       v-b-popover.hover.noninteractive="errorPopover"
-    />
-    <font-awesome-icon v-else
-      :icon="['fas', 'info']"
+    >
+      <font-awesome-icon :icon="['fas', 'exclamation-triangle']" /> Errors
+    </div>
+    <div v-else
       v-b-popover.hover.noninteractive="errorPopover"
-    />
+    >
+      <font-awesome-icon :icon="['fas', 'info']" /> Warnings
+    </div>
   </div>
   `
 })
@@ -31,6 +33,6 @@ export default class StatusRenderer extends Mixins(TableErrors) {
   }
 
   private get isError() {
-    return this.params.data.errors.some((err: ValidationError) => err.severity = ErrorSeverity.error)
+    return this.params.data.errors.some((err: ValidationError) => err.severity === ErrorSeverity.error)
   }
 }
