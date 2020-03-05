@@ -29,13 +29,7 @@ export default class ActionRenderer extends Mappers {
   private params!: ICellRendererParams
 
   private async onRevert() {
-    const { row } = await this.revert({ id: this.table.id, key: this.key, index: this.params.data._index }) as any
-    if (row) {
-      this.params.node.setData({
-        ...this.params.data,
-        ...row
-      })
-    }
+    const { row } = await this.revert({ id: this.table.id, key: this.key }) as any
     // this.params.api.({ rowNodes: [this.params.node] })
     // this.params.context.parent.onUpdate()
   }

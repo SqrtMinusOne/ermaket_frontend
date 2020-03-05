@@ -14,6 +14,7 @@ import {
   Filter,
   KeysMap,
   Loaded,
+  ErrorSeverity,
   Operator,
   Order,
   RowData,
@@ -132,6 +133,10 @@ class TableGetters extends Getters<TableState> {
   }
 
   public hasErrors(id: number, key: any) {
+    return this.state.errors[id] && this.state.errors[id][key] && this.state.errors[id][key].filter((err) => err.severity === ErrorSeverity.error).length > 0
+  }
+
+  public hasInfo(id: number, key: any) {
     return this.state.errors[id] && this.state.errors[id][key]
   }
 
@@ -803,7 +808,8 @@ class TableActions extends Actions<
   }): { row: any; record: any } {
     if (index === undefined && this.getters.isToUpdate(id, key)) {
       index = this.state.loaded[id].data.findIndex(
-        (datum) => datum[this.state.loaded[id].keyField] === key
+        // tslint:disable-next-line:triple-equals
+        (datum) => datum[this.state.loaded[id].keyField] == key
       )
     }
     this.mutations.revertChanges({ id, index, key } as {

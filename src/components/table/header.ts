@@ -46,6 +46,7 @@ export default class TableHeader extends Mappers {
   private mounted() {
     this.params.column.addEventListener('sortChanged', this.onSortChanged)
     this.params.column.addEventListener('filterChanged', this.onFilterChanged)
+    this.onSortChanged()
   }
 
   private setSortIcon() {

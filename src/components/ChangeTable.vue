@@ -6,7 +6,7 @@
     style="height: 400px"
     class="ag-theme-material"
     ref="table"
-    />
+  />
 </template>
 
 <script lang="ts">
@@ -14,7 +14,7 @@ import { AgGridVue } from 'ag-grid-vue'
 import { ColDef, GridOptions } from 'ag-grid-community'
 import { Component, Vue, Mixins } from 'vue-property-decorator'
 
-import { TransactionUnit, TransactionType } from '@/types/tables'
+import { TransactionUnit, TransactionType, ValidationError, ErrorSeverity } from '@/types/tables'
 import { Table } from '@/types/user'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
@@ -30,14 +30,14 @@ const Mappers = Vue.extend({
   computed: {
     ...tableMapper.mapGetters(['breakdown', 'getError']),
     ...tableMapper.mapState(['transaction']),
-    ...userMapper.mapGetters(['hierarchyElem'])
-  }
+    ...userMapper.mapGetters(['hierarchyElem']),
+  },
 })
 
 @Component({
   components: {
-    AgGridVue
-  }
+    AgGridVue,
+  },
 })
 export default class ChangeTable extends Mappers {
   private gridOptions: GridOptions = {
@@ -60,7 +60,7 @@ export default class ChangeTable extends Mappers {
     },
     getRowClass: this.getRowClass,
     context: {
-      parent: this
+      parent: this,
     },
   }
 
@@ -79,12 +79,12 @@ export default class ChangeTable extends Mappers {
       headerName: 'Record key',
       field: 'key',
       cellRenderer: 'KeyRenderer',
-      headerComponentParams: { isPk: true }
+      headerComponentParams: { isPk: true },
     },
     {
       headerName: 'Status',
       field: 'errors',
-      cellRenderer: 'StatusRenderer'
+      cellRenderer: 'StatusRenderer',
     },
     {
       headerName: 'Actions',
@@ -93,14 +93,14 @@ export default class ChangeTable extends Mappers {
       lockPinned: true,
       pinned: 'right',
       cellRenderer: 'ActionRenderer',
-    }
+    },
   ]
 
   private getRowClass(params: any) {
     if (!params.data) {
       return ''
     }
-    if (params.data.errors) {
+    if (params.data.errors && params.data.errors.some((err: ValidationError) => err.severity === ErrorSeverity.error)) {
       return 'bg-danger'
     }
     switch (params.data.type) {
@@ -124,22 +124,35 @@ export default class ChangeTable extends Mappers {
       const isAuto = elem.columns.find((col) => col.isPk)!.isAuto
 
       for (const [key, update] of Object.entries(unit.update)) {
-        data.push({ ...local, key, type: TransactionType.update, errors: this.getError(id, key) })
+        data.push({
+          ...local,
+          key,
+          type: TransactionType.update,
+          errors: this.getError(id, key),
+        })
       }
       for (const [key, del] of Object.entries(unit.delete)) {
-        data.push({ ...local, key, type: TransactionType.delete })
+        data.push({
+          ...local,
+          key,
+          type: TransactionType.delete,
+          errors: this.getError(id, key),
+        })
       }
       for (const [key, create] of Object.entries(unit.create)) {
-        data.push({ ...local, key, isAuto, type: TransactionType.create, errors: this.getError(id, key) })
+        data.push({
+          ...local,
+          key,
+          isAuto,
+          type: TransactionType.create,
+          errors: this.getError(id, key),
+        })
       }
     }
 
     return data
   }
 }
-
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

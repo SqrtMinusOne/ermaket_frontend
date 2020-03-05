@@ -94,9 +94,25 @@ export interface TableCreate {
 
 export type TableDelete = boolean
 
+export enum ErrorSeverity {
+  error,
+  warning
+}
+
+export enum ErrorFixType {
+  delete
+}
+
+export interface ErrorFix {
+  type: ErrorFixType,
+  args: any
+}
+
 export interface ValidationError {
   rowName: string
   message: string
+  severity?: ErrorSeverity
+  fixes?: ErrorFix[]
 }
 
 export interface TransactionErrors {

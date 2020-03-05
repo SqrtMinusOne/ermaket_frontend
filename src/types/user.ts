@@ -63,6 +63,8 @@ export interface LinkedColumn extends Column {
   linkType: TableLinkType
   fkName?: string
   isMultiple: boolean
+  linkMultiple: boolean
+  linkRequired: boolean
 }
 
 export enum FormLinkType {

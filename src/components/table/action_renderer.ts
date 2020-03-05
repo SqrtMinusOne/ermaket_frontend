@@ -13,7 +13,7 @@ const Mappers = Mixins(TableErrors).extend({
   computed: {
     ...tableMapper.mapState(['errors']),
     ...userMapper.mapGetters(['getTable']),
-    ...tableMapper.mapGetters(['isTransactee', 'isToDelete', 'hasErrors', 'getError', 'isToCreate']),
+    ...tableMapper.mapGetters(['isTransactee', 'isToDelete', 'hasErrors', 'hasInfo', 'getError', 'isToCreate']),
   },
   methods: {
     ...tableMapper.mapActions(['fetchRecord', 'setDelete', 'revert']),
@@ -26,7 +26,8 @@ const Mappers = Mixins(TableErrors).extend({
       v-b-popover.hover.noninteractive="errorPopover"
       variant="primary"
     >
-      <font-awesome-icon :icon="['fas', 'exclamation-triangle']" />
+      <font-awesome-icon :icon="['fas', 'exclamation-triangle']" v-if="isError" />
+      <font-awesome-icon :icon="['fas', 'info']" v-else />
     </b-button>
     <b-button v-if="canRevert"
       variant="primary"
@@ -97,6 +98,10 @@ export default class ActionRenderer extends Mappers {
   }
 
   private get showErrors() {
+    return this.hasInfo(this.table.id, this.key)
+  }
+
+  private isError(){
     return this.hasErrors(this.table.id, this.key)
   }
 

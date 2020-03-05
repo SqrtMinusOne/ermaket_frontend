@@ -3,6 +3,7 @@ import {
   KeysMap,
   TransactionUnit,
   LoadedTable,
+  ErrorSeverity,
   TableUpdate,
   TableCreate,
   ValidationError,
@@ -17,6 +18,9 @@ function pushError(
   key: any,
   error: ValidationError
 ) {
+  if (_.isNil(error.severity)) {
+    error.severity = ErrorSeverity.error
+  }
   if (errors[key]) {
     errors[key].push(error)
   } else {
@@ -78,7 +82,7 @@ export default class Validator {
         ...this.check_deletes(transaction, id, loaded),
       }
     }
-    return errors
+    return _.omitBy(errors, (value) => _.isEmpty(value))
   }
 
   public static validateChange(
@@ -100,6 +104,7 @@ export default class Validator {
       .filter((column) => column.isUnique)
       .map((column) => {
         uniqueSets[column.rowName] = new Set()
+        repeatSets[column.rowName] = new Set()
         return column
       })
     const keyField = data.loaded.keyField
@@ -153,7 +158,7 @@ export default class Validator {
     change: TableCreate | TableUpdate
   ) {
     const upd = instanceOfTableUpdate(change)
-      ? { ...change.oldData, ...change.oldData }
+      ? { ...change.oldData, ...change.newData }
       : change.newData
     const errors: ValidationError[] = []
     for (const column of requiredChecks) {
@@ -166,18 +171,21 @@ export default class Validator {
             errors.push({
               rowName: column.rowName,
               message: `"${column.text}" cannot be empty`,
+              severity: ErrorSeverity.error
             })
           }
         } else if (isNil(upd[column.fkName])) {
           errors.push({
             rowName: column.rowName,
             message: `"${column.text}" is a required field`,
+              severity: ErrorSeverity.error
           })
         }
       } else if (isNil(upd[column.rowName])) {
         errors.push({
           rowName: column.rowName,
           message: `"${column.text}" is a required field`,
+          severity: ErrorSeverity.error
         })
       }
     }
@@ -190,57 +198,22 @@ export default class Validator {
     slice: LoadedSlice
   ): KeysMap<ValidationError[]> {
     const errors: KeysMap<ValidationError[]> = {}
-    const assertions = this.get_delete_assertions(id, slice)
+    const deletes = transaction[id].delete
 
-    if (_.isEmpty(assertions)) {
-      return errors
-    }
+    const cascades = slice[id].table.columns.filter(
+      (column) => instanceOfLinkedColumn(column) && column.linkRequired && !column.linkMultiple
+    ) as LinkedColumn[]
 
-    for (const key of Object.keys(transaction[id].delete)) {
-      const data = getLoaded(slice[id], key)
-      for (const [rowName, assertion] of Object.entries(assertions)) {
-        const fkValue = data[assertion.fk.fkName as any]
-        if (!assertion.column.isMultiple) {
-          if (!transaction[assertion.table.id].delete[fkValue]) {
-            pushError(errors, key, {
-              rowName,
-              message: `This entry cannot be deleted because an entry from ${assertion.table.name} depends on it. Delete the linked entry as well.`,
-            })
-          }
-        } else {
-          // TODO
-        }
+    for (const key of Object.keys(deletes)) {
+      for (const cascade of cascades) {
+        pushError(errors, key, {
+          rowName: cascade.rowName,
+          message: `Linked records from the table <b>"${cascade.linkTableName}"</b> may be <b>deleted</b> as well`,
+          severity: ErrorSeverity.warning
+        })
       }
     }
 
     return errors
-  }
-
-  private static get_delete_assertions(id: number, slice: LoadedSlice) {
-    const fks = slice[id].table.columns.filter(
-      (column) => instanceOfLinkedColumn(column) && column.fkName
-    ) as LinkedColumn[]
-
-    const assertions: {
-      [key: string]: { fk: LinkedColumn; table: Table; column: LinkedColumn }
-    } = {}
-    for (const fk of fks) {
-      const loaded = getTable(slice, fk.linkSchema, fk.linkTableName)
-      if (!loaded) {
-        continue
-      }
-      const linkHere = loaded.table.columns.find(
-        (column) =>
-          instanceOfLinkedColumn(column) &&
-          column.linkSchema === slice[id].table.schema &&
-          column.linkTableName === slice[id].table.tableName &&
-          column.isRequired
-      ) as LinkedColumn
-      if (!linkHere) {
-        continue
-      }
-      assertions[fk.rowName] = { table: loaded.table, column: linkHere, fk }
-    }
-    return assertions
   }
 }

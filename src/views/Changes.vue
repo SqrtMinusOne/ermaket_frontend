@@ -6,6 +6,18 @@
         variant="outline-light"
         size="sm"
         v-b-tooltip.noninteractive
+        title="Validate the transaction"
+        @click="onCheck"
+        :disabled="isSending"
+      >
+        <font-awesome-icon :icon="['fas', 'tasks']" />
+        Run check
+      </b-button>
+      <b-button
+        class="ml-2"
+        variant="outline-light"
+        size="sm"
+        v-b-tooltip.noninteractive
         title="Revert all changes"
         @click="onRevert"
         :disabled="isSending"
@@ -59,7 +71,7 @@ const Mappers = Vue.extend({
     ...tableMapper.mapGetters(['breakdown']),
   },
   methods: {
-    ...tableMapper.mapActions(['revertAll', 'commitAll'])
+    ...tableMapper.mapActions(['revertAll', 'commitAll', 'validateTransaction'])
   }
 })
 
@@ -76,6 +88,10 @@ export default class Changes extends Mappers {
     this.isSending = true
     this.commitAll()
     this.isSending = false
+  }
+
+  private onCheck() {
+    this.validateTransaction()
   }
 
   private onRevert() {
