@@ -641,6 +641,27 @@ class TableActions extends Actions<
     return loaded
   }
 
+  public applyUpdatesToData({ id, data }: { id: number, data: any[] }) {
+    if (!this.state.transaction[id] || !this.state.transaction[id].update) {
+      return data
+    }
+    const loaded = this.state.loaded[id]
+    return data.map((datum) => {
+      let key = datum[loaded.keyField]
+      key = mapKey(key, this.state.transaction[id].mapKeys)
+      if (this.state.transaction[id].update[key]) {
+        return {
+          ...datum,
+          ..._.pick(
+            this.state.transaction[id].update[key].newData,
+            Object.keys(datum)
+          )
+        }
+      }
+      return datum
+    })
+  }
+
   public async fetchRows({
     id,
     rowStart,
@@ -681,7 +702,7 @@ class TableActions extends Actions<
       rowEnd > 0 ? rowEnd - rowStart : -1,
       order
     )
-    const rowsData = data.data.data
+    let rowsData = data.data.data
     this.actions.checkLoaded(elem)
     if (!filter && !order) {
       this.actions.setRows({
@@ -692,6 +713,7 @@ class TableActions extends Actions<
       })
       return this.getters.getRows(id, rowStart, rowEnd)
     }
+    rowsData = await this.actions.applyUpdatesToData({ id, data: rowsData })
     return rowsData
   }
 
@@ -881,7 +903,7 @@ class TableActions extends Actions<
       await TransactionAPI.sendTransaction(this.state.transaction)
       this.mutations.reset()
     } catch (err) {
-      console.error(err)
+      return err
     }
   }
 }

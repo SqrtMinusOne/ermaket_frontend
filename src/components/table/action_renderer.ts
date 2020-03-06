@@ -71,6 +71,8 @@ export default class ActionRenderer extends Mappers {
 
   private async onRevert() {
     const wasCreated = this.isToCreate(this.table.id, this.key)
+    const filterModel = this.params.api.getFilterModel()
+    const sortModel = this.params.api.getSortModel()
     const { row } = (await this.revert({
       id: this.table.id,
       key: this.key,
@@ -90,6 +92,10 @@ export default class ActionRenderer extends Mappers {
       this.params.context.parent.update()
     }
     this.params.context.parent.onUpdate()
+    this.$nextTick(() => {
+      this.params.api.setFilterModel(filterModel)
+      this.params.api.setSortModel(sortModel)
+    })
   }
 
   private onUnlink() {

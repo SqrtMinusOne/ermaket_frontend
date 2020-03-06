@@ -20,7 +20,7 @@
         v-b-tooltip.noninteractive
         title="Revert all changes"
         @click="onRevert"
-        :disabled="isSending"
+        :disabled="isSending || breakdown.sum === 0"
       >
         <font-awesome-icon :icon="['fas', 'undo']" />
         Revert
@@ -32,12 +32,22 @@
         v-b-tooltip.noninteractive
         title="Send changes to server"
         @click="onCommit"
-        :disabled="isSending"
+        :disabled="isSending || breakdown.sum === 0"
       >
         <font-awesome-icon :icon="['fas', 'save']" />
         Commit
       </b-button>
     </template>
+    <b-alert
+      :show="okCountDown"
+      dismissible
+      variant="success"
+      @dismissed="okCountDown = 0"
+      @dismiss-count-down="okCountDown"
+    >
+      <font-awesome-icon :icon="['fas', 'check']" />
+      Transaction successful
+    </b-alert>
     <p v-if="breakdown.sum > 0 && !isSending">
       You have uncommited changes:
       <b>{{ breakdown.update }} changed</b> records,
@@ -50,10 +60,16 @@
     <p v-else-if="!isSending">
       You have no uncommited changes.
     </p>
-    <b-alert v-else variant="primary" show class="d-flex d-flex-row align-items-center">
+    <b-alert
+      v-else
+      variant="primary"
+      show
+      class="d-flex d-flex-row align-items-center"
+    >
       <b-spinner variant="primary mr-2" />
       Sending changes...
     </b-alert>
+
     <ChangeTable />
   </main-card>
 </template>
@@ -71,8 +87,12 @@ const Mappers = Vue.extend({
     ...tableMapper.mapGetters(['breakdown']),
   },
   methods: {
-    ...tableMapper.mapActions(['revertAll', 'commitAll', 'validateTransaction'])
-  }
+    ...tableMapper.mapActions([
+      'revertAll',
+      'commitAll',
+      'validateTransaction',
+    ]),
+  },
 })
 
 @Component({
@@ -83,11 +103,15 @@ const Mappers = Vue.extend({
 })
 export default class Changes extends Mappers {
   private isSending: boolean = false
+  private okCountDown: number = 0
 
   private async onCommit() {
     this.isSending = true
-    this.commitAll()
+    const error = await this.commitAll()
     this.isSending = false
+    if (!error) {
+      this.okCountDown = 10
+    }
   }
 
   private onCheck() {
