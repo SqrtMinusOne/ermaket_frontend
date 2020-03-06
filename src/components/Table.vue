@@ -129,16 +129,24 @@ export default class TableComponent extends Mappers {
 
   public update() {
     if (this.gridApi) {
+      const filterModel = this.gridApi.getFilterModel()
+      const sortModel = this.gridApi.getSortModel()
       this.gridApi.refreshInfiniteCache()
+      this.$nextTick(() => {
+        if (!_.isEmpty(filterModel)) {
+          this.gridApi!.setFilterModel(filterModel)
+        }
+        if (!_.isEmpty(sortModel)) {
+          this.gridApi!.setSortModel(sortModel)
+        }
+      })
     }
   }
 
   public onLinkedClose(key: any) {
     delete this.linkedOpened[key]
     this.resetHeight = true
-    if (this.gridApi) {
-      this.gridApi.refreshInfiniteCache()
-    }
+    this.update()
   }
 
   public getLinked(key: any) {
@@ -250,9 +258,7 @@ export default class TableComponent extends Mappers {
 
   @Watch('keysParams', { deep: true })
   private onKeysParamsChanged() {
-    if (this.gridApi) {
-      this.gridApi.refreshInfiniteCache()
-    }
+    this.update()
   }
 
   @Watch('autoLoadLinked')

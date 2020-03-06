@@ -424,7 +424,7 @@ class TableMutations extends Mutations<TableState> {
     startRow: number
     endRow: number
   }) {
-    if (!this.state.transaction[id]) {
+    if (!this.state.transaction[id] ||! !this.state.transaction[id].update) {
       return
     }
     const loaded = this.state.loaded[id]
@@ -463,7 +463,7 @@ class TableMutations extends Mutations<TableState> {
     index =
       index !== undefined
         ? index
-        : this.state.loaded[id].data.find(
+        : this.state.loaded[id].data.findIndex(
             (datum) => datum[this.state.loaded[id].keyField] === key
           )
     if (index === undefined) {
@@ -479,7 +479,7 @@ class TableMutations extends Mutations<TableState> {
     this.state.loaded[id].data[index] = {
       ...this.state.loaded[id].data[index],
       ..._.pick(
-        this.state.transaction[id].update[key],
+        this.state.transaction[id].update[key].newData,
         Object.keys(this.state.loaded[id].data[index])
       ),
     }
@@ -681,17 +681,18 @@ class TableActions extends Actions<
       rowEnd > 0 ? rowEnd - rowStart : -1,
       order
     )
+    const rowsData = data.data.data
     this.actions.checkLoaded(elem)
     if (!filter && !order) {
       this.actions.setRows({
         elem,
         rowStart,
         rowCount: data.data.total,
-        data: data.data.data,
+        data: rowsData,
       })
       return this.getters.getRows(id, rowStart, rowEnd)
     }
-    return data.data.data
+    return rowsData
   }
 
   public async fetchRecord({
@@ -790,6 +791,8 @@ class TableActions extends Actions<
     this.mutations.setUpdate({ id, oldData, newData: data })
     if (index !== undefined) {
       this.mutations.updateRow({ id, index, data })
+    } else {
+      this.mutations.applyOneUpdateToTable({ id, key })
     }
     this.mutations.applyUpdateToRecord({
       id,
@@ -875,7 +878,7 @@ class TableActions extends Actions<
 
   public async commitAll() {
     try {
-      TransactionAPI.sendTransaction(this.state.transaction)
+      await TransactionAPI.sendTransaction(this.state.transaction)
       this.mutations.reset()
     } catch (err) {
       console.error(err)

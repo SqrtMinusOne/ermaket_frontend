@@ -403,7 +403,7 @@ export default class Validator {
     for (const cascade of cascades) {
       errors.push({
         rowName: cascade.rowName,
-        message: `Records in column <b>"${cascade.text}"</b> will be <b>deleted</b> with this record`,
+        message: `Linked records in the column <b>"${cascade.text}"</b> will be <b>deleted</b> with this record`,
         severity: ErrorSeverity.warning,
       })
     }
