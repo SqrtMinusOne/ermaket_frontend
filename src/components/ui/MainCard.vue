@@ -10,7 +10,7 @@
     <template v-slot:header>
       <div class="d-flex flex-row align-items-center">
         <b>{{ name }}</b>
-        <div class="ml-auto" style="height: 32px">
+        <div class="ml-auto d-flex flex-row" style="height: 32px">
           <slot name="controls" />
         </div>
       </div>

@@ -65,6 +65,7 @@ class TableState {
   public loaded: Loaded = {}
   public transaction: Transaction = {}
   public errors: TransactionErrors = {}
+  public areErrorsUpd: boolean = false
 }
 
 class TableGetters extends Getters<TableState> {
@@ -140,9 +141,9 @@ class TableGetters extends Getters<TableState> {
     return (
       this.state.errors[id] &&
       this.state.errors[id][key] &&
-      this.state.errors[id][key].filter(
+      this.state.errors[id][key].some(
         (err) => err.severity === ErrorSeverity.error
-      ).length > 0
+      )
     )
   }
 
@@ -221,6 +222,10 @@ class TableMutations extends Mutations<TableState> {
         }
       }
     }
+  }
+
+  public setErrorsUpdated(state: boolean) {
+    this.state.areErrorsUpd = state
   }
 
   public updateRecord({ id, key, data }: { id: number; key: any; data: any }) {
@@ -763,6 +768,7 @@ class TableActions extends Actions<
     this.mutations.initTransaction(id)
     this.mutations.setNewRecord({ id, key, data })
     this.actions.validateUpdate({ id, key })
+    this.mutations.setErrorsUpdated(false)
   }
 
   public validateUpdate({ id, key }: { id: number; key: any }) {
@@ -784,6 +790,7 @@ class TableActions extends Actions<
     this.mutations.setErrors(
       Validator.validateTransaction(this.state.transaction, slice, this.user.state.hierarchy!.tables)
     )
+    this.mutations.setErrorsUpdated(true)
   }
 
   public setRowUpdate({
@@ -822,6 +829,7 @@ class TableActions extends Actions<
       applyOld: false,
     })
     this.actions.validateUpdate({ id, key })
+    this.mutations.setErrorsUpdated(false)
   }
 
   public setRecordUpdate({
@@ -841,6 +849,7 @@ class TableActions extends Actions<
     this.mutations.updateRecord({ id, key, data })
     this.mutations.applyOneUpdateToTable({ id, key, index })
     this.actions.validateUpdate({ id, key })
+    this.mutations.setErrorsUpdated(false)
   }
 
   public setDelete({ id, key }: { id: number; key: any }) {
@@ -851,6 +860,7 @@ class TableActions extends Actions<
       this.mutations.setDelete({ id, key })
       this.actions.validateUpdate({ id, key })
     }
+    this.mutations.setErrorsUpdated(false)
   }
 
   public revert({
@@ -874,6 +884,7 @@ class TableActions extends Actions<
       key: any
     })
     this.mutations.tryToCloseTransaction(id)
+    this.mutations.setErrorsUpdated(false)
     return {
       row: index !== undefined ? this.state.loaded[id].data[index] : null,
       record: this.state.loaded[id].records[key],

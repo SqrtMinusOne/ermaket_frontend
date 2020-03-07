@@ -2,6 +2,7 @@ import { Criterion, Operator, Filter, Order } from '../types/tables'
 import { AxiosPromise } from 'axios'
 import { TableResponse } from '@/types/tables'
 import { http } from '@/axios-common'
+import _ from 'lodash'
 
 export default class TableAPI {
   public static get_table(
@@ -10,7 +11,7 @@ export default class TableAPI {
     filterBy: Filter = [],
     offset: number = 0,
     limit: number = 10,
-    order: Order = []
+    order?: Order
   ) : AxiosPromise<TableResponse> {
     TableAPI.resolve_operators(filterBy)
     return http.get(`/tables/table/${schema}/${table}`, {
@@ -18,7 +19,7 @@ export default class TableAPI {
         filter_by: JSON.stringify(filterBy),
         offset,
         limit,
-        order_by: JSON.stringify(order),
+        order_by: _.isNil(order) ? undefined : JSON.stringify(order)
       },
     })
   }

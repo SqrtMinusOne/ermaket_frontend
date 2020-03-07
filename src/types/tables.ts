@@ -62,6 +62,22 @@ export interface TableResponse {
   total: number
 }
 
+export interface TableErrorResponse {
+  message: string
+  ok: boolean
+  data: {
+    info: ValidationInfo | DefaultInfo | any
+    message: string
+    type: string
+  }
+}
+
+export interface ValidationInfo {
+  [key: string]: string[]
+}
+
+export type DefaultInfo = string
+
 export interface Loaded {
   [id: number]: LoadedTable
 }
