@@ -12,7 +12,7 @@
 <script lang="ts">
 import { Component, Vue, Emit } from 'vue-property-decorator'
 import { userMapper } from '../store/modules/user'
-import { HierarchyElem, Section, Table, Form, PrebuiltPage } from '@/types/user'
+import { HierarchyElem, Section, Table, Form, PrebuiltPage, PrebuiltPageType } from '@/types/user'
 import { instanceOfSection, instanceOfTable, instanceOfForm, instanceOfPrebuiltPage } from '@/types/user_guards'
 // tslint:disable-next-line:no-var-requires
 const SidebarMenu = require('vue-sidebar-menu').SidebarMenu
@@ -112,10 +112,18 @@ export default class Home extends Mappers {
   }
 
   private makePrebuiltPage(element: PrebuiltPage): Item {
-    return {
+    const data: Item = {
       title: element.name,
-      href: '#' // TODO
+      href: '#'
     }
+    switch(element.type) {
+      case PrebuiltPageType.sql:
+        data.href = '/system/sql'
+        data.icon = 'fas fa-code'
+        break
+    }
+
+    return data
   }
 
   private get menu () {

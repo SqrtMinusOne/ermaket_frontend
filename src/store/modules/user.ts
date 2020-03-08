@@ -11,6 +11,8 @@ import {
   Hierarchy,
   HierarchyElem,
   Access,
+  PrebuiltPage,
+  PrebuiltPageType,
   TableLinkType,
   FormLinkType,
   FormDescription,
@@ -20,6 +22,7 @@ import {
 import {
   instanceOfTable,
   instanceOfForm,
+  instanceOfPrebuiltPage,
   instanceOfLinkedColumn,
   instanceOfLinkedField,
 } from '@/types/user_guards'
@@ -42,9 +45,16 @@ function setEnums(elem: HierarchyElem) {
     }
     setEnumsForm(elem.formDescription)
   }
-  if (instanceOfForm(elem)) {
+  else if (instanceOfForm(elem)) {
     setEnumsForm(elem.formDescription)
   }
+  else if (instanceOfPrebuiltPage(elem)) {
+    setEnumsPrebuiltPage(elem)
+  }
+}
+
+function setEnumsPrebuiltPage(elem: PrebuiltPage) {
+  elem.type = $enum(PrebuiltPageType).asValueOrThrow(elem.type)
 }
 
 function setEnumsForm(elem: FormDescription) {

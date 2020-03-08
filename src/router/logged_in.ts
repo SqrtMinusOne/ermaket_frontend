@@ -4,6 +4,7 @@ import Changes from '@/views/Changes.vue'
 import Error404 from '@/views/404.vue'
 import Home from '@/views/Home.vue'
 import Table from '@/views/Table.vue'
+import SQLConsole from '@/views/SQLConsole.vue'
 
 export default class LoggedInRoutes implements RouterOptions {
   public static routes = [
@@ -19,6 +20,10 @@ export default class LoggedInRoutes implements RouterOptions {
         {
           path: '/changes',
           component: Changes,
+        },
+        {
+          path: '/system/sql',
+          component: SQLConsole
         },
         {
           path: '*',

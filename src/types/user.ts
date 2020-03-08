@@ -139,8 +139,12 @@ export interface Page extends HierarchyElem {
   [key: string]: any // TODO
 }
 
+export enum PrebuiltPageType {
+  sql = 'sql'
+}
+
 export interface PrebuiltPage extends HierarchyElem {
-  type: string // TODO
+  type: PrebuiltPageType
 }
 
 export interface Hierarchy {

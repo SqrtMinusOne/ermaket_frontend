@@ -37,11 +37,7 @@ import { userMapper } from '@/store/modules/user'
 import ErrorShow from '@/components/ErrorShow.vue'
 
 const Mappers = Vue.extend({
-  computed: {
-    ...userMapper.mapState(['error']),
-  },
   methods: {
-    ...userMapper.mapMutations(['setError']),
     ...userMapper.mapActions(['login']),
   },
 })
