@@ -7,7 +7,7 @@ export function instanceOfTableUpdate(obj?: any): obj is TableUpdate {
 
 export function instanceOfValidationInfo(obj?: any): obj is ValidationInfo {
   return (
-    _.isObject(obj) &&
+    _.isObject(obj) && !_.isEmpty(obj) &&
     Object.values(obj).every(
       (val) => _.isArray(val) && val.every((entry) => _.isString(entry))
     )

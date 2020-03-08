@@ -5,8 +5,13 @@
     header-text-variant="white"
   >
     <b-card-text>
-      <b-alert variant="danger" :show="error" @dimissed="setError(null)" dismissible>
-        {{ error }}
+      <b-alert
+        variant="danger"
+        :show="showError"
+        @dimissed="showError = false"
+        dismissible
+      >
+        <ErrorShow :response="errorData" />
       </b-alert>
       <b-form @submit="onLogin">
         <b-form-group label="Login" label-for="login-input">
@@ -29,28 +34,40 @@
 import { Component, Vue } from 'vue-property-decorator'
 
 import { userMapper } from '@/store/modules/user'
+import ErrorShow from '@/components/ErrorShow.vue'
 
 const Mappers = Vue.extend({
   computed: {
-    ...userMapper.mapState(['error'])
+    ...userMapper.mapState(['error']),
   },
   methods: {
     ...userMapper.mapMutations(['setError']),
-    ...userMapper.mapActions(['login'])
-  }
+    ...userMapper.mapActions(['login']),
+  },
 })
 
-@Component
+@Component({
+  components: { ErrorShow },
+})
 export default class LoginForm extends Mappers {
   public form = {
     login: '' as string,
     password: '' as string,
   }
 
+  private errorData: any = {}
+  private showError: boolean = false
+
   public async onLogin(e: Event) {
     e.preventDefault()
-    await this.login(this.form)
-    this.$router.push('/table/2')
+    const error = await this.login(this.form)
+    if (!error) {
+      this.$router.push('/table/2')
+      this.showError = false
+    } else {
+      this.errorData = error.response.data
+      this.showError = true
+    }
   }
 }
 </script>

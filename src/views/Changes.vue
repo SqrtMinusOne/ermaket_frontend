@@ -48,7 +48,7 @@
       dismissible
       variant="success"
       @dismissed="okCountDown = 0"
-      @dismiss-count-down="okCountDown"
+      @dismiss-count-down="onCountDown = $event"
     >
       <font-awesome-icon :icon="['fas', 'check']" />
       Transaction successful

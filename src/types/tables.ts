@@ -1,3 +1,5 @@
+import { DefaultResponse } from '@/types/user'
+
 export interface Criterion {
   field_name: string
   operator: Operator | string
@@ -62,14 +64,8 @@ export interface TableResponse {
   total: number
 }
 
-export interface TableErrorResponse {
-  message: string
-  ok: boolean
-  data: {
-    info: ValidationInfo | DefaultInfo | any
-    message: string
-    type: string
-  }
+export interface TableErrorResponse extends DefaultResponse {
+  data: ValidationInfo | DefaultInfo | any
 }
 
 export interface ValidationInfo {
@@ -106,6 +102,20 @@ export interface TableUpdate {
 
 export interface TableCreate {
   newData: any
+  links: CreateLink[]
+}
+
+export enum CreateLinkType {
+  fk,
+  relationship
+}
+
+export interface CreateLink {
+  id: number
+  key: string | number
+  rowName: string
+  fkName?: string
+  type: CreateLinkType
 }
 
 export type TableDelete = boolean

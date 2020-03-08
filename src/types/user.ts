@@ -1,6 +1,7 @@
 export interface DefaultResponse {
   ok: boolean
   message?: string
+  traceback?: string
   [key: string]: any
 }
 

@@ -65,7 +65,6 @@ function setTable(sorted: SortedTables, table: Table) {
 class UserState {
   public user: User | null = null
   public hierarchy: Hierarchy | null = null
-  public error: string | null = null
 }
 
 class UserGetters extends Getters<UserState> {
@@ -79,6 +78,19 @@ class UserGetters extends Getters<UserState> {
         (elem: HierarchyElem) => elem.id === id
       )
     }
+  }
+
+  public get tables() {
+    const tables: {[id: number]: Table}  = {}
+    if (!this.state.hierarchy) {
+      return tables
+    }
+    for (const elem of this.state.hierarchy.hierarchy) {
+      if (instanceOfTable(elem)) {
+        tables[elem.id] = elem
+      }
+    }
+    return tables
   }
 
   public getTable(schema: string, name: string): Table | undefined {
@@ -96,10 +108,6 @@ class UserGetters extends Getters<UserState> {
 class UserMutations extends Mutations<UserState> {
   public setUser(newUser: User | null) {
     this.state.user = newUser
-  }
-
-  public setError(error: string | null) {
-    this.state.error = error
   }
 
   public setHierarchy(hierarchy: Hierarchy | null) {
@@ -166,12 +174,7 @@ class UserActions extends Actions<
       const response = await UserAPI.login(payload.login, payload.password)
       await this.actions.fetchUser()
     } catch (err) {
-      if (err.response) {
-        this.mutations.setError(err.response.data.message)
-      } else {
-        // tslint:disable-next-line:no-console
-        console.error(err)
-      }
+      return err
     }
   }
 

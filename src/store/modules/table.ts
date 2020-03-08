@@ -22,9 +22,11 @@ import {
   Transaction,
   TransactionErrors,
   TransactionUnit,
+  TableCreate,
+  CreateLinkType,
 } from '@/types/tables'
-import { instanceOfTable } from '@/types/user_guards'
-import { Table, Column, SortedTables } from '@/types/user'
+import { instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
+import { Table, Column, SortedTables, LinkedColumn } from '@/types/user'
 import TableAPI from '@/api/table'
 import TransactionAPI from '@/api/transaction'
 import Validator from '@/api/validation'
@@ -269,13 +271,24 @@ class TableMutations extends Mutations<TableState> {
   }) {
     Vue.set(this.state.transaction[id].create, key, {
       newData: data,
+      links: [],
     })
     Vue.set(this.state.loaded[id].records, key, {
       data,
     })
   }
 
-  public validateUpdate({ id, key, t, tables }: { id: number; key: any; t: Table, tables: SortedTables }) {
+  public validateUpdate({
+    id,
+    key,
+    t,
+    tables,
+  }: {
+    id: number
+    key: any
+    t: Table
+    tables: SortedTables
+  }) {
     const data =
       this.state.transaction[id].update[key] ||
       this.state.transaction[id].create[key]
@@ -283,7 +296,9 @@ class TableMutations extends Mutations<TableState> {
     const errors = []
 
     if (!_.isNil(data)) {
-      errors.push(...Validator.validateChange(data, t, this.state.transaction, tables))
+      errors.push(
+        ...Validator.validateChange(data, t, this.state.transaction, tables)
+      )
     }
     if (!_.isNil(deleteData)) {
       errors.push(...Validator.validateDelete(deleteData, t))
@@ -429,7 +444,7 @@ class TableMutations extends Mutations<TableState> {
     startRow: number
     endRow: number
   }) {
-    if (!this.state.transaction[id] ||! !this.state.transaction[id].update) {
+    if (!this.state.transaction[id] || !!this.state.transaction[id].update) {
       return
     }
     const loaded = this.state.loaded[id]
@@ -556,6 +571,76 @@ class TableMutations extends Mutations<TableState> {
       }
     }
   }
+
+  public resetCreateLinks() {
+    for (const unit of Object.values(this.state.transaction)) {
+      for (const key of Object.keys(unit.create)) {
+        Vue.set(unit.create[key], 'links', [])
+      }
+    }
+  }
+
+  public resolveCreateLinks({
+    tables,
+    sortedTables,
+  }: {
+    tables: { [id: number]: Table }
+    sortedTables: SortedTables
+  }) {
+    for (const [idS, unitS] of Object.entries(this.state.transaction)) {
+      const id = Number(idS)
+      const unit = unitS as TransactionUnit
+      const checks = tables[id].columns.reduce(
+        (
+          acc: Array<{ column: LinkedColumn; create: KeysMap<TableCreate> }>,
+          col: Column
+        ) => {
+          if (instanceOfLinkedColumn(col)) {
+            const tr = this.state.transaction[
+              sortedTables[col.linkSchema][col.linkTableName].id
+            ]
+            if (!_.isNil(tr) && !_.isEmpty(tr.create)) {
+              acc.push({
+                column: col,
+                create: tr.create,
+              })
+            }
+          }
+          return acc
+        },
+        []
+      )
+      if (_.isEmpty(checks)) {
+        continue
+      }
+
+      for (const entry of [
+        ...Object.values(unit.create),
+        ...Object.values(unit.update),
+      ]) {
+        for (const check of checks) {
+          const rowName = check.column.fkName || check.column.rowName
+          const keys = check.column.isMultiple
+            ? entry.newData[rowName]
+            : [entry.newData[rowName]]
+          const type = check.column.isMultiple
+            ? CreateLinkType.relationship
+            : CreateLinkType.fk
+          for (const key of keys) {
+            if (!_.isNil(check.create[key])) {
+              check.create[key].links.push({
+                id,
+                key: entry.newData[this.state.loaded[id].keyField],
+                rowName: check.column.rowName,
+                fkName: check.column.fkName,
+                type,
+              })
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 class TableActions extends Actions<
@@ -624,7 +709,8 @@ class TableActions extends Actions<
       this.state.transaction[id].create
     ).map((c) => ({ ...c.newData, _new: true }))
     rowStart = rowStart > 0 ? rowStart : 0
-    rowEnd = rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length + created.length
+    rowEnd =
+      rowEnd > 0 ? rowEnd : this.state.loaded[id].data.length + created.length
     rowStart -= created.length
     rowEnd -= created.length
 
@@ -646,7 +732,7 @@ class TableActions extends Actions<
     return loaded
   }
 
-  public applyUpdatesToData({ id, data }: { id: number, data: any[] }) {
+  public applyUpdatesToData({ id, data }: { id: number; data: any[] }) {
     if (!this.state.transaction[id] || !this.state.transaction[id].update) {
       return data
     }
@@ -660,7 +746,7 @@ class TableActions extends Actions<
           ..._.pick(
             this.state.transaction[id].update[key].newData,
             Object.keys(datum)
-          )
+          ),
         }
       }
       return datum
@@ -776,7 +862,12 @@ class TableActions extends Actions<
     if (!instanceOfTable(elem)) {
       return
     }
-    this.mutations.validateUpdate({ id, key, t: elem, tables: this.user.state.hierarchy!.tables })
+    this.mutations.validateUpdate({
+      id,
+      key,
+      t: elem,
+      tables: this.user.state.hierarchy!.tables,
+    })
   }
 
   public validateTransaction() {
@@ -788,7 +879,11 @@ class TableActions extends Actions<
       }
     }
     this.mutations.setErrors(
-      Validator.validateTransaction(this.state.transaction, slice, this.user.state.hierarchy!.tables)
+      Validator.validateTransaction(
+        this.state.transaction,
+        slice,
+        this.user.state.hierarchy!.tables
+      )
     )
     this.mutations.setErrorsUpdated(true)
   }
@@ -911,6 +1006,11 @@ class TableActions extends Actions<
 
   public async commitAll() {
     try {
+      this.mutations.resetCreateLinks()
+      this.mutations.resolveCreateLinks({
+        tables: this.user.getters.tables,
+        sortedTables: this.user.state.hierarchy!.tables,
+      })
       await TransactionAPI.sendTransaction(this.state.transaction)
       this.mutations.reset()
     } catch (err) {
