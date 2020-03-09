@@ -16,7 +16,7 @@ import 'codemirror/addon/hint/sql-hint.js'
 export default class SQLInput extends Vue {
   private cmOptions = {
     autoCloseBrackets: true,
-    extraKeys: {"Ctrl-Space": "autocomplete"},
+    extraKeys: { 'Ctrl-Space': 'autocomplete' },
     indentUnit: 4,
     line: true,
     lineNumbers: true,
@@ -24,7 +24,8 @@ export default class SQLInput extends Vue {
     styleActiveLine: true,
   }
 
-  @Model('change', { type: String, required: true }) private readonly code!: string
+  @Model('change', { type: String, required: true })
+  private readonly code!: string
 
   private onInput(event: string) {
     this.$emit('change', event)
