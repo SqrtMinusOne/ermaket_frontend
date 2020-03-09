@@ -22,7 +22,7 @@ export default class LoggedInRoutes implements RouterOptions {
           component: Changes,
         },
         {
-          path: '/system/sql',
+          path: '/system/sql/:id',
           component: SQLConsole
         },
         {

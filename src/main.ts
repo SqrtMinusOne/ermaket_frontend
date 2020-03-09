@@ -26,6 +26,11 @@ library.add(fas)
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 dom.watch()
 
+/* Vue Codemirror */
+// tslint:disable-next-line:no-var-requires
+const VueCodemirror = require('vue-codemirror')
+import 'codemirror/lib/codemirror.css'
+
 /* App */
 import App from './App.vue'
 import router from './router'
@@ -36,6 +41,7 @@ Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 Vue.use(datePicker)
 Vue.use(VueFormGenerator)
+Vue.use(VueCodemirror)
 
 /* Custom components */
 import TableComponent from '@/components/Table.vue'

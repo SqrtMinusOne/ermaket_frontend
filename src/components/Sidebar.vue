@@ -118,7 +118,7 @@ export default class Home extends Mappers {
     }
     switch(element.type) {
       case PrebuiltPageType.sql:
-        data.href = '/system/sql'
+        data.href = `/system/sql/${element.id}`
         data.icon = 'fas fa-code'
         break
     }

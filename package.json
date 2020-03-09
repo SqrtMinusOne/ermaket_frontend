@@ -24,6 +24,7 @@
     "vue": "^2.6.11",
     "vue-bootstrap-datetimepicker": "^5.0.1",
     "vue-class-component": "^7.0.2",
+    "vue-codemirror": "^4.0.6",
     "vue-form-generator": "^2.3.4",
     "vue-property-decorator": "^8.3.0",
     "vue-router": "^3.1.3",
