@@ -50,7 +50,11 @@
           <font-awesome-icon :icon="['fas', 'times']" />
         </b-button>
       </template>
-      <div v-if="result.response" class="p-3">
+      <b-alert variant="success" v-if="result.showOk" show>
+        <font-awesome-icon :icon="['fas', 'check']" />
+        Request OK
+      </b-alert>
+      <div v-else-if="result.response" class="p-3">
         <ResultTable
           :keys="result.response.keys"
           :rows="result.response.result"
@@ -65,6 +69,7 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import _ from 'lodash'
 import moment from 'moment'
 
 import SqlAPI, { SQLResponse } from '@/api/sql'
@@ -82,6 +87,7 @@ interface Result {
   code: string
   response?: SQLResponse
   errorData?: any
+  showOk: boolean
   showError: boolean
   name: string
 }
@@ -104,6 +110,7 @@ export default class SQLConsole extends Mappers {
         code: this.code,
         response: response.data,
         showError: false,
+        showOk: _.isNil(response.data.rows) && _.isNil(response.data.keys),
         name,
       })
     } catch (err) {
@@ -111,6 +118,7 @@ export default class SQLConsole extends Mappers {
         code: this.code,
         errorData: err.response.data,
         showError: true,
+        showOk: false,
         name,
       })
     }
