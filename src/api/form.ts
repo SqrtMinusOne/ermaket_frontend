@@ -10,88 +10,117 @@ import {
   FormSchema,
   GenField,
 } from '@/types/user'
-import { instanceOfLinkedField, instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
+import {
+  instanceOfLinkedField,
+  instanceOfTable,
+  instanceOfLinkedColumn,
+} from '@/types/user_guards'
 import _ from 'lodash'
 
 // tslint:disable-next-line:no-var-requires
 const validators = require('vue-form-generator').validators
 
+interface ReGrouped {
+  [key: string]: string
+}
+
 export default class SchemaGenerator {
   private hierarchy: Hierarchy
+  private ignoreGrouped: boolean
 
-  constructor(hierarchy: Hierarchy) {
+  constructor(hierarchy: Hierarchy, ignoreGrouped: boolean = false) {
     this.hierarchy = hierarchy
+    this.ignoreGrouped = ignoreGrouped
   }
 
   public makeSchema(form: FormDescription): FormSchema {
-    const groups: { [key: string]: number } = {}
+    const grouped: { [key: string]: GenField } = {}
+    const groups: ReGrouped = {}
     form.groups.forEach((group, index) => {
       group.rows.forEach((row) => {
-        groups[row] = index
+        groups[row] = group.legend
       })
     })
-    const fields: GenField[] = []
-    let miscGroup = false
     for (const field of form.fields) {
-      const f = this.makeGenField(form, field)
-      if (f) {
-        fields.push(f)
-        if (_.isNil(groups[field.rowName])) {
-          miscGroup = true
+      for (const genField of this.makeFields(
+        form,
+        groups,
+        field,
+        Object.keys(grouped)
+      )) {
+        if (_.isNil(grouped[genField.group])) {
+          grouped[genField.group] = []
         }
+        grouped[genField.group].push(genField.field)
       }
     }
-
-    if (_.isEmpty(groups)) {
+    if (Object.keys(grouped).length === 1) {
       return {
-        fields,
+        fields: grouped[Object.keys(grouped)[0]],
       }
     }
-    const schema: FormSchema = {
-      groups: form.groups.map((group) => ({
-        legend: group.legend,
-        fields: [],
+    return {
+      groups: Object.entries(grouped).map(([legend, fields]) => ({
+        legend,
+        fields,
       })),
     }
-    if (miscGroup) {
-      schema.groups!.push({ legend: 'Misc', fields: [] })
-    }
-    for (const field of fields) {
-      schema.groups![_.get(groups, field.model, schema.groups!.length - 1)].fields.push(field)
-    }
-    return schema
   }
 
-  private makeGenField(form: FormDescription, field: Field) {
+  private makeFields(
+    form: FormDescription,
+    groups: ReGrouped,
+    field: Field,
+    usedGroups: string[]
+  ): Array<{ field: GenField; group: string }> {
+    const group = groups[field.rowName] || 'Misc'
     if (!instanceOfLinkedField(field)) {
-      const { column } = this.getTableField(form.schema, form.tableName, field.rowName)
-      return this.makeSimpleField(column, field)
+      const { column } = this.getTableField(
+        form.schema,
+        form.tableName,
+        field.rowName
+      )
+      return [{ field: this.makeSimpleField(column, field), group }]
+    }
+    if (field.linkType !== FormLinkType.groupedForm || this.ignoreGrouped) {
+      return [{ field: this.makeLinkedField(form, field), group }]
     } else {
-      const { column } = this.getTableField(form.schema, form.tableName, field.rowName) as unknown as { column: LinkedColumn, table: Table }
-      const linkedTable = this.getTable(column.linkSchema, column.linkTableName)
-      switch (field.linkType) {
-        case FormLinkType.simple:
-          return {
-            ...this.makeSimpleField(column, field),
-          }
-        case FormLinkType.dropdown:
-          return {
-            type: 'linkedSelect',
-            schema: column.linkSchema,
-            table: column.linkTableName,
-            multiple: column.isMultiple,
-            validator: this.getValidator(form, column),
-            ...this.getAttrs(column, field),
-          }
-        case FormLinkType.linkedTable:
-          return {
-            type: 'linkedTableModal',
-            column,
-            table: linkedTable,
-            validator: this.getValidator(form, column),
-            ...this.getAttrs(column, field),
-          }
-      }
+      // Useless and complicated
+      // return this.getGroupedFormFields(form, field, usedGroups)
+    }
+    return []
+  }
+
+  private makeLinkedField(form: FormDescription, field: LinkedField) {
+    const { column } = (this.getTableField(
+      form.schema,
+      form.tableName,
+      field.rowName
+    ) as unknown) as { column: LinkedColumn; table: Table }
+    const linkedTable = this.getTable(column.linkSchema, column.linkTableName)
+    switch (field.linkType) {
+      case FormLinkType.simple:
+        return {
+          ...this.makeSimpleField(column, field),
+        }
+      case FormLinkType.dropdown:
+        return {
+          type: 'linkedSelect',
+          schema: column.linkSchema,
+          table: column.linkTableName,
+          multiple: column.isMultiple,
+          validator: this.getValidator(form, column),
+          ...this.getAttrs(column, field),
+        }
+      case FormLinkType.groupedForm:
+      case FormLinkType.linkedTable:
+        return {
+          type: 'linkedTableModal',
+          column,
+          table: linkedTable,
+          validator: this.getValidator(form, column),
+          ...this.getAttrs(column, field),
+        }
     }
   }
 
@@ -158,10 +187,57 @@ export default class SchemaGenerator {
 
     gen = {
       ...gen,
-      ...this.getAttrs(column, field)
+      ...this.getAttrs(column, field),
     }
 
     return gen
+  }
+  private getGroupedFormFields(
+    form: FormDescription,
+    field: LinkedField,
+    usedGroups: string[]
+  ): Array<{ field: GenField; group: string }> {
+    const schema = this.getGroupedFormSchema(form, field, usedGroups)
+    const fields = []
+    for (const group of schema.groups!) {
+      fields.push(...group.fields.map((f) => ({ field: f, group: group.legend })))
+    }
+    return fields
+  }
+
+  private getGroupedFormSchema(
+    form: FormDescription,
+    field: LinkedField,
+    usedGroups: string[]
+  ): FormSchema {
+    const { column } = (this.getTableField(
+      form.schema,
+      form.tableName,
+      field.rowName
+    ) as unknown) as { column: LinkedColumn; table: Table }
+    const linkedTable = this.getTable(column.linkSchema, column.linkTableName)
+    const generator = new SchemaGenerator(this.hierarchy, true)
+    let linkedSchema = generator.makeSchema(linkedTable.formDescription)
+    if (!_.isNil(linkedSchema.fields)) {
+      linkedSchema = {
+        groups: [
+          {
+            legend: linkedTable.name,
+            fields: linkedSchema.fields,
+          },
+        ],
+      }
+    }
+    const used = new Set(usedGroups)
+    const rename = linkedSchema.groups!.some((group) => used.has(group.legend))
+    linkedSchema.groups = linkedSchema.groups!.map((group) => ({
+      fields: group.fields.map((f) => ({
+        ...f,
+        model: `${field.rowName}.${f.model}`
+      })),
+      legend: rename ? `${linkedTable.name}: ${group.legend}` : group.legend,
+    }))
+    return linkedSchema
   }
 
   private getTable(schema: string, tableName: string) {
@@ -175,7 +251,10 @@ export default class SchemaGenerator {
 
   private getTableField(schema: string, tableName: string, rowName?: string) {
     const table = this.getTable(schema, tableName)
-    return { table, column: table.columns.find((column) => column.rowName === rowName)! }
+    return {
+      table,
+      column: table.columns.find((column) => column.rowName === rowName)!,
+    }
   }
 
   private makeEnum(column: Column) {
@@ -190,7 +269,11 @@ export default class SchemaGenerator {
   }
 
   private getValidator(form: FormDescription, column: LinkedColumn) {
-    const { column: fkColumn } = this.getTableField(form.schema, form.tableName, column.fkName)
+    const { column: fkColumn } = this.getTableField(
+      form.schema,
+      form.tableName,
+      column.fkName
+    )
     if (!fkColumn) {
       if (column.isMultiple) {
         return validators.array

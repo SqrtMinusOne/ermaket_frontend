@@ -34,7 +34,11 @@ export default class FieldDatepicker extends Mixins(abstractField) {
 
   private created() {
     if (this.value) {
-      this.val = this.value.toDate()
+      try {
+        this.val = this.value.toDate()
+      } catch (TypeError) {
+        this.val = moment(this.value).toDate()
+      }
     } else if (this.schema.default) {
       this.val = this.schema.default.toDate()
     } else {

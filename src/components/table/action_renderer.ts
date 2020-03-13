@@ -45,6 +45,14 @@ const Mappers = Mixins(TableErrors).extend({
     >
       <font-awesome-icon :icon="['fas', 'minus-square']" />
     </b-button>
+    <b-button v-if="canEdit"
+      variant="primary"
+      v-b-tooltip.hover.noninteractive
+      title="Edit the entry in the form"
+      @click="onEdit"
+    >
+      <font-awesome-icon :icon="['fas', 'pen']" />
+    </b-button>
     <b-button v-if="canDelete && !isCreate"
       variant="primary"
       v-b-tooltip.hover.noninteractive
@@ -103,6 +111,10 @@ export default class ActionRenderer extends Mappers {
     this.params.context.parent.update()
   }
 
+  private onEdit() {
+    this.params.context.parent.onFormEdit(this.key, this.params.node)
+  }
+
   private get showErrors() {
     return this.hasInfo(this.table.id, this.key)
   }
@@ -133,6 +145,13 @@ export default class ActionRenderer extends Mappers {
       !this.params.noDelete &&
       this.table.userAccess.has(Access.delete) &&
       !this.isToDelete(this.table.id, this.key)
+    )
+  }
+
+  private get canEdit() {
+    return (
+      this.params.data &&
+      this.table.userAccess.has(Access.change)
     )
   }
 

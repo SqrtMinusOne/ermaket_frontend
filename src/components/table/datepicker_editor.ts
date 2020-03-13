@@ -40,7 +40,11 @@ export default class DatePickerEditor extends Mixins(TableEditMixin) {
   }
 
   public created() {
-    this.value = this.params.value.toDate()
+    try {
+      this.value = this.params.value.toDate()
+    } catch (TypeError) {
+      this.value = moment(this.params.value).toDate()
+    }
     if (this.params.columnElem.dateFormat) {
       this.options.format = this.params.columnElem.dateFormat
     }

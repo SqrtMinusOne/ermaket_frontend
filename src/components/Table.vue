@@ -219,6 +219,10 @@ export default class TableComponent extends Mappers {
     this.setActionColumnWidth()
   }
 
+  public onFormEdit(key: string | number, node: RowNode) {
+    this.$emit('formEdit', key, node)
+  }
+
   private getRowHeight(node: RowNode) {
     if (this.isFullWidth(node)) {
       return 350
@@ -329,6 +333,7 @@ export default class TableComponent extends Mappers {
     if (this.columnApi) {
       this.columnApi.resetColumnState()
     }
+    this.setActionColumnWidth()
   }
 
   private setTableHeight() {
@@ -422,6 +427,9 @@ export default class TableComponent extends Mappers {
   private getActionNumber() {
     let n = 0
     if (this.elem.userAccess.has(Access.delete)) {
+      n++
+    }
+    if (this.elem.userAccess.has(Access.change)) {
       n++
     }
     if (this.transaction[this.elem.id]) {
@@ -577,7 +585,7 @@ export default class TableComponent extends Mappers {
   }
 
   private setActionColumnWidth() {
-    this.columnApi!.setColumnWidth('_actions', 42 * this.getActionNumber() + 50)
+    this.columnApi!.setColumnWidth('_actions', 50 * this.getActionNumber() + 40)
   }
 
   private makeDataSource(): IDatasource {
