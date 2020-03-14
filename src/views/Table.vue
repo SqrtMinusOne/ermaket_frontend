@@ -25,6 +25,17 @@
         New
       </b-button>
       <b-button
+        @click="saveCSV"
+        variant="outline-light"
+        class="mr-1"
+        size="sm"
+        v-b-tooltip.hover.noninteractive
+        title="Export table"
+      >
+        <font-awesome-icon :icon="['fas', 'file-export']" />
+        Export
+      </b-button>
+      <b-button
         @click="toggleAutoLoad"
         variant="outline-light"
         class="mr-1"

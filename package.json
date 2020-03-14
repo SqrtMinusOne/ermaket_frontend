@@ -18,6 +18,7 @@
     "bootstrap": "^4.4.1",
     "bootstrap-vue": "^2.2.2",
     "core-js": "^3.4.4",
+    "file-saver": "^2.0.2",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "ts-enum-util": "^4.0.1",
@@ -33,6 +34,7 @@
     "vuex-smart-module": "^0.3.2"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.1",
     "@types/jest": "^24.0.19",
     "@types/lodash": "^4.14.149",
     "@vue/cli-plugin-babel": "^4.1.0",

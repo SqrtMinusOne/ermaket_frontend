@@ -27,6 +27,7 @@ import {
 } from '@/types/tables'
 import { instanceOfTable, instanceOfLinkedColumn } from '@/types/user_guards'
 import { Table, Column, SortedTables, LinkedColumn } from '@/types/user'
+import Converter from '@/api/converter'
 import TableAPI from '@/api/table'
 import TransactionAPI from '@/api/transaction'
 import Validator from '@/api/validation'
@@ -1016,6 +1017,17 @@ class TableActions extends Actions<
     } catch (err) {
       return err
     }
+  }
+
+  public async tableToCSV(id: number) {
+    const elem = this.user.getters.hierarchyElem(id) as Table
+    const data = await this.actions.fetchRows({
+      id,
+      rowStart: 0,
+      rowEnd: -1,
+    })
+    const csv = Converter.to_csv(data!, elem)
+    return csv
   }
 }
 
