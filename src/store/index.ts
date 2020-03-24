@@ -10,6 +10,7 @@ import {
 } from 'vuex-smart-module'
 import { user } from './modules/user'
 import { table } from './modules/table'
+import { logic } from './modules/logic'
 
 Vue.use(Vuex)
 
@@ -19,6 +20,7 @@ const root = new Module({
   modules: {
     user,
     table,
+    logic,
   },
 })
 

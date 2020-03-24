@@ -1,6 +1,6 @@
 import { Criterion, Operator, Filter, Order } from '../types/tables'
 import { AxiosPromise } from 'axios'
-import { TableResponse } from '@/types/tables'
+import { TableResponse, EntryResponse } from '@/types/tables'
 import { http } from '@/axios-common'
 import _ from 'lodash'
 
@@ -28,7 +28,7 @@ export default class TableAPI {
     table: string,
     schema: string,
     filterBy: Filter = []
-  ) {
+  ): AxiosPromise<EntryResponse> {
     TableAPI.resolve_operators(filterBy)
     return http.get(`/tables/entry/${schema}/${table}`, {
       params: {

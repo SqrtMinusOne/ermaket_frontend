@@ -82,7 +82,7 @@ export default class TableComponent extends Mappers {
     column: LinkedColumn
   }
 
-  @Prop({ type: Array }) private readonly keys?: any[]
+  @Prop({ type: Array }) private readonly keys?: any[] | any
 
   private error?: string
   private onResize: any
@@ -199,16 +199,20 @@ export default class TableComponent extends Mappers {
     if (this.keys === undefined) {
       return
     }
+    if (!_.isArray(this.keys)) {
+      this.$emit('change', key)
+    }
+    const keys = this.keys as any[]
     if (!state) {
-      const index = this.keys.indexOf(key)
+      const index = keys.indexOf(key)
       if (index >= 0) {
-        const newKeys = this.keys.filter((v) => v !== key)
+        const newKeys = keys.filter((v) => v !== key)
         this.$emit('change', newKeys)
       }
     } else {
-      const index = this.keys.indexOf(key)
+      const index = keys.indexOf(key)
       if (index < 0) {
-        const newKeys = this.keys.slice()
+        const newKeys = keys.slice()
         newKeys.push(key)
         this.$emit('change', newKeys)
       }
@@ -221,6 +225,17 @@ export default class TableComponent extends Mappers {
 
   public onFormEdit(key: string | number, node: RowNode) {
     this.$emit('formEdit', key, node)
+  }
+
+  public setTableHeight() {
+    if (this.fill) {
+      window.scrollTo(0, 0)
+      const element = this.$el as any
+      const viewport = element.getBoundingClientRect()
+      const height = window.innerHeight - viewport.top - 20
+      console.log(height)
+      element.style.height = `${height}px`
+    }
   }
 
   private getRowHeight(node: RowNode) {
@@ -334,16 +349,6 @@ export default class TableComponent extends Mappers {
       this.columnApi.resetColumnState()
     }
     this.setActionColumnWidth()
-  }
-
-  private setTableHeight() {
-    if (this.fill) {
-      window.scrollTo(0, 0)
-      const element = this.$el as any
-      const viewport = element.getBoundingClientRect()
-      const height = window.innerHeight - viewport.top - 20
-      element.style.height = `${height}px`
-    }
   }
 
   private beforeDestroy() {
@@ -696,13 +701,21 @@ export default class TableComponent extends Mappers {
 
   private addKeysFilter(): Criterion[] {
     if (this.keys) {
-      return this.keys.map((key) => {
-        return {
-          field_name: this.pk.rowName,
-          operator: Operator.equals,
-          field_value: key,
-        }
-      })
+      if (_.isArray(this.keys)) {
+        return this.keys.map((key) => {
+          return {
+            field_name: this.pk.rowName,
+            operator: Operator.equals,
+            field_value: key,
+          }
+        })
+      } else {
+        return [{
+            field_name: this.pk.rowName,
+            operator: Operator.equals,
+            field_value: this.keys,
+          }]
+      }
     }
     return []
   }

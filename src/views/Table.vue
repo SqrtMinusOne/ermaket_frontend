@@ -74,11 +74,12 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Mixins } from 'vue-property-decorator'
+import { Component, Vue, Mixins, Watch } from 'vue-property-decorator'
 import { RowNode } from 'ag-grid-community'
 
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
+import { logicMapper } from '@/store/modules/logic'
 import { instanceOfTable } from '@/types/user_guards'
 import { Table as TableElem, Access } from '@/types/user'
 
@@ -93,6 +94,7 @@ import TableControls from '@/mixins/table_controls'
 const Mappers = Mixins(TableControls).extend({
   computed: {
     ...userMapper.mapGetters(['hierarchyElem']),
+    ...logicMapper.mapState(['messages'])
   },
   methods: {
     ...tableMapper.mapActions(['addRecord'])
@@ -109,6 +111,13 @@ export default class Table extends Mappers {
 
   private get id() {
     return Number(this.$route.params.id)
+  }
+
+  @Watch('messages', { deep: true })
+  private onLogicMessage() {
+    setTimeout(() => { // FIXME
+      this.tableComponent.setTableHeight()
+    }, 100)
   }
 
   private created() {

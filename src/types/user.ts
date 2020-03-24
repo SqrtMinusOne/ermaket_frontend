@@ -1,4 +1,6 @@
-export interface DefaultResponse {
+import { LogicResponse } from './logic'
+
+export interface DefaultResponse extends LogicResponse {
   ok: boolean
   message?: string
   traceback?: string

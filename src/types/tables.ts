@@ -1,4 +1,5 @@
 import { DefaultResponse } from '@/types/user'
+import { LogicResponse } from '@/types/logic'
 
 export interface Criterion {
   field_name: string
@@ -59,9 +60,13 @@ export interface LoadedTable {
   records: KeysMap<LoadedRecord>
 }
 
-export interface TableResponse {
+export interface TableResponse extends LogicResponse {
   data: RowData
   total: number
+}
+
+export interface EntryResponse extends LogicResponse {
+  [key: string]: any
 }
 
 export interface TableErrorResponse extends DefaultResponse {

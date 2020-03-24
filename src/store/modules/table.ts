@@ -32,6 +32,7 @@ import TableAPI from '@/api/table'
 import TransactionAPI from '@/api/transaction'
 import Validator from '@/api/validation'
 import { user } from './user'
+import { logic } from './logic'
 import moment from 'moment'
 import _ from 'lodash'
 
@@ -651,9 +652,11 @@ class TableActions extends Actions<
   TableActions
 > {
   private user!: Context<typeof user>
+  private logic!: Context<typeof logic>
 
   public $init(store: Store<any>): void {
     this.user = user.context(store)
+    this.logic = logic.context(store)
   }
 
   public checkLoaded(elem: Table) {
@@ -786,14 +789,23 @@ class TableActions extends Actions<
         return rows
       }
     }
-    const data = await TableAPI.get_table(
-      elem.tableName,
-      elem.schema,
-      filter,
-      rowStart,
-      rowEnd > 0 ? rowEnd - rowStart : -1,
-      order
-    )
+    let data
+    try {
+      data = await TableAPI.get_table(
+        elem.tableName,
+        elem.schema,
+        filter,
+        rowStart,
+        rowEnd > 0 ? rowEnd - rowStart : -1,
+        order
+      )
+      if (! await this.logic.actions.processLogic(data)) {
+        return
+      }
+    } catch(err) {
+      await this.logic.actions.processLogicError(err)
+      return
+    }
     let rowsData = data.data.data
     this.actions.checkLoaded(elem)
     if (!filter && !order) {
@@ -835,7 +847,16 @@ class TableActions extends Actions<
     if (!filter) {
       filter = makeFilter(elem, key)
     }
-    const data = await TableAPI.get_entry(elem.tableName, elem.schema, filter)
+    let data
+    try {
+      data = await TableAPI.get_entry(elem.tableName, elem.schema, filter)
+      if (! await this.logic.actions.processLogic(data)) {
+        return
+      }
+    } catch (err) {
+      await this.logic.actions.processLogicError(err)
+      return
+    }
     this.actions.checkLoaded(elem)
     this.mutations.setRecord({ id, key, data: data.data })
     this.mutations.applyUpdateToRecord({ id, key })
@@ -1012,9 +1033,13 @@ class TableActions extends Actions<
         tables: this.user.getters.tables,
         sortedTables: this.user.state.hierarchy!.tables,
       })
-      await TransactionAPI.sendTransaction(this.state.transaction)
+      const response = await TransactionAPI.sendTransaction(this.state.transaction)
+      if (! await this.logic.actions.processLogic(response)) {
+        return
+      }
       this.mutations.reset()
     } catch (err) {
+      await this.logic.actions.safeProcessLogicError(err)
       return err
     }
   }

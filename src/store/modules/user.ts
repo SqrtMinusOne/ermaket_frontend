@@ -4,7 +4,9 @@ import {
   Actions,
   Module,
   createMapper,
+  Context,
 } from 'vuex-smart-module'
+import { Store } from 'vuex'
 import { $enum } from 'ts-enum-util'
 import {
   User,
@@ -26,6 +28,7 @@ import {
   instanceOfLinkedColumn,
   instanceOfLinkedField,
 } from '@/types/user_guards'
+import { logic } from './logic'
 import UserAPI from '@/api/user'
 import SchemaGenerator from '@/api/form'
 
@@ -167,6 +170,12 @@ class UserActions extends Actions<
   UserMutations,
   UserActions
 > {
+  private logic!: Context<typeof logic>
+
+  public $init(store: Store<any>): void {
+    this.logic = logic.context(store)
+  }
+
   public async fetchUser() {
     try {
       const response = await UserAPI.current()
@@ -182,17 +191,26 @@ class UserActions extends Actions<
   public async login(payload: { login: string; password: string }) {
     try {
       const response = await UserAPI.login(payload.login, payload.password)
+      if (! await this.logic.actions.processLogic(response)) {
+        return
+      }
       await this.actions.fetchUser()
     } catch (err) {
+      await this.logic.actions.processLogicError(err.response)
       return err
     }
   }
 
   public async logout() {
     try {
-      await UserAPI.logout()
-    } finally {
+      const response = await UserAPI.logout()
+      await this.logic.actions.processLogic(response)
+    } catch (err) {
+      await this.logic.actions.processLogicError(err.response)
+    }
+    finally {
       this.mutations.reset()
+      this.logic.mutations.reset()
     }
   }
 }

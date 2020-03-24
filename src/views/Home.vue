@@ -4,6 +4,7 @@
     <div :style="contentStyle" class="d-flex flex-column min-vh-100">
       <Navbar />
       <div class="d-flex flex-column flex-fill overflow-auto px-3 pt-2">
+        <LogicShow />
         <router-view />
       </div>
     </div>
@@ -14,9 +15,10 @@
 import { Component, Vue } from 'vue-property-decorator'
 import Navbar from '@/components/Navbar.vue'
 import Sidebar from '@/components/Sidebar.vue'
+import LogicShow from '@/components/LogicShow.vue'
 
 @Component({
-  components: { Sidebar, Navbar },
+  components: { Sidebar, Navbar, LogicShow },
 })
 export default class Home extends Vue {
   private sidebarWidth = 350

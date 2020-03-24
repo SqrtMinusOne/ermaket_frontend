@@ -80,7 +80,7 @@ export default class LinkedTableRenderer extends Mappers {
   private params!: Params
   private record: LoadedRecord = null as unknown as LoadedRecord
   private edit: boolean = false
-  private keys: any[] | null = null
+  private keys: any[] | any | null = null
 
   private created() {
     this.record = this.getRecord(this.params.table.id, this.key) as LoadedRecord
@@ -88,7 +88,7 @@ export default class LinkedTableRenderer extends Mappers {
   }
 
   @Watch('keys')
-  private onKeysChange(event: any[], oldKeys: any[] | null) {
+  private onKeysChange(event: any[] | any, oldKeys: any[] | any | null) {
     if (oldKeys === null) {
       return
     }

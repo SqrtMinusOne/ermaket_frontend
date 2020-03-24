@@ -8,7 +8,7 @@ export interface SQLResponse extends DefaultResponse {
 }
 
 export default class SqlAPI {
-  public static sendRequest(query: string) {
+  public static sendRequest(query: string): AxiosPromise<SQLResponse> {
     return http.post('/sql/execute', { query })
   }
 }
