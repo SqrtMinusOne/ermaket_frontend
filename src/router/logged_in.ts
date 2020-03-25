@@ -6,6 +6,7 @@ import Error404 from '@/views/404.vue'
 import Home from '@/views/Home.vue'
 import Table from '@/views/Table.vue'
 import SQLConsole from '@/views/SQLConsole.vue'
+import Page from '@/views/Page.vue'
 
 export default class LoggedInRoutes implements RouterOptions {
   public static routes = [
@@ -17,6 +18,11 @@ export default class LoggedInRoutes implements RouterOptions {
         {
           path: '/table/:id',
           component: Table,
+          beforeEnter: handleLogic,
+        },
+        {
+          path: '/pages/:id',
+          component: Page,
           beforeEnter: handleLogic,
         },
         {

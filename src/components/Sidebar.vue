@@ -12,8 +12,22 @@
 <script lang="ts">
 import { Component, Vue, Emit } from 'vue-property-decorator'
 import { userMapper } from '../store/modules/user'
-import { HierarchyElem, Section, Table, Form, PrebuiltPage, PrebuiltPageType } from '@/types/user'
-import { instanceOfSection, instanceOfTable, instanceOfForm, instanceOfPrebuiltPage } from '@/types/user_guards'
+import {
+  HierarchyElem,
+  Section,
+  Table,
+  Form,
+  PrebuiltPage,
+  PrebuiltPageType,
+  Page,
+} from '@/types/user'
+import {
+  instanceOfSection,
+  instanceOfTable,
+  instanceOfForm,
+  instanceOfPrebuiltPage,
+  instanceOfPage,
+} from '@/types/user_guards'
 // tslint:disable-next-line:no-var-requires
 const SidebarMenu = require('vue-sidebar-menu').SidebarMenu
 
@@ -61,37 +75,44 @@ interface ComponentItem {
   hiddenOnCollapse?: boolean
 }
 
-interface Menu extends Array<Item|HeaderItem|ComponentItem> {}
-
+interface Menu extends Array<Item | HeaderItem | ComponentItem> {}
 
 @Component({
-  components: { SidebarMenu }
+  components: { SidebarMenu },
 })
 export default class Home extends Mappers {
   private makeMenuElem(element: HierarchyElem): Item {
+    let item: Item
     if (instanceOfTable(element) && !element.hidden) {
-      return this.makeTable(element as Table)
+      item = this.makeTable(element)
     }
-    if (instanceOfSection(element)) {
-      return this.makeSection(element as Section)
+    else if (instanceOfSection(element)) {
+      item = this.makeSection(element)
     }
-    if (instanceOfForm(element)) {
-      return this.makeForm(element as Form)
+    else if (instanceOfForm(element)) {
+      item = this.makeForm(element)
     }
-    // TODO page
-    return this.makePrebuiltPage(element as PrebuiltPage)
+    else if (instanceOfPage(element)) {
+      item = this.makePage(element)
+    } else {
+      item = this.makePrebuiltPage(element as PrebuiltPage)
+    }
+    if (element.overrideIcon) {
+      item.icon = element.overrideIcon
+    }
+    return item
   }
 
   private makeTable(element: Table): Item {
     return {
       title: element.name,
       href: { path: `/table/${element.id}` },
-      icon: 'fas fa-table'
+      icon: 'fas fa-table',
     }
   }
 
   private makeSection(element: Section): Item {
-    const children: Item [] = []
+    const children: Item[] = []
     for (const id of element.children) {
       children.push(this.makeMenuElem(this.hierarchyElem(id) as HierarchyElem))
     }
@@ -107,16 +128,16 @@ export default class Home extends Mappers {
     return {
       title: element.name,
       href: { path: `/forms/${element.id}` },
-      icon: 'fas fa-wpforms'
+      icon: 'fas fa-wpforms',
     }
   }
 
   private makePrebuiltPage(element: PrebuiltPage): Item {
     const data: Item = {
       title: element.name,
-      href: '#'
+      href: '#',
     }
-    switch(element.type) {
+    switch (element.type) {
       case PrebuiltPageType.sql:
         data.href = `/system/sql/${element.id}`
         data.icon = 'fas fa-code'
@@ -126,7 +147,15 @@ export default class Home extends Mappers {
     return data
   }
 
-  private get menu () {
+  private makePage(element: Page): Item {
+    return {
+      title: element.name,
+      href: { path: `/pages/${element.id}` },
+      icon: 'fas fa-file'
+    }
+  }
+
+  private get menu() {
     if (this.hierarchy === null) {
       return []
     }
@@ -134,7 +163,7 @@ export default class Home extends Mappers {
       {
         header: true,
         title: 'Navigation',
-        hiddenOnCollapse: true
+        hiddenOnCollapse: true,
       },
     ]
     for (const rootId of this.hierarchy.root) {
@@ -149,8 +178,6 @@ export default class Home extends Mappers {
     return collapsed
   }
 }
-
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

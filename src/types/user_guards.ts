@@ -4,6 +4,7 @@ import {
   Table,
   Form,
   PrebuiltPage,
+  Page,
   Column,
   LinkedColumn,
   Field,
@@ -20,6 +21,10 @@ export function instanceOfTable(obj?: HierarchyElem): obj is Table {
 
 export function instanceOfForm(obj?: HierarchyElem): obj is Form {
   return obj ? 'formDescription' in obj : false
+}
+
+export function instanceOfPage(obj?: HierarchyElem): obj is Page {
+  return obj ? 'pageName' in obj : false
 }
 
 export function instanceOfPrebuiltPage(

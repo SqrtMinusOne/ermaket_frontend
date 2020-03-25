@@ -57,6 +57,7 @@ export interface UserTrigger {
 export interface HierarchyElem {
   id: number
   name: string
+  overrideIcon?: string
   accessRights: AccessRight[]
   userAccess: Set<Access>
   buttonList?: Button[]
@@ -170,7 +171,8 @@ export interface Form extends HierarchyElem {
 }
 
 export interface Page extends HierarchyElem {
-  [key: string]: any // TODO
+  pageName: string
+  addCard?: boolean
 }
 
 export enum PrebuiltPageType {
