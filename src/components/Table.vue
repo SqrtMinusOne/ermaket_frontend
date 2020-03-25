@@ -233,7 +233,6 @@ export default class TableComponent extends Mappers {
       const element = this.$el as any
       const viewport = element.getBoundingClientRect()
       const height = window.innerHeight - viewport.top - 20
-      console.log(height)
       element.style.height = `${height}px`
     }
   }

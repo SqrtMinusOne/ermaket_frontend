@@ -6,6 +6,7 @@ import {
   createMapper,
 } from 'vuex-smart-module'
 
+import LogicAPI from '@/api/logic'
 import { LogicResponse, Message } from '@/types/logic'
 import { AxiosResponse, AxiosError } from 'axios'
 import _ from 'lodash'

@@ -27,7 +27,7 @@ export default class LoggedInRoutes implements RouterOptions {
         },
         {
           path: '*',
-          name: '404',
+          name: '404-logged_in',
           component: Error404,
         },
       ],

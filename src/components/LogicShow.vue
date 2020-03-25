@@ -4,11 +4,17 @@
       v-for="(message, index) in messages"
       :key="index"
       :variant="message.variant"
-      @dismissed="onCloseMessage(index)"
+      class="d-flex flex-row align-items-center px-2 py-1"
       show
-      dismissible
     >
-      {{ message.message }}
+      <div v-html="message.message" />
+      <div
+        class="d-flex darken_hover ml-auto"
+        :style="hoverIconStyle"
+        @click.stop="onCloseMessage(index)"
+      >
+        <font-awesome-icon :icon="['fas', 'times']" class="my-auto mx-auto" />
+      </div>
     </b-alert>
   </div>
 </template>
@@ -31,6 +37,11 @@ const Mappers = Vue.extend({
 
 @Component
 export default class LogicShow extends Mappers {
+  private hoverIconStyle = {
+    width: '30px',
+    height: '30px',
+  }
+
   public onCloseMessage(index: number) {
     this.closeMessage(index)
   }

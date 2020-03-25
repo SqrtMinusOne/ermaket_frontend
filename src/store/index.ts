@@ -11,6 +11,7 @@ import {
 import { user } from './modules/user'
 import { table } from './modules/table'
 import { logic } from './modules/logic'
+import { progress } from './modules/progress'
 
 Vue.use(Vuex)
 
@@ -21,6 +22,7 @@ const root = new Module({
     user,
     table,
     logic,
+    progress,
   },
 })
 
