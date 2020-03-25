@@ -43,6 +43,16 @@ class LogicActions extends Actions<
   LogicMutations,
   LogicActions
 > {
+  public async processCallScript(scriptId: number) {
+    try {
+      const response = await LogicAPI.execute(scriptId, null)
+      return this.actions.processLogic(response)
+    } catch (err) {
+      await this.actions.processLogicError(err)
+      return false
+    }
+  }
+
   public async processLogic(response: AxiosResponse<LogicResponse>) {
     if (_.isNil(response.data.businessLogic)) {
       return true

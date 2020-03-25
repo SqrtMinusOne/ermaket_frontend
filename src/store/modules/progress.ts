@@ -22,7 +22,6 @@ class ProgressGetters extends Getters<ProgressState> {
 class ProgressMutations extends Mutations<ProgressState> {
   public enqueue() {
     this.state.enqueued += 1
-    console.log(JSON.stringify(this.state))
   }
 
   public dequeue() {
@@ -30,7 +29,6 @@ class ProgressMutations extends Mutations<ProgressState> {
     if (this.state.enqueued <= this.state.processed) {
       this.state.enqueued = this.state.processed = 0
     }
-    console.log(JSON.stringify(this.state))
   }
 }
 

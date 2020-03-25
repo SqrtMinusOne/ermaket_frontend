@@ -1,4 +1,5 @@
 import { RouterOptions, RouteConfig } from 'vue-router'
+import handleLogic from './logic_handler'
 
 import Changes from '@/views/Changes.vue'
 import Error404 from '@/views/404.vue'
@@ -16,6 +17,7 @@ export default class LoggedInRoutes implements RouterOptions {
         {
           path: '/table/:id',
           component: Table,
+          beforeEnter: handleLogic,
         },
         {
           path: '/changes',
@@ -23,7 +25,8 @@ export default class LoggedInRoutes implements RouterOptions {
         },
         {
           path: '/system/sql/:id',
-          component: SQLConsole
+          component: SQLConsole,
+          beforeEnter: handleLogic,
         },
         {
           path: '*',

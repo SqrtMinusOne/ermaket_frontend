@@ -75,6 +75,7 @@
 
 <script lang="ts">
 import { Component, Vue, Mixins, Watch } from 'vue-property-decorator'
+import { Route } from 'vue-router'
 import { RowNode } from 'ag-grid-community'
 
 import { tableMapper } from '@/store/modules/table'
@@ -82,6 +83,7 @@ import { userMapper } from '@/store/modules/user'
 import { logicMapper } from '@/store/modules/logic'
 import { instanceOfTable } from '@/types/user_guards'
 import { Table as TableElem, Access } from '@/types/user'
+import handleLogic from '@/router/logic_handler'
 
 import FormModal from '@/components/FormModal.vue'
 import FormEditor from '@/components/FormEditor.vue'
@@ -111,6 +113,10 @@ export default class Table extends Mappers {
 
   private get id() {
     return Number(this.$route.params.id)
+  }
+
+  beforeRouteUpdate(to: Route, from: Route, next: any) {
+    handleLogic(to, from, next)
   }
 
   @Watch('messages', { deep: true })

@@ -8,14 +8,14 @@
   >
     <b-navbar-brand to="/">ERMaket</b-navbar-brand>
     <b-progress
-      :value="processed"
-      :max="enqueued"
+      :max="progressMax"
       variant="secondary"
       class="flex-fill"
       v-if="showProgress"
-      show-progress
       animated
-    />
+      >
+      <b-progress-bar :value="progressValue" :label="progressLabel" />
+    </b-progress>
     <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
     <b-collapse
       id="nav-collapse"
@@ -80,6 +80,18 @@ export default class Navbar extends Mappers {
   private async onLogout() {
     await this.logout()
     this.$router.push('/login')
+  }
+
+  private get progressMax() {
+    return this.processed === 0 ? 1 : this.enqueued
+  }
+
+  private get progressValue() {
+    return this.processed === 0 ? 1 : this.processed
+  }
+
+  private get progressLabel() {
+    return this.enqueued === 1 ? 'Loading..' : `${this.processed}/${this.enqueued}`
   }
 }
 </script>

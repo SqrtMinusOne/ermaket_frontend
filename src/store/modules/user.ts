@@ -8,6 +8,7 @@ import {
 } from 'vuex-smart-module'
 import { Store } from 'vuex'
 import { $enum } from 'ts-enum-util'
+import _ from 'lodash'
 import {
   User,
   Hierarchy,
@@ -20,6 +21,8 @@ import {
   FormDescription,
   Table,
   SortedTables,
+  Activation,
+  Trigger,
 } from '@/types/user'
 import {
   instanceOfTable,
@@ -40,6 +43,11 @@ function setEnums(elem: HierarchyElem) {
       $enum(Access).asValueOrThrow(acc)
     )
   }
+  if (!_.isNil(elem.triggerList)) {
+    for (const trigger of elem.triggerList) {
+      trigger.activation = $enum(Activation).asValueOrThrow(trigger.activation)
+    }
+  }
   if (instanceOfTable(elem)) {
     for (const column of elem.columns) {
       if (instanceOfLinkedColumn(column)) {
@@ -47,11 +55,9 @@ function setEnums(elem: HierarchyElem) {
       }
     }
     setEnumsForm(elem.formDescription)
-  }
-  else if (instanceOfForm(elem)) {
+  } else if (instanceOfForm(elem)) {
     setEnumsForm(elem.formDescription)
-  }
-  else if (instanceOfPrebuiltPage(elem)) {
+  } else if (instanceOfPrebuiltPage(elem)) {
     setEnumsPrebuiltPage(elem)
   }
 }
@@ -93,8 +99,22 @@ class UserGetters extends Getters<UserState> {
     }
   }
 
+  public triggers(id: number): { [key: string]: Trigger[] } {
+    const res: { [key: string]: Trigger[] } = {}
+    const triggers: Trigger[] | undefined = this.state.hierarchy?.hierarchy.find((elem) => elem.id === id)?.triggerList
+    if (!_.isNil(triggers)) {
+      for (const trigger of triggers) {
+        if (!(trigger.activation in res)) {
+          res[trigger.activation] = []
+        }
+        res[trigger.activation].push(trigger)
+      }
+    }
+    return res
+  }
+
   public get tables() {
-    const tables: {[id: number]: Table}  = {}
+    const tables: { [id: number]: Table } = {}
     if (!this.state.hierarchy) {
       return tables
     }
@@ -133,10 +153,14 @@ class UserMutations extends Mutations<UserState> {
 
         if (instanceOfTable(elem)) {
           setTable(this.state.hierarchy.tables, elem)
-          elem.formDescription.formSchema = generator.makeSchema(elem.formDescription)
+          elem.formDescription.formSchema = generator.makeSchema(
+            elem.formDescription
+          )
         }
         if (instanceOfForm(elem)) {
-          elem.formDescription.formSchema = generator.makeSchema(elem.formDescription)
+          elem.formDescription.formSchema = generator.makeSchema(
+            elem.formDescription
+          )
         }
       }
     }
@@ -191,7 +215,7 @@ class UserActions extends Actions<
   public async login(payload: { login: string; password: string }) {
     try {
       const response = await UserAPI.login(payload.login, payload.password)
-      if (! await this.logic.actions.processLogic(response)) {
+      if (!(await this.logic.actions.processLogic(response))) {
         return
       }
       await this.actions.fetchUser()
@@ -207,8 +231,7 @@ class UserActions extends Actions<
       await this.logic.actions.processLogic(response)
     } catch (err) {
       await this.logic.actions.processLogicError(err.response)
-    }
-    finally {
+    } finally {
       this.mutations.reset()
       this.logic.mutations.reset()
     }

@@ -23,13 +23,28 @@ export interface AccessRight {
   access: Access[]
 }
 
+export enum Activation {
+  open = 'open',
+  afterOpen = 'afterOpen',
+  read = 'read',
+  transaction = 'transaction',
+  login = 'login',
+  logout = 'logout',
+  call = 'call'
+}
+
+export interface Trigger {
+  activation: Activation,
+  scriptId: number
+}
+
 export interface HierarchyElem {
   id: number
   name: string
   accessRights: AccessRight[]
   userAccess: Set<Access>
-  buttonList: any[] // TODO 19-01-20 21:12:30
-  triggerList: any[] // TODO 19-01-20 21:12:30
+  buttonList?: any[] // TODO 19-01-20 21:12:30
+  triggerList?: Trigger[]
   _tag_name?: string
 }
 
