@@ -10,6 +10,7 @@ import { Store } from 'vuex'
 import { $enum } from 'ts-enum-util'
 import _ from 'lodash'
 import {
+  ButtonLocation,
   User,
   Hierarchy,
   HierarchyElem,
@@ -23,6 +24,7 @@ import {
   SortedTables,
   Activation,
   Trigger,
+  UserTrigger,
 } from '@/types/user'
 import {
   instanceOfTable,
@@ -48,6 +50,12 @@ function setEnums(elem: HierarchyElem) {
       trigger.activation = $enum(Activation).asValueOrThrow(trigger.activation)
     }
   }
+  setTriggers(elem)
+  if (!_.isNil(elem.buttonList)) {
+    for (const button of elem.buttonList) {
+      button.location = $enum(ButtonLocation).asValueOrThrow(button.location)
+    }
+  }
   if (instanceOfTable(elem)) {
     for (const column of elem.columns) {
       if (instanceOfLinkedColumn(column)) {
@@ -59,6 +67,18 @@ function setEnums(elem: HierarchyElem) {
     setEnumsForm(elem.formDescription)
   } else if (instanceOfPrebuiltPage(elem)) {
     setEnumsPrebuiltPage(elem)
+  }
+}
+
+function setTriggers(elem: HierarchyElem) {
+  const res: { [key: string]: Trigger[] } = {}
+  if (!_.isNil(elem.triggerList)) {
+    for (const trigger of elem.triggerList) {
+      if (!(trigger.activation in res)) {
+        res[trigger.activation] = []
+      }
+      res[trigger.activation].push(trigger)
+    }
   }
 }
 
@@ -99,18 +119,12 @@ class UserGetters extends Getters<UserState> {
     }
   }
 
-  public triggers(id: number): { [key: string]: Trigger[] } {
-    const res: { [key: string]: Trigger[] } = {}
-    const triggers: Trigger[] | undefined = this.state.hierarchy?.hierarchy.find((elem) => elem.id === id)?.triggerList
-    if (!_.isNil(triggers)) {
-      for (const trigger of triggers) {
-        if (!(trigger.activation in res)) {
-          res[trigger.activation] = []
-        }
-        res[trigger.activation].push(trigger)
-      }
-    }
-    return res
+  public triggers(id: number): UserTrigger {
+    return (
+      this.state.hierarchy?.hierarchy.find(
+        (elem: HierarchyElem) => elem.id === id
+      )?.userTrigger || {}
+    )
   }
 
   public get tables() {

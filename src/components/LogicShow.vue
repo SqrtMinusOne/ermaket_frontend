@@ -33,8 +33,6 @@ const Mappers = Vue.extend({
   },
 })
 
-// FIXME multiple messages closing
-
 @Component
 export default class LogicShow extends Mappers {
   private hoverIconStyle = {

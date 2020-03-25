@@ -1,6 +1,7 @@
 <template>
   <main-card :name="table.name" no-body>
     <template v-slot:controls>
+      <LogicButtons location="cardHeader" :buttons="table.buttonList" :buttonAttrs="{ size: 'sm' }" />
       <b-button
         @click="resetTable"
         variant="outline-light"
@@ -49,6 +50,7 @@
       </b-button>
       <rights-breakdown size="sm" variant="outline-light" :id="table.id" />
     </template>
+    <LogicButtons class="m-1" location="top" :buttons="table.buttonList" />
     <TableComponent
       :id="Number($route.params.id)"
       @modelsChanged="onModelsChanged"
@@ -87,6 +89,7 @@ import handleLogic from '@/router/logic_handler'
 
 import FormModal from '@/components/FormModal.vue'
 import FormEditor from '@/components/FormEditor.vue'
+import LogicButtons from '@/components/LogicButtons.vue'
 import MainCard from '@/components/ui/MainCard.vue'
 import SpinnerModal from '@/components/ui/SpinnerModal.vue'
 import RightsBreakdown from '@/components/ui/RightsBreakdown.vue'
@@ -96,15 +99,22 @@ import TableControls from '@/mixins/table_controls'
 const Mappers = Mixins(TableControls).extend({
   computed: {
     ...userMapper.mapGetters(['hierarchyElem']),
-    ...logicMapper.mapState(['messages'])
+    ...logicMapper.mapState(['messages']),
   },
   methods: {
-    ...tableMapper.mapActions(['addRecord'])
-  }
+    ...tableMapper.mapActions(['addRecord']),
+  },
 })
 
 @Component({
-  components: { MainCard, RightsBreakdown, FormModal, SpinnerModal, FormEditor },
+  components: {
+    MainCard,
+    RightsBreakdown,
+    FormModal,
+    SpinnerModal,
+    FormEditor,
+    LogicButtons,
+  },
 })
 export default class Table extends Mappers {
   private formData: any
@@ -115,13 +125,14 @@ export default class Table extends Mappers {
     return Number(this.$route.params.id)
   }
 
-  beforeRouteUpdate(to: Route, from: Route, next: any) {
+  private beforeRouteUpdate(to: Route, from: Route, next: any) {
     handleLogic(to, from, next)
   }
 
   @Watch('messages', { deep: true })
   private onLogicMessage() {
-    setTimeout(() => { // FIXME
+    setTimeout(() => {
+      // FIXME
       this.tableComponent.setTableHeight()
     }, 100)
   }
@@ -151,7 +162,7 @@ export default class Table extends Mappers {
   private onFormEdited(key: number | string, data: any) {
     this.editedNode!.setData({
       ...this.editedNode!.data,
-      ...data
+      ...data,
     })
     this.tableComponent.gridApi!.redrawRows({ rowNodes: [this.editedNode!] })
     this.tableComponent.onUpdate()

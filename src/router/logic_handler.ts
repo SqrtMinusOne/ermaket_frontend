@@ -7,9 +7,19 @@ export default async function handleLogic(to: Route, from: Route, next: any) {
   const triggers = store.getters['user/triggers'](id)
   const onOpen = await Promise.all(
     triggers[Activation.open]?.map((trigger: Trigger) =>
-      store.dispatch('logic/processCallScript', trigger.scriptId, {
-        root: true,
-      })
+      store.dispatch(
+        'logic/processCallScript',
+        {
+          scriptId: trigger.scriptId,
+          data: {
+            activation: Activation.open,
+            to: to.fullPath,
+          },
+        },
+        {
+          root: true,
+        }
+      )
     ) || []
   )
   if (!onOpen.every((ret) => ret === true)) {
@@ -17,9 +27,19 @@ export default async function handleLogic(to: Route, from: Route, next: any) {
   } else {
     Promise.all(
       triggers[Activation.afterOpen]?.map((trigger: Trigger) =>
-        store.dispatch('logic/processCallScript', trigger.scriptId, {
-          root: true,
-        })
+        store.dispatch(
+          'logic/processCallScript',
+          {
+            scriptId: trigger.scriptId,
+            data: {
+              activate: Activation.afterOpen,
+              to: to.fullPath,
+            },
+          },
+          {
+            root: true,
+          }
+        )
       ) || []
     )
     next()

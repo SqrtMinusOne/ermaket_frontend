@@ -43,9 +43,9 @@ class LogicActions extends Actions<
   LogicMutations,
   LogicActions
 > {
-  public async processCallScript(scriptId: number) {
+  public async processCallScript({ scriptId, data } : { scriptId: number, data: any }) {
     try {
-      const response = await LogicAPI.execute(scriptId, null)
+      const response = await LogicAPI.execute(scriptId, data)
       return this.actions.processLogic(response)
     } catch (err) {
       await this.actions.processLogicError(err)

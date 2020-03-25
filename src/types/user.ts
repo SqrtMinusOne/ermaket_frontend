@@ -38,13 +38,30 @@ export interface Trigger {
   scriptId: number
 }
 
+export enum ButtonLocation {
+  top = 'top',
+  cardHeader = 'cardHeader'
+}
+
+export interface Button {
+  text: string
+  location: ButtonLocation
+  variant: string
+  scriptId: number
+}
+
+export interface UserTrigger {
+  [key: string]: Trigger[]
+}
+
 export interface HierarchyElem {
   id: number
   name: string
   accessRights: AccessRight[]
   userAccess: Set<Access>
-  buttonList?: any[] // TODO 19-01-20 21:12:30
+  buttonList?: Button[]
   triggerList?: Trigger[]
+  userTrigger: UserTrigger
   _tag_name?: string
 }
 
