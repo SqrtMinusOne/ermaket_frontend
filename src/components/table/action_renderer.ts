@@ -6,6 +6,7 @@ import { Column, Access, Table } from '@/types/user'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
 import TableErrors from '@/mixins/table_errors'
+import LogicButtons from '@/components/LogicButtons.vue'
 
 interface Params extends ICellRendererParams {
   [key: string]: any
@@ -23,10 +24,12 @@ const Mappers = Mixins(TableErrors).extend({
 })
 
 @Component({
-  template: `<span>
+  template: `<div class="d-flex flex-row pt-1">
+    <LogicButtons location="action" :buttons=table.buttonList />
     <b-button v-if="showErrors"
       v-b-popover.hover.noninteractive="errorPopover"
       variant="primary"
+      class="mr-1"
     >
       <font-awesome-icon :icon="['fas', 'exclamation-triangle']" v-if="isError" />
       <font-awesome-icon :icon="['fas', 'info']" v-else />
@@ -36,6 +39,7 @@ const Mappers = Mixins(TableErrors).extend({
       v-b-tooltip.hover.noninteractive
       title="Revert changes"
       @click="onRevert"
+      class="mr-1"
     >
       <font-awesome-icon :icon="['fas', 'history']" />
     </b-button>
@@ -44,6 +48,7 @@ const Mappers = Mixins(TableErrors).extend({
       v-b-tooltip.noninteractive
       title="Remove the link"
       @click="onUnlink"
+      class="mr-1"
     >
       <font-awesome-icon :icon="['fas', 'minus-square']" />
     </b-button>
@@ -52,6 +57,7 @@ const Mappers = Mixins(TableErrors).extend({
       v-b-tooltip.hover.noninteractive
       title="Edit the entry in the form"
       @click="onEdit"
+      class="mr-1"
     >
       <font-awesome-icon :icon="['fas', 'pen']" />
     </b-button>
@@ -60,10 +66,12 @@ const Mappers = Mixins(TableErrors).extend({
       v-b-tooltip.hover.noninteractive
       title="Mark the entry for deletion"
       @click="onDelete"
+      class="mr-1"
     >
       <font-awesome-icon :icon="['fas', 'times']" />
     </b-button>
-  </span>`,
+  </div>`,
+  components: { LogicButtons }
 })
 export default class ActionRenderer extends Mappers {
   private params!: Params

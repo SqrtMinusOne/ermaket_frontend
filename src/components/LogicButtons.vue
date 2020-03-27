@@ -3,11 +3,14 @@
     <b-button
       v-for="(button, index) in buttonsHere"
       :key="index"
-      :variant="button.variant"
+      :variant="button.variant || 'primary'"
       @click="onClick(button.scriptId)"
-      v-html="button.text"
+      v-b-tooltip.hover.noninteractive
+      :title="button.tooltip"
       v-bind="buttonAttrs"
-      class="mr-2">
+      class="mr-2 d-flex flex-row">
+      <font-awesome-icon :icon="JSON.parse(button.icon)" v-if="button.icon" :class="{ 'mr-2': Boolean(button.text) }" />
+      <div v-html="button.text" v-if="button.text" />
     </b-button>
   </div>
 </template>

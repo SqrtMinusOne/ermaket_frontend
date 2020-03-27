@@ -19,6 +19,7 @@ import {
   HierarchyElem,
   PrebuiltPage,
   PrebuiltPageType,
+  SystemAction,
   SortedTables,
   Table,
   TableLinkType,
@@ -54,6 +55,10 @@ function setEnums(elem: HierarchyElem) {
   if (!_.isNil(elem.buttonList)) {
     for (const button of elem.buttonList) {
       button.location = $enum(ButtonLocation).asValueOrThrow(button.location)
+      if (!_.isNil(button.action)) {
+        console.log(button.action)
+        button.action = $enum(SystemAction).asValueOrThrow(button.action)
+      }
     }
   }
   if (instanceOfTable(elem)) {

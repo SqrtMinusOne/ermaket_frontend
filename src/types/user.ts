@@ -40,14 +40,25 @@ export interface Trigger {
 
 export enum ButtonLocation {
   top = 'top',
-  cardHeader = 'cardHeader'
+  cardHeader = 'cardHeader',
+  column = 'column',
+  action = 'action'
+}
+
+export enum SystemAction {
+  regToken = 'regToken',
+  passToken = 'passToken'
 }
 
 export interface Button {
   text: string
-  location: ButtonLocation
+  location: ButtonLocation,
+  action?: SystemAction,
+  icon?: string
   variant: string
-  scriptId: number
+  tooltip?: string
+  scriptId?: number
+
 }
 
 export interface UserTrigger {

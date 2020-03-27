@@ -29,7 +29,14 @@ import {
 import _ from 'lodash'
 
 import { instanceOfLinkedColumn, instanceOfTable } from '@/types/user_guards'
-import { Column, LinkedColumn, Table, TableLinkType, Access } from '@/types/user'
+import {
+  Column,
+  LinkedColumn,
+  Table,
+  TableLinkType,
+  Access,
+  ButtonLocation,
+} from '@/types/user'
 import { Criterion, FilterObject, Operator, Order } from '@/types/tables'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
@@ -49,7 +56,12 @@ import TimestampRenderer from './table/timestamp_renderer'
 const Mappers = Vue.extend({
   computed: {
     ...tableMapper.mapState(['loaded', 'transaction', 'errors']),
-    ...tableMapper.mapGetters(['isToDelete', 'isToUpdate', 'hasErrors', 'isToCreate']),
+    ...tableMapper.mapGetters([
+      'isToDelete',
+      'isToUpdate',
+      'hasErrors',
+      'isToCreate',
+    ]),
     ...userMapper.mapGetters(['hierarchyElem']),
   },
   methods: {
@@ -64,14 +76,15 @@ const Mappers = Vue.extend({
   },
   model: {
     prop: 'keys',
-    event: 'change'
-  }
+    event: 'change',
+  },
 })
 export default class TableComponent extends Mappers {
   public gridApi?: GridApi
   public columnApi?: ColumnApi
 
-  @Prop({ type: Boolean, default: false }) public readonly autoLoadLinked!: boolean
+  @Prop({ type: Boolean, default: false })
+  public readonly autoLoadLinked!: boolean
 
   @Prop({ type: Number, required: true }) private readonly id!: number
   @Prop({ type: Boolean, default: false }) private fill!: boolean
@@ -116,7 +129,7 @@ export default class TableComponent extends Mappers {
     multiSortKey: 'ctrl',
     getRowClass: this.getRowClass,
     context: {
-      parent: this
+      parent: this,
     },
     fullWidthCellRenderer: 'LinkedTableRenderer',
     isFullWidthCell: this.isFullWidth,
@@ -423,10 +436,14 @@ export default class TableComponent extends Mappers {
       pinned: 'right',
       filter: false,
       headerComponentParams: { isPk: false, table: this.elem, pk: this.pk },
-      cellRendererParams: { table: this.elem, pk: this.pk, isLinked: !_.isNil(this.keys) },
+      cellRendererParams: {
+        table: this.elem,
+        pk: this.pk,
+        isLinked: !_.isNil(this.keys),
+      },
       cellRenderer: 'ActionRenderer',
       editable: false,
-      width: 49 * this.getActionNumber() + 43
+      width: 49 * this.getActionNumber() + 43,
     }
   }
 
@@ -435,7 +452,10 @@ export default class TableComponent extends Mappers {
     if (this.elem.userAccess.has(Access.delete)) {
       n++
     }
-    if (this.elem.userAccess.has(Access.change) && !_.isNil(this.elem.formDescription)) {
+    if (
+      this.elem.userAccess.has(Access.change) &&
+      !_.isNil(this.elem.formDescription)
+    ) {
       n++
     }
     if (this.transaction[this.elem.id]) {
@@ -446,6 +466,11 @@ export default class TableComponent extends Mappers {
     }
     if (!_.isNil(this.keys)) {
       n++
+    }
+    if (!_.isNil(this.elem.buttonList)) {
+      n += this.elem.buttonList.filter(
+        (button) => (button.location === ButtonLocation.action)
+      ).length
     }
     return n
   }
@@ -467,7 +492,7 @@ export default class TableComponent extends Mappers {
     const params = {
       columnElem: column,
       table: this.elem,
-      pk: this.pk
+      pk: this.pk,
     }
     let renderer: string = 'GeneralRenderer'
     if (instanceOfLinkedColumn(column)) {
@@ -483,7 +508,7 @@ export default class TableComponent extends Mappers {
     }
     return {
       cellRendererParams: params,
-      cellRenderer: renderer
+      cellRenderer: renderer,
     }
   }
 
@@ -582,10 +607,16 @@ export default class TableComponent extends Mappers {
   private onValueChanged(event: CellValueChangedEvent) {
     if (!(event.oldValue !== undefined && event.oldValue === event.newValue)) {
       if (event.data._index !== undefined) {
-        this.setRowUpdate({ id: this.id, index: event.data._index, data: event.data })
+        this.setRowUpdate({
+          id: this.id,
+          index: event.data._index,
+          data: event.data,
+        })
       } else {
         const oldData = { ...event.data }
-        oldData[event.column.getUserProvidedColDef().cellRendererParams.columnElem.rowName] = event.oldValue
+        oldData[
+          event.column.getUserProvidedColDef().cellRendererParams.columnElem.rowName
+        ] = event.oldValue
         this.setRowUpdate({ id: this.id, oldData, data: event.data })
       }
     }
@@ -637,7 +668,11 @@ export default class TableComponent extends Mappers {
               //   this.rowCount += self.linkedOpened.length
               // }
             }
-            if (!_.isNil(self.keys) && self.keysParams && self.keysParams.edit) {
+            if (
+              !_.isNil(self.keys) &&
+              self.keysParams &&
+              self.keysParams.edit
+            ) {
               data = self.injectKeys(data)
             }
             params.successCallback(data, this.rowCount)
@@ -721,11 +756,13 @@ export default class TableComponent extends Mappers {
           }
         })
       } else {
-        return [{
+        return [
+          {
             field_name: this.pk.rowName,
             operator: Operator.equals,
             field_value: this.keys,
-          }]
+          },
+        ]
       }
     }
     return []
@@ -780,7 +817,9 @@ export default class TableComponent extends Mappers {
   }
 
   private injectIndices(data: any[], start: number) {
-    const delta = this.transaction[this.id] ? Object.keys(this.transaction[this.id].create).length : 0
+    const delta = this.transaction[this.id]
+      ? Object.keys(this.transaction[this.id].create).length
+      : 0
     data.forEach((datum, i) => {
       datum._index = start + Number(i) - delta
     })
