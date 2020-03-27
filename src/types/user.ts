@@ -156,7 +156,7 @@ export interface Table extends HierarchyElem {
   schema: string
   linesOnPage: number
   columns: Column[]
-  formDescription: FormDescription
+  formDescription?: FormDescription
   hidden: boolean
 }
 

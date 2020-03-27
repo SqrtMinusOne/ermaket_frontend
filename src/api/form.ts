@@ -215,9 +215,9 @@ export default class SchemaGenerator {
       form.tableName,
       field.rowName
     ) as unknown) as { column: LinkedColumn; table: Table }
-    const linkedTable = this.getTable(column.linkSchema, column.linkTableName)
+    const linkedTable = this.getTable(column.linkSchema, column.linkTableName)!
     const generator = new SchemaGenerator(this.hierarchy, true)
-    let linkedSchema = generator.makeSchema(linkedTable.formDescription)
+    let linkedSchema = generator.makeSchema(linkedTable.formDescription!)
     if (!_.isNil(linkedSchema.fields)) {
       linkedSchema = {
         groups: [

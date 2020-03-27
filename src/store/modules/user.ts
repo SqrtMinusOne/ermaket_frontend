@@ -62,8 +62,11 @@ function setEnums(elem: HierarchyElem) {
         column.linkType = $enum(TableLinkType).asValueOrThrow(column.linkType)
       }
     }
-    setEnumsForm(elem.formDescription)
-  } else if (instanceOfForm(elem)) {
+    if (!_.isNil(elem.formDescription)) {
+      setEnumsForm(elem.formDescription)
+    }
+  }
+  else if (instanceOfForm(elem)) {
     setEnumsForm(elem.formDescription)
   } else if (instanceOfPrebuiltPage(elem)) {
     setEnumsPrebuiltPage(elem)
@@ -159,6 +162,7 @@ class UserMutations extends Mutations<UserState> {
 
   public setHierarchy(hierarchy: Hierarchy | null) {
     this.state.hierarchy = hierarchy
+    console.log('hello')
     if (this.state.hierarchy) {
       this.state.hierarchy.tables = {}
       const generator = new SchemaGenerator(hierarchy!)
@@ -167,9 +171,9 @@ class UserMutations extends Mutations<UserState> {
 
         if (instanceOfTable(elem)) {
           setTable(this.state.hierarchy.tables, elem)
-          elem.formDescription.formSchema = generator.makeSchema(
-            elem.formDescription
-          )
+          if (!_.isNil(elem.formDescription)) {
+            elem.formDescription.formSchema = generator.makeSchema(elem.formDescription)
+          }
         }
         if (instanceOfForm(elem)) {
           elem.formDescription.formSchema = generator.makeSchema(

@@ -20,7 +20,7 @@ export function instanceOfTable(obj?: HierarchyElem): obj is Table {
 }
 
 export function instanceOfForm(obj?: HierarchyElem): obj is Form {
-  return obj ? 'formDescription' in obj : false
+  return obj && !instanceOfTable(obj) ? 'formDescription' in obj : false
 }
 
 export function instanceOfPage(obj?: HierarchyElem): obj is Page {

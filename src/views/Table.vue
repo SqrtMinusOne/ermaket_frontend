@@ -79,6 +79,7 @@
 import { Component, Vue, Mixins, Watch } from 'vue-property-decorator'
 import { Route } from 'vue-router'
 import { RowNode } from 'ag-grid-community'
+import _ from 'lodash'
 
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
@@ -175,7 +176,7 @@ export default class Table extends Mappers {
   }
 
   private get canAdd() {
-    return this.table.userAccess.has(Access.change)
+    return this.table.userAccess.has(Access.change) && !_.isNil(this.table.formDescription)
   }
 
   private get table(): TableElem {
