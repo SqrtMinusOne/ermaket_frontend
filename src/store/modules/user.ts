@@ -10,28 +10,28 @@ import { Store } from 'vuex'
 import { $enum } from 'ts-enum-util'
 import _ from 'lodash'
 import {
+  Access,
+  Activation,
   ButtonLocation,
-  User,
+  FormDescription,
+  FormLinkType,
   Hierarchy,
   HierarchyElem,
-  Access,
   PrebuiltPage,
   PrebuiltPageType,
-  TableLinkType,
-  FormLinkType,
-  FormDescription,
-  Table,
   SortedTables,
-  Activation,
+  Table,
+  TableLinkType,
   Trigger,
+  User,
   UserTrigger,
 } from '@/types/user'
 import {
-  instanceOfTable,
   instanceOfForm,
-  instanceOfPrebuiltPage,
   instanceOfLinkedColumn,
   instanceOfLinkedField,
+  instanceOfPrebuiltPage,
+  instanceOfTable,
 } from '@/types/user_guards'
 import { logic } from './logic'
 import UserAPI from '@/api/user'

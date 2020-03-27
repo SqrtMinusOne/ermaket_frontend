@@ -81,6 +81,11 @@ interface Menu extends Array<Item | HeaderItem | ComponentItem> {}
   components: { SidebarMenu },
 })
 export default class Home extends Mappers {
+  private systemMenu: Menu = [{
+    component: 'ProfileEntry',
+    hiddenOnCollapse: true
+  }]
+
   private makeMenuElem(element: HierarchyElem): Item {
     let item: Item
     if (instanceOfTable(element) && !element.hidden) {
@@ -165,6 +170,7 @@ export default class Home extends Mappers {
         title: 'Navigation',
         hiddenOnCollapse: true,
       },
+      ...this.systemMenu,
     ]
     for (const rootId of this.hierarchy.root) {
       menu.push(this.makeMenuElem(this.hierarchyElem(rootId) as HierarchyElem))

@@ -3,4 +3,8 @@ $base-bg: lighten($ermaket_secondary, 5%);
 
 $item-line-height: 20px;
 
+.sidebar_component {
+  background-color: $base-bg !important;
+}
+
 //$base-bg: $ermaket_secondary;

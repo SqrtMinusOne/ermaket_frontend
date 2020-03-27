@@ -38,7 +38,7 @@ for (const pageConfig of pagesConfig) {
   components
 })
 export default class PageView extends Mappers {
-  created() {
+  private created() {
     if (!this.ok) {
       this.$router.push('/page_not_exists')
     }
