@@ -45,12 +45,12 @@ const Mappers = Mixins(TableEditMixin).extend({
         v-b-tooltip.hover.noninteractive
         title="Open linked table"
         class="mr-1"
-        v-if="!isLinkOpened"
+        v-if="!isLinkOpened && showLinkedToggle"
         :disabled="!canOpenLinked"
       >
         <font-awesome-icon :icon="['fas', 'arrow-down']"/>
       </b-button>
-      <b-button v-else
+      <b-button v-else-if="showLinkedToggle"
         variant="outline-primary"
         @click="onCloseLinkedTable"
         v-b-tooltip.hover.noninteractive
@@ -107,11 +107,20 @@ export default class LinkedRenderer extends Mappers {
   }
 
   private onCloseLinkedTable() {
-    this.params.context.parent.onLinkedClose(this.params.data[this.params.pk.rowName])
+    this.params.context.parent.onLinkedClose(
+      this.params.data[this.params.pk.rowName]
+    )
   }
 
   private get colElem(): LinkedColumn {
     return this.params.columnElem
+  }
+
+  private get showLinkedToggle() {
+    return (
+      this.colElem.linkType === TableLinkType.combined ||
+      this.colElem.linkType === TableLinkType.linked
+    )
   }
 
   private get isLinkOpened() {
@@ -155,7 +164,7 @@ export default class LinkedRenderer extends Mappers {
     return {
       title: this.colElem.text,
       content,
-      html: true
+      html: true,
     }
   }
 

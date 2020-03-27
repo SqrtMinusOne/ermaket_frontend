@@ -162,7 +162,6 @@ class UserMutations extends Mutations<UserState> {
 
   public setHierarchy(hierarchy: Hierarchy | null) {
     this.state.hierarchy = hierarchy
-    console.log('hello')
     if (this.state.hierarchy) {
       this.state.hierarchy.tables = {}
       const generator = new SchemaGenerator(hierarchy!)

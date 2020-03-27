@@ -1039,7 +1039,7 @@ class TableActions extends Actions<
       }
       this.mutations.reset()
     } catch (err) {
-      await this.logic.actions.safeProcessLogicError(err)
+      this.logic.actions.safeProcessLogicError(err)
       return err
     }
   }

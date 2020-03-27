@@ -17,12 +17,12 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (response) => {
     const store = require('@/store/index').default
-    store.commit('progress/dequeue', null, { root: true })
+    store.commit('progress/dequeue', true, { root: true })
     return response
   },
   (error) => {
     const store = require('@/store/index').default
-    store.commit('progress/dequeue', null, { root: true })
+    store.commit('progress/dequeue', false, { root: true })
     return Promise.reject(error)
   }
 )

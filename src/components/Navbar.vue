@@ -9,11 +9,11 @@
     <b-navbar-brand to="/">ERMaket</b-navbar-brand>
     <b-progress
       :max="progressMax"
-      variant="secondary"
+      :variant="progressVariant"
       class="flex-fill"
       v-if="showProgress"
-      animated
-      >
+      :animated="progressAnimate"
+    >
       <b-progress-bar :value="progressValue" :label="progressLabel" />
     </b-progress>
     <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
@@ -21,7 +21,7 @@
       id="nav-collapse"
       is-nav
       class="ml-auto"
-      style="flex-grow: unset !important"
+      style="flex-grow: unset !important;"
     >
       <b-navbar-nav class="" v-if="isLoggedIn">
         <b-nav-item to="/changes" v-if="hasChanges">
@@ -56,7 +56,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 import { userMapper } from '@/store/modules/user'
 import { tableMapper } from '@/store/modules/table'
 import { progressMapper } from '@/store/modules/progress'
@@ -65,10 +65,11 @@ const Mappers = Vue.extend({
   computed: {
     ...userMapper.mapGetters(['isLoggedIn']),
     ...tableMapper.mapGetters(['hasChanges']),
-    ...progressMapper.mapState(['enqueued', 'processed']),
+    ...progressMapper.mapState(['enqueued', 'processed', 'errors']),
     ...progressMapper.mapGetters(['showProgress']),
   },
   methods: {
+    ...progressMapper.mapMutations(['reset']),
     ...userMapper.mapActions({
       logout: 'logout',
     }),
@@ -90,8 +91,35 @@ export default class Navbar extends Mappers {
     return this.processed === 0 ? 1 : this.processed
   }
 
+  private get progressAnimate() {
+    return this.enqueued > this.processed
+  }
+
+  private get progressVariant() {
+    return this.errors === 0 ? 'secondary' : 'danger'
+  }
+
+  // @Watch('errors')
+  // private onErrorsChanged(errors: number) {
+  //   if (errors > 0 && this.enqueued <= this.processed) {
+  //     setTimeout(() => {
+  //       this.reset()
+  //     }, 1000)
+  //   }
+  // }
+
   private get progressLabel() {
-    return this.enqueued === 1 ? 'Loading..' : `${this.processed}/${this.enqueued}`
+    if (this.enqueued === 0) {
+      if (this.errors === 1) {
+        return 'Error'
+      }
+      return `Errors: ${this.errors}`
+    }
+    let str = this.enqueued === 1 ? 'Loading..' : `${this.processed}/${this.enqueued}`
+    if (this.errors > 0) {
+      str += ` (Errors: ${this.errors})`
+    }
+    return str
   }
 }
 </script>

@@ -1,9 +1,11 @@
 import { Component, Vue, Mixins } from 'vue-property-decorator'
 import { ICellRendererParams } from 'ag-grid-community'
+import _ from 'lodash'
+
+import { Column, Access, Table } from '@/types/user'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
 import TableErrors from '@/mixins/table_errors'
-import { Column, Access, Table } from '@/types/user'
 
 interface Params extends ICellRendererParams {
   [key: string]: any
@@ -152,6 +154,7 @@ export default class ActionRenderer extends Mappers {
     return (
       this.params.data &&
       this.table.userAccess.has(Access.change)
+      && !_.isNil(this.table.formDescription)
     )
   }
 

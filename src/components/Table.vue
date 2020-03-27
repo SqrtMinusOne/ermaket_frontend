@@ -35,6 +35,7 @@ import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
 
 import ActionRenderer from './table/action_renderer'
+import BooleanRenderer from './table/boolean_renderer'
 import BootstrapEditor from './table/bootstrap_editor'
 import CheckboxRenderer from './table/checkbox_renderer'
 import DatePickerEditor from './table/datepicker_editor'
@@ -101,6 +102,7 @@ export default class TableComponent extends Mappers {
     pagination: true,
     frameworkComponents: {
       ActionRenderer,
+      BooleanRenderer,
       BootstrapEditor,
       CheckboxRenderer,
       DatePickerEditor,
@@ -361,7 +363,7 @@ export default class TableComponent extends Mappers {
       return defs
     }
     const pk = this.pk
-    if (this.keys && this.keysParams && this.keysParams.edit) {
+    if (!_.isNil(this.keys) && this.keysParams && this.keysParams.edit) {
       defs.push(this.getCheckboxColumn())
     }
     for (const column of table.columns) {
@@ -433,7 +435,7 @@ export default class TableComponent extends Mappers {
     if (this.elem.userAccess.has(Access.delete)) {
       n++
     }
-    if (this.elem.userAccess.has(Access.change)) {
+    if (this.elem.userAccess.has(Access.change) && !_.isNil(this.elem.formDescription)) {
       n++
     }
     if (this.transaction[this.elem.id]) {
@@ -449,7 +451,7 @@ export default class TableComponent extends Mappers {
   }
 
   private getIsEditable(column: Column) {
-    if (this.noEdit || column.isAuto) {
+    if (this.noEdit || column.isAuto || column.type === 'boolean') {
       return false
     }
     if (!instanceOfLinkedColumn(column)) {
@@ -476,6 +478,8 @@ export default class TableComponent extends Mappers {
       case 'time':
       case 'timestamp':
         renderer = 'TimestampRenderer'
+      case 'boolean':
+        renderer = 'BooleanRenderer'
     }
     return {
       cellRendererParams: params,
@@ -498,13 +502,14 @@ export default class TableComponent extends Mappers {
       switch (column.linkType) {
         case TableLinkType.linked:
           return
-        case TableLinkType.simple:
+        case TableLinkType.combined:
         case TableLinkType.dropdown:
           return {
             cellEditor: 'LinkedEditor',
             cellEditorParams: params,
             valueSetter,
           }
+        case TableLinkType.simple: // Process as sumple column
       }
     }
 
@@ -597,6 +602,10 @@ export default class TableComponent extends Mappers {
     return {
       rowCount: undefined,
       getRows(params: IGetRowsParams) {
+        if (self.checkReturnEmpty()) {
+          params.successCallback([], 0)
+          return
+        }
         const filter = self.castFilterModel(params.filterModel)
         const order = self.castSortModel(params.sortModel)
         const payload = {
@@ -624,8 +633,11 @@ export default class TableComponent extends Mappers {
             }
             if (!_.isEmpty(self.linkedOpened)) {
               data = self.injectLinkedRows(data)
+              // if (!_.isNil(this.rowCount)) {
+              //   this.rowCount += self.linkedOpened.length
+              // }
             }
-            if (self.keys && self.keysParams && self.keysParams.edit) {
+            if (!_.isNil(self.keys) && self.keysParams && self.keysParams.edit) {
               data = self.injectKeys(data)
             }
             params.successCallback(data, this.rowCount)
@@ -668,7 +680,7 @@ export default class TableComponent extends Mappers {
         obj.or.push(...or)
       }
     }
-    if (this.keys && this.keysParams && !this.keysParams.edit) {
+    if (!_.isNil(this.keys) && this.keysParams && !this.keysParams.edit) {
       obj.or.push(...this.addKeysFilter())
     }
     if (obj.and.length + obj.or.length === 0) {
@@ -699,7 +711,7 @@ export default class TableComponent extends Mappers {
   }
 
   private addKeysFilter(): Criterion[] {
-    if (this.keys) {
+    if (!_.isNil(this.keys)) {
       if (_.isArray(this.keys)) {
         return this.keys.map((key) => {
           return {
@@ -794,6 +806,10 @@ export default class TableComponent extends Mappers {
       }
       return { _key: false, ...datum }
     })
+  }
+
+  private checkReturnEmpty() {
+    return !_.isNil(this.keys) && !this.keysParams?.edit && _.isEmpty(this.keys)
   }
 }
 </script>
