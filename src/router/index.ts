@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 import Login from '@/views/Login.vue'
+import SignUp from '@/views/SignUp.vue'
 import Error404 from '@/views/404.vue'
 
 import LoggedInRoutes from './logged_in'
@@ -13,6 +14,11 @@ const routes: RouteConfig[] = [
     path: '/login',
     name: 'login',
     component: Login,
+  },
+  {
+    path: '/signup',
+    name: 'signup',
+    component: SignUp,
   },
   ...LoggedInRoutes.routes,
   {

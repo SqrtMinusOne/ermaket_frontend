@@ -40,7 +40,11 @@ Vue.config.productionTip = false
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 Vue.use(datePicker)
-Vue.use(VueFormGenerator)
+Vue.use(VueFormGenerator, {
+  validators: {
+
+  }
+})
 Vue.use(VueCodemirror)
 
 /* Custom components which have to registered globally for some obscure reasons */

@@ -33,7 +33,7 @@ export default class ProfileEntry extends Mappers {
   }
 
   private get roles() {
-    return this.user!.roles.join(' ,')
+    return this.user!.roles.join(', ')
   }
 }
 </script>
