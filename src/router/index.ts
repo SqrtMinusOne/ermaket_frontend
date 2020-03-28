@@ -1,8 +1,10 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
-import Login from '@/views/Login.vue'
-import SignUp from '@/views/SignUp.vue'
+import UnAuthHome from '@/views/UnAuthHome.vue'
 import Error404 from '@/views/404.vue'
+
+import LoginForm from '@/components/system_forms/LoginForm.vue'
+import SignUpForm from '@/components/system_forms/SignUpForm.vue'
 
 import LoggedInRoutes from './logged_in'
 import store from '@/store/index'
@@ -11,14 +13,26 @@ Vue.use(VueRouter)
 
 const routes: RouteConfig[] = [
   {
-    path: '/login',
-    name: 'login',
-    component: Login,
-  },
-  {
-    path: '/signup',
-    name: 'signup',
-    component: SignUp,
+    path: '/',
+    name: 'unauthhome',
+    component: UnAuthHome,
+    children: [
+      {
+        path: '/login',
+        name: 'login',
+        component: LoginForm,
+      },
+      {
+        path: '/signup',
+        name: 'signup',
+        component: SignUpForm,
+      },
+      {
+        path: '/password',
+        name: 'password',
+        component: SignUpForm,
+      }
+    ]
   },
   ...LoggedInRoutes.routes,
   {

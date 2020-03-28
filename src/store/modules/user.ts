@@ -313,6 +313,27 @@ class UserActions extends Actions<
       return err
     }
   }
+
+  public async resetPassword({
+    token,
+    login,
+    password,
+  }: {
+    token: string
+    login: string
+    password: string
+  }) {
+    try {
+      const response = await UserAPI.resetPassword(token, login, password)
+      if (!(await this.logic.actions.processLogic(response))) {
+        return
+      }
+      await this.actions.fetchUser()
+    } catch (err) {
+      this.logic.actions.processLogicError(err.response)
+      return err
+    }
+  }
 }
 
 export const user = new Module({

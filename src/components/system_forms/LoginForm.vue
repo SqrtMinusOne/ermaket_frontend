@@ -19,7 +19,8 @@
           type="password"
         />
       </b-form-group>
-      <b-button type="submit" variant="primary">Login</b-button>
+      <b-button type="submit" variant="primary" class="mr-2">Login</b-button>
+      <b-button @click="resetPass" variant="outline-primary">Reset password</b-button>
     </b-form>
   </main-card>
 </template>
@@ -59,6 +60,10 @@ export default class LoginForm extends Mappers {
       this.errorData = error.response.data
       this.showError = true
     }
+  }
+
+  public resetPass() {
+    this.$router.push('/password')
   }
 }
 </script>

@@ -4,7 +4,8 @@
     <b-container fluid>
       <b-row align-h="center" align-v="center" class="mt-3">
         <b-col sm="12" md="6">
-          <SignUpForm />
+          <LogicShow />
+          <router-view />
         </b-col>
       </b-row>
     </b-container>
@@ -13,7 +14,8 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
-import SignUpForm from '@/components/SignUpForm.vue'
+import LoginForm from '@/components/system_forms/LoginForm.vue'
+import LogicShow from '@/components/LogicShow.vue'
 import Navbar from '@/components/Navbar.vue'
 import { userMapper } from '@/store/modules/user'
 
@@ -22,14 +24,16 @@ const Mappers = Vue.extend({
     ...userMapper.mapGetters(['isLoggedIn']),
   },
   methods: {
-    ...userMapper.mapActions(['logout']),
+    ...userMapper.mapActions({
+      logout: 'logout',
+    }),
   },
 })
 
 @Component({
-  components: { SignUpForm, Navbar },
+  components: { LoginForm, Navbar, LogicShow },
 })
-export default class SignUp extends Mappers {
+export default class Login extends Mappers {
   @Watch('isLoggedIn')
   private onLoggedIn() {
     if (this.isLoggedIn) {

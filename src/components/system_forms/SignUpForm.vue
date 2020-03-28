@@ -14,14 +14,17 @@
       :options="formOptions"
       @validated="onValidated"
     />
-    <b-button @click="onSignUp" variant="primary" :disabled="!isValid"
-      >Sign up</b-button
-    >
+    <b-button @click="onSubmit" variant="primary" :disabled="!isValid" class="mr-2">
+      {{ resetPass ? 'Reset password' : 'Sign up' }}
+    </b-button>
+    <b-button @click="onBack" variant="outline-primary">
+      Back to login
+    </b-button>
   </main-card>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Prop } from 'vue-property-decorator'
 import { userMapper } from '@/store/modules/user'
 import { FormSchema } from '@/types/user'
 import MainCard from '@/components/ui/MainCard.vue'
@@ -48,7 +51,7 @@ function repeatPassword(value: string, field: any, model: any) {
 
 const Mappers = Vue.extend({
   methods: {
-    ...userMapper.mapActions(['signUp']),
+    ...userMapper.mapActions(['signUp', 'resetPassword']),
   },
 })
 
@@ -59,7 +62,7 @@ export default class SignUpForm extends Mappers {
     login: string
     password: string
     repeatPassword: string
-  } = {}
+  } = emptyModel()
 
   private isValid: boolean = true
   private errorData: any = {}
@@ -113,8 +116,14 @@ export default class SignUpForm extends Mappers {
     this.isValid = isValid
   }
 
-  private async onSignUp() {
-    const error = await this.signUp(this.model)
+  private get resetPass() {
+    return this.$route.path.includes('password')
+  }
+
+  private async onSubmit() {
+    const error = this.resetPass
+      ? await this.resetPassword(this.model)
+      : await this.signUp(this.model)
     if (!error) {
       this.$router.push('/table/2') // FIXME?
       this.showError = false
@@ -124,8 +133,8 @@ export default class SignUpForm extends Mappers {
     }
   }
 
-  private created() {
-    this.model = emptyModel()
+  private onBack() {
+    this.$router.push('/login')
   }
 }
 </script>
