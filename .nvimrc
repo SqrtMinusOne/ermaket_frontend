@@ -4,6 +4,7 @@ let g:ale_typescript_tslint_use_global = 0
 let g:ale_history_log_output = 1
 let g:ale_typescript_tslint_config_path = 'tslint.json'
 let g:ale_linters = {'vue': ['vls'], 'typescript': ['tsserver', 'tslint']}
+" let g:ale_vue_vls_use_global = 1
 
 let g:ale_fixers = {
             \    'javascript': ['prettier', 'eslint'],

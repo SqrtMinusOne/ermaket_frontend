@@ -24,7 +24,7 @@ const Mappers = Vue.extend({
       </div>
       <div>{{ params.displayName }}</div>
       <div v-if="params.enableSorting" v-html="sortIcon" class="ml-2" />
-      <div class="ml-auto d-flex darken_hover" :style="filterStyle" @click.stop="onFilterClicked" v-if="params.enableMenu">
+      <div class="ml-auto d-flex darken_hover" :style="filterStyle" @click.stop="onFilterClicked" v-if="params.enableMenu && column?.isFilter">
         <font-awesome-icon :icon="['fas', 'filter']" class="my-auto mx-auto" />
       </div>
       <div class="d-flex darken_hover" :style="hoverIconStyle" @click.stop="onFilterRemove" v-if="isFilter">

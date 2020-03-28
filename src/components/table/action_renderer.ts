@@ -25,7 +25,7 @@ const Mappers = Mixins(TableErrors).extend({
 
 @Component({
   template: `<div class="d-flex flex-row pt-1">
-    <LogicButtons location="action" :buttons=table.buttonList />
+    <LogicButtons location="action" :buttons="table.buttonList" :data="{ row: params.data }" />
     <b-button v-if="showErrors"
       v-b-popover.hover.noninteractive="errorPopover"
       variant="primary"

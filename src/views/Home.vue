@@ -8,22 +8,42 @@
         <router-view />
       </div>
     </div>
+    <RegistrationTokenModal ref="regModal" />
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
+
+import { logicMapper } from '@/store/modules/logic'
+import { SystemModal } from '@/types/logic'
+
 import Navbar from '@/components/Navbar.vue'
 import Sidebar from '@/components/Sidebar.vue'
 import LogicShow from '@/components/LogicShow.vue'
+import RegistrationTokenModal from '@/components/RegistrationTokenModal.vue'
+
+
+const Mappers = Vue.extend({
+  computed: {
+    ...logicMapper.mapState(['systemModal'])
+  }
+})
 
 @Component({
-  components: { Sidebar, Navbar, LogicShow },
+  components: { Sidebar, Navbar, LogicShow, RegistrationTokenModal },
 })
-export default class Home extends Vue {
+export default class Home extends Mappers {
   private sidebarWidth = 350
   private sidebarCollapsedWidth = 50
   private sidebarCollapsed = false
+
+  @Watch('systemModal')
+  private onModalChange(modal: SystemModal) {
+    if (modal === SystemModal.regToken) {
+      (this.$refs.regModal as any).show()
+    }
+  }
 
   private onCollapse(collapsed: boolean) {
     this.sidebarCollapsed = collapsed

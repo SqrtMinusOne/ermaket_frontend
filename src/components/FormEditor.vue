@@ -13,14 +13,13 @@
 
 <script lang="ts">
 import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
-import { Table as TableElem } from '@/types/user'
+import { Table as TableElem, FormDescription } from '@/types/user'
 import _ from 'lodash'
 
 import FormModal from '@/components/FormModal.vue'
 import SpinnerModal from '@/components/ui/SpinnerModal.vue'
 import { userMapper } from '@/store/modules/user'
 import { tableMapper } from '@/store/modules/table'
-import { FormDescription } from '@/types/user'
 
 const Mappers = Vue.extend({
   computed: {

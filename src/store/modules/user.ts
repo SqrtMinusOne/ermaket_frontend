@@ -56,7 +56,6 @@ function setEnums(elem: HierarchyElem) {
     for (const button of elem.buttonList) {
       button.location = $enum(ButtonLocation).asValueOrThrow(button.location)
       if (!_.isNil(button.action)) {
-        console.log(button.action)
         button.action = $enum(SystemAction).asValueOrThrow(button.action)
       }
     }
@@ -70,8 +69,7 @@ function setEnums(elem: HierarchyElem) {
     if (!_.isNil(elem.formDescription)) {
       setEnumsForm(elem.formDescription)
     }
-  }
-  else if (instanceOfForm(elem)) {
+  } else if (instanceOfForm(elem)) {
     setEnumsForm(elem.formDescription)
   } else if (instanceOfPrebuiltPage(elem)) {
     setEnumsPrebuiltPage(elem)
@@ -176,7 +174,9 @@ class UserMutations extends Mutations<UserState> {
         if (instanceOfTable(elem)) {
           setTable(this.state.hierarchy.tables, elem)
           if (!_.isNil(elem.formDescription)) {
-            elem.formDescription.formSchema = generator.makeSchema(elem.formDescription)
+            elem.formDescription.formSchema = generator.makeSchema(
+              elem.formDescription
+            )
           }
         }
         if (instanceOfForm(elem)) {
@@ -247,6 +247,16 @@ class UserActions extends Actions<
     }
   }
 
+  public async resetPasswordToken({ login }: { login: string }) {
+    try {
+      const name = `Reset password for ${login}`
+      const response = await UserAPI.resetPasswordToken(name, login)
+      this.logic.actions.processLogic(response)
+    } catch (err) {
+      this.logic.actions.processLogicError(err.response)
+    }
+  }
+
   public async logout() {
     try {
       const response = await UserAPI.logout()
@@ -256,6 +266,30 @@ class UserActions extends Actions<
     } finally {
       this.mutations.reset()
       this.logic.mutations.reset()
+    }
+  }
+
+  public async registrationToken({
+    name,
+    roles,
+    uses,
+    timeLimit,
+  }: {
+    name: string
+    roles?: string[]
+    uses?: number
+    timeLimit?: string
+  }) {
+    try {
+      const response = await UserAPI.registrationToken(
+        name,
+        roles,
+        uses,
+        timeLimit
+      )
+      this.logic.actions.processLogic(response)
+    } catch (err) {
+      this.logic.actions.processLogicError(err.response)
     }
   }
 }

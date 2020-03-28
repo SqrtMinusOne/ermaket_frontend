@@ -12,6 +12,11 @@
     <b-modal hide-header hide-footer ref="modal" size="xl" body-class="p-0">
       <main-card :name="schema.table.name" no-body>
         <template v-slot:controls>
+          <b-button @click="toggleEdit" variant="outline-light" size="sm">
+            <font-awesome-icon :icon="['fas', 'pencil-alt']" v-if="edit" />
+            <font-awesome-icon :icon="['fas', 'eye']" v-else />
+            {{ !edit ? 'View mode' : 'Edit mode' }}
+          </b-button>
           <b-button
             @click="resetTable"
             variant="outline-light"
@@ -46,7 +51,7 @@
         <TableComponent
           :id="schema.table.id"
           style="height: 300px"
-          v-model="keys"
+          v-model="value"
           @change="onChange"
           :keysParams="keysParams"
           :autoLoad="autoLoad"
@@ -60,6 +65,8 @@
 
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
+import _ from 'lodash'
+
 import TableControls from '@/mixins/table_controls'
 import MainCard from '@/components/ui/MainCard.vue'
 // tslint:disable-next-line:no-var-requires
@@ -68,7 +75,6 @@ import { LinkedColumn } from '@/types/user'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
 
-import _ from 'lodash'
 
 const Mappers = Mixins(abstractField, TableControls).extend({
   computed: {
@@ -86,11 +92,15 @@ const Mappers = Mixins(abstractField, TableControls).extend({
 export default class FieldLinkedSelect extends Mappers {
   private schema!: any
   private value!: any
-  private keys: any[] = []
+  private edit: boolean = false
 
   private onClick() {
     const modal = this.$refs.modal as any
     modal.show()
+  }
+
+  private toggleEdit() {
+    this.edit = !this.edit
   }
 
   private created() {
@@ -102,10 +112,10 @@ export default class FieldLinkedSelect extends Mappers {
   }
 
   private get displayValue() {
-    if (_.isArray(this.keys)) {
-      return this.keys.join(', ')
+    if (_.isArray(this.value)) {
+      return this.value.join(', ')
     }
-    return this.keys
+    return this.value
   }
 
   private get column() {
@@ -123,7 +133,7 @@ export default class FieldLinkedSelect extends Mappers {
 
   private get keysParams() {
     return {
-      edit: true,
+      edit: this.edit,
       column: this.schema.column,
     }
   }

@@ -44,10 +44,16 @@
         </b-nav-item>
       </b-navbar-nav>
       <b-navbar-nav v-else class="ml-auto">
+        <b-nav-item to="/signup">
+          <b-button variant="outline-light" size="sm" block>
+            <font-awesome-icon :icon="['fas', 'user-plus']" />
+            Sign up
+          </b-button>
+        </b-nav-item>
         <b-nav-item to="/login">
           <b-button variant="outline-light" size="sm" block>
             <font-awesome-icon :icon="['fas', 'sign-in-alt']" />
-            Login
+            Sign in
           </b-button>
         </b-nav-item>
       </b-navbar-nav>

@@ -107,6 +107,7 @@ export default class TableComponent extends Mappers {
   private resetHeight: boolean = false
   private defaultRowHeight: number = 48
   private actionNumber: number = 0
+  private rowNameCasts?: {[key: string]: string}
 
   private gridOptions: GridOptions = {
     rowModelType: 'infinite',
@@ -363,6 +364,7 @@ export default class TableComponent extends Mappers {
       this.columnApi.resetColumnState()
     }
     this.setActionColumnWidth()
+    this.rowNameCasts = this.getRowNameFilterCasts()
   }
 
   private beforeDestroy() {
@@ -439,7 +441,7 @@ export default class TableComponent extends Mappers {
       cellRendererParams: {
         table: this.elem,
         pk: this.pk,
-        isLinked: !_.isNil(this.keys),
+        isLinked: !_.isNil(this.keysParams) && !this.keysParams.edit,
       },
       cellRenderer: 'ActionRenderer',
       editable: false,
@@ -464,12 +466,12 @@ export default class TableComponent extends Mappers {
     if (!_.isEmpty(this.errors[this.elem.id])) {
       n++
     }
-    if (!_.isNil(this.keys)) {
+    if (!_.isNil(this.keysParams) && !this.keysParams.edit) {
       n++
     }
     if (!_.isNil(this.elem.buttonList)) {
       n += this.elem.buttonList.filter(
-        (button) => (button.location === ButtonLocation.action)
+        (button) => button.location === ButtonLocation.action
       ).length
     }
     return n
@@ -503,8 +505,10 @@ export default class TableComponent extends Mappers {
       case 'time':
       case 'timestamp':
         renderer = 'TimestampRenderer'
+        break
       case 'boolean':
         renderer = 'BooleanRenderer'
+        break
     }
     return {
       cellRendererParams: params,
@@ -693,10 +697,11 @@ export default class TableComponent extends Mappers {
       const column = (this.columnApi as ColumnApi)
         .getColumn(sort.colId)
         .getUserProvidedColDef().cellRendererParams.columnElem as Column
+      const rowName = this.rowNameCasts![column.rowName] || column.rowName
       if (sort.sort === 'asc') {
-        return column.rowName
+        return rowName
       } else {
-        return `-${column.rowName}`
+        return `-${rowName}`
       }
     })
   }
@@ -707,7 +712,8 @@ export default class TableComponent extends Mappers {
       or: [],
     }
     for (const [column, filter] of Object.entries(model)) {
-      const { and, or } = this.castFilterColumn(column, filter)
+      const rowName = this.rowNameCasts![column] || column
+      const { and, or } = this.castFilterColumn(rowName, filter)
       if (and) {
         obj.and.push(...and)
       }
@@ -722,6 +728,16 @@ export default class TableComponent extends Mappers {
       return undefined
     }
     return obj
+  }
+
+  private getRowNameFilterCasts(): {[key: string]: string} {
+    const res: {[key: string]: string} = {}
+    for (const column of this.elem.columns) {
+      if (instanceOfLinkedColumn(column) && !_.isNil(column.fkName)) {
+        res[column.rowName] = column.fkName
+      }
+    }
+    return res
   }
 
   private castFilterColumn(column: string, filter: any): FilterObject {

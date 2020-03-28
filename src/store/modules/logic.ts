@@ -5,9 +5,10 @@ import {
   Module,
   createMapper,
 } from 'vuex-smart-module'
+import { Vue } from 'vue-property-decorator'
 
 import LogicAPI from '@/api/logic'
-import { LogicResponse, Message } from '@/types/logic'
+import { LogicResponse, Message, SystemModal } from '@/types/logic'
 import { AxiosResponse, AxiosError } from 'axios'
 import _ from 'lodash'
 
@@ -15,6 +16,7 @@ import _ from 'lodash'
 
 class LogicState {
   public messages: Message[] = []
+  public systemModal?: SystemModal
 }
 
 class LogicGetters extends Getters<LogicState> {}
@@ -29,6 +31,14 @@ class LogicMutations extends Mutations<LogicState> {
 
   public addMessages(messages: Message[]) {
     this.state.messages.push(...messages)
+  }
+
+  public openModal(modal: SystemModal) {
+    Vue.set(this.state, 'systemModal', modal)
+  }
+
+  public onCloseModal() {
+    Vue.set(this.state, 'systemModal', undefined)
   }
 
   public closeMessage(index: number) {
