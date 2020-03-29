@@ -118,7 +118,7 @@ const Mappers = Mixins(TableControls).extend({
   },
 })
 export default class Table extends Mappers {
-  private formData: any
+  private formData: any = {}
   private formKey: number = 0
   private editedNode?: RowNode
 

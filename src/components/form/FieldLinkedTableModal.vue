@@ -96,6 +96,12 @@ export default class FieldLinkedSelect extends Mappers {
 
   private onClick() {
     const modal = this.$refs.modal as any
+    if (_.isNil(this.value)) {
+      if (this.column.isMultiple) {
+        this.$set(this, 'value', [])
+      }
+    }
+    this.edit = _.isEmpty(this.value)
     modal.show()
   }
 
