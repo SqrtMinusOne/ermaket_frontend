@@ -33,6 +33,8 @@ import {
   instanceOfLinkedField,
   instanceOfPrebuiltPage,
   instanceOfTable,
+  instanceOfSection,
+  instanceOfPage,
 } from '@/types/user_guards'
 import { logic } from './logic'
 import UserAPI from '@/api/user'
@@ -131,6 +133,31 @@ class UserGetters extends Getters<UserState> {
         (elem: HierarchyElem) => elem.id === id
       )?.userTrigger || {}
     )
+  }
+
+  public get home() {
+    return this.state.hierarchy?.hierarchy.find(
+      (elem) => !instanceOfSection(elem)
+    )
+  }
+
+  public route(elem?: HierarchyElem) {
+    if (instanceOfTable(elem)) {
+      return `/table/${elem.id}`
+    }
+    if (instanceOfForm(elem)) {
+      return `/forms/${elem.id}`
+    }
+    if (instanceOfPrebuiltPage(elem)) {
+      switch (elem.type) {
+        case PrebuiltPageType.sql:
+          return `/system/sql/${elem.id}`
+      }
+    }
+    if (instanceOfPage(elem)) {
+      return `/pgaes/${elem.id}`
+    }
+    return '#'
   }
 
   public get tables() {

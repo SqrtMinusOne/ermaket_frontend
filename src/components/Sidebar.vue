@@ -34,7 +34,7 @@ const SidebarMenu = require('vue-sidebar-menu').SidebarMenu
 const Mappers = Vue.extend({
   computed: {
     ...userMapper.mapState(['hierarchy']),
-    ...userMapper.mapGetters(['hierarchyElem']),
+    ...userMapper.mapGetters(['hierarchyElem', 'route']),
   },
 })
 
@@ -46,7 +46,7 @@ interface Icon {
 }
 
 interface Item {
-  href: string | object
+  href?: string | object
   title: string
   icon?: Icon | string
   badge?: Icon
@@ -102,6 +102,7 @@ export default class Home extends Mappers {
     } else {
       item = this.makePrebuiltPage(element as PrebuiltPage)
     }
+    item.href = this.route(element)
     if (element.overrideIcon) {
       item.icon = element.overrideIcon
     }
@@ -111,7 +112,6 @@ export default class Home extends Mappers {
   private makeTable(element: Table): Item {
     return {
       title: element.name,
-      href: { path: `/table/${element.id}` },
       icon: 'fas fa-table',
     }
   }
@@ -123,7 +123,6 @@ export default class Home extends Mappers {
     }
     return {
       title: element.name,
-      href: '#',
       icon: 'fas fa-caret-right',
       child: children,
     }
@@ -132,7 +131,6 @@ export default class Home extends Mappers {
   private makeForm(element: Form): Item {
     return {
       title: element.name,
-      href: { path: `/forms/${element.id}` },
       icon: 'fas fa-wpforms',
     }
   }
@@ -140,11 +138,9 @@ export default class Home extends Mappers {
   private makePrebuiltPage(element: PrebuiltPage): Item {
     const data: Item = {
       title: element.name,
-      href: '#',
     }
     switch (element.type) {
       case PrebuiltPageType.sql:
-        data.href = `/system/sql/${element.id}`
         data.icon = 'fas fa-code'
         break
     }
@@ -155,7 +151,6 @@ export default class Home extends Mappers {
   private makePage(element: Page): Item {
     return {
       title: element.name,
-      href: { path: `/pages/${element.id}` },
       icon: 'fas fa-file'
     }
   }

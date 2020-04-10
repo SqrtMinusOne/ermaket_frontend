@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import VueRouter, { RouteConfig } from 'vue-router'
+import VueRouter, { RouteConfig, Route } from 'vue-router'
 import UnAuthHome from '@/views/UnAuthHome.vue'
 import Error404 from '@/views/404.vue'
 
@@ -11,12 +11,28 @@ import store from '@/store/index'
 
 Vue.use(VueRouter)
 
+const handleIndex = (to: Route, from: Route, next: any) => {
+  console.log(to)
+  if (!store.getters['user/isLoggedIn'] && to.fullPath === '/') {
+    next({
+      path: '/login'
+    })
+  } else {
+    next()
+  }
+}
+
 const routes: RouteConfig[] = [
   {
     path: '/',
     name: 'unauthhome',
     component: UnAuthHome,
     children: [
+      {
+        path: '/',
+        name: 'home',
+        component: LoginForm,
+      },
       {
         path: '/login',
         name: 'login',
@@ -48,6 +64,7 @@ const router = new VueRouter({
   routes,
 })
 
+
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!store.getters['user/isLoggedIn']) {
@@ -59,7 +76,11 @@ router.beforeEach((to, from, next) => {
       next()
     }
   } else {
-    next()
+    if (to.fullPath === '/' && store.getters['user/isLoggedIn']) {
+      next({ path: store.getters['user/route'](store.getters['user/home']) })
+    } else {
+      next()
+    }
   }
 })
 

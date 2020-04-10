@@ -50,6 +50,9 @@ function repeatPassword(value: string, field: any, model: any) {
 }
 
 const Mappers = Vue.extend({
+  computed: {
+    ...userMapper.mapGetters(['home', 'route'])
+  },
   methods: {
     ...userMapper.mapActions(['signUp', 'resetPassword']),
   },
@@ -125,7 +128,7 @@ export default class SignUpForm extends Mappers {
       ? await this.resetPassword(this.model)
       : await this.signUp(this.model)
     if (!error) {
-      this.$router.push('/table/2') // FIXME?
+      this.$router.push(this.route(this.home))
       this.showError = false
     } else {
       this.errorData = error.response.data

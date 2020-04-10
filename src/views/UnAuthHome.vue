@@ -18,6 +18,7 @@ import LoginForm from '@/components/system_forms/LoginForm.vue'
 import LogicShow from '@/components/LogicShow.vue'
 import Navbar from '@/components/Navbar.vue'
 import { userMapper } from '@/store/modules/user'
+import { Route } from 'vue-router'
 
 const Mappers = Vue.extend({
   computed: {

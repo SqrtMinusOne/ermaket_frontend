@@ -36,6 +36,9 @@ const Mappers = Vue.extend({
   methods: {
     ...userMapper.mapActions(['login']),
   },
+  computed: {
+    ...userMapper.mapGetters(['home', 'route'])
+  },
 })
 
 @Component({
@@ -54,7 +57,7 @@ export default class LoginForm extends Mappers {
     e.preventDefault()
     const error = await this.login(this.form)
     if (!error) {
-      this.$router.push('/table/2') // FIXME?
+      this.$router.push(this.route(this.home))
       this.showError = false
     } else {
       this.errorData = error.response.data
