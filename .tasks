@@ -1,0 +1,8 @@
+# vim: set fenc=utf-8 ft=dosini:
+
+[project-lint]
+command=yarn run lint
+cwd=<root>
+output=terminal
+pos=bottom
+save=1

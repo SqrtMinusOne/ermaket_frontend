@@ -12,6 +12,7 @@
 <script lang="ts">
 import { Component, Vue, Emit } from 'vue-property-decorator'
 import { userMapper } from '../store/modules/user'
+import _ from 'lodash'
 import {
   HierarchyElem,
   Section,
@@ -86,10 +87,12 @@ export default class Home extends Mappers {
     hiddenOnCollapse: true
   }]
 
-  private makeMenuElem(element: HierarchyElem): Item {
-    let item: Item
-    if (instanceOfTable(element) && !element.hidden) {
-      item = this.makeTable(element)
+  private makeMenuElem(element: HierarchyElem) {
+    let item: Item | null = null
+    if (instanceOfTable(element)) {
+      if (!element.hidden) {
+        item = this.makeTable(element)
+      }
     }
     else if (instanceOfSection(element)) {
       item = this.makeSection(element)
@@ -102,9 +105,11 @@ export default class Home extends Mappers {
     } else {
       item = this.makePrebuiltPage(element as PrebuiltPage)
     }
-    item.href = this.route(element)
-    if (element.overrideIcon) {
-      item.icon = element.overrideIcon
+    if (item) {
+      item.href = this.route(element)
+      if (element.overrideIcon) {
+        item.icon = element.overrideIcon
+      }
     }
     return item
   }
@@ -119,7 +124,10 @@ export default class Home extends Mappers {
   private makeSection(element: Section): Item {
     const children: Item[] = []
     for (const id of element.children) {
-      children.push(this.makeMenuElem(this.hierarchyElem(id) as HierarchyElem))
+      const item = this.makeMenuElem(this.hierarchyElem(id) as HierarchyElem)
+      if (!_.isNil(item)) {
+        children.push(item)
+      }
     }
     return {
       title: element.name,
@@ -168,7 +176,7 @@ export default class Home extends Mappers {
       ...this.systemMenu,
     ]
     for (const rootId of this.hierarchy.root) {
-      menu.push(this.makeMenuElem(this.hierarchyElem(rootId) as HierarchyElem))
+      menu.push(this.makeMenuElem(this.hierarchyElem(rootId) as HierarchyElem)!)
     }
 
     return menu
