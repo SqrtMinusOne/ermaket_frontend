@@ -1,6 +1,8 @@
 import { Component, Vue, Watch } from 'vue-property-decorator'
+import _ from 'lodash'
+
 import { instanceOfLinkedColumn } from '@/types/user_guards'
-import { Column, LinkedColumn } from '@/types/user'
+import { Column, LinkedColumn, Table } from '@/types/user'
 import { userMapper } from '@/store/modules/user'
 
 const Mappers = Vue.extend({
@@ -16,7 +18,7 @@ const Mappers = Vue.extend({
       ref="root"
       class="w-100 h-100 d-flex align-items-center"
     >
-      <div class="mr-2" v-b-tooltip.hover.noninteractive title="Key attribute" v-if="params.isPk">
+      <div class="mr-2" v-b-tooltip.hover.noninteractive title="Key attribute" v-if="isPk">
         <font-awesome-icon :icon="['fas', 'key']"/>
       </div>
       <div class="mr-2" v-b-tooltip.hover.noninteractive :title="linkTooltip" v-if="isLinked">
@@ -109,6 +111,18 @@ export default class TableHeader extends Mappers {
 
   private get isLinked() {
     return this.params.columnElem && instanceOfLinkedColumn(this.params.columnElem)
+  }
+
+  private get isPk() {
+    if (this.params.isPk) {
+      return true
+    }
+    if (instanceOfLinkedColumn(this.column)) {
+      if (!_.isNil(this.column.fkName)) {
+        return (this.params.table as Table)?.columns.find((col) => col.rowName === (this.column as LinkedColumn).fkName)!.isPk
+      }
+    }
+    return false
   }
 
   private get column(): Column {

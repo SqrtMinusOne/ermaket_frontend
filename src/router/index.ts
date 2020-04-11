@@ -25,12 +25,11 @@ const handleIndex = (to: Route, from: Route, next: any) => {
 const routes: RouteConfig[] = [
   {
     path: '/',
-    name: 'unauthhome',
     component: UnAuthHome,
     children: [
       {
         path: '/',
-        name: 'home',
+        name: 'login_home',
         component: LoginForm,
       },
       {

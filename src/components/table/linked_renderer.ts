@@ -12,7 +12,7 @@ interface Params extends ICellRendererParams {
 const Mappers = Mixins(TableEditMixin).extend({
   computed: {
     ...userMapper.mapGetters(['getTable']),
-    ...tableMapper.mapGetters(['getRecord']),
+    ...tableMapper.mapGetters(['getRecord', 'isTransactee']),
   },
   methods: {
     ...tableMapper.mapActions(['fetchRecord']),
@@ -139,9 +139,21 @@ export default class LinkedRenderer extends Mappers {
     )
   }
 
+  private get displayData() {
+    let data = this.record?.data[this.colElem.rowName]
+    if (this.record?.data._display[this.colElem.rowName]) {
+      if (!this.isTransactee(this.params.table.id, this.key)) {
+        data = this.record.data._display[this.colElem.rowName]
+      } else {
+        data = '[Changed]'
+      }
+    }
+    return data
+  }
+
   private get recordString() {
     if (this.record) {
-      const data = this.record.data[this.colElem.rowName]
+      const data = this.displayData
       if (!Array.isArray(data)) {
         return data
       }
@@ -153,7 +165,12 @@ export default class LinkedRenderer extends Mappers {
   private get recordTooltip() {
     let content = ''
     if (this.record) {
-      const data = this.record.data[this.colElem.rowName]
+      const data = this.displayData
+
+      if (data === '[Changed]') {
+        return 'Data preview is available only for unchanged records'
+      }
+
       if (!Array.isArray(data)) {
         return data
       }

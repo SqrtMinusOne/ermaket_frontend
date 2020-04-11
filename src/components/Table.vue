@@ -711,8 +711,11 @@ export default class TableComponent extends Mappers {
       and: [],
       or: [],
     }
-    for (const [column, filter] of Object.entries(model)) {
-      const rowName = this.rowNameCasts![column] || column
+    for (const [columnName, filter] of Object.entries(model)) {
+      const column = (this.columnApi as ColumnApi)
+        .getColumn(columnName)
+        .getUserProvidedColDef().cellRendererParams.columnElem as Column
+      const rowName = this.rowNameCasts![column.rowName] || column.rowName
       const { and, or } = this.castFilterColumn(rowName, filter)
       if (and) {
         obj.and.push(...and)
@@ -827,7 +830,7 @@ export default class TableComponent extends Mappers {
       {
         field_name: column,
         operator: op,
-        field_value: condition.filter || condition.dateFrom,
+        field_value: !_.isNil(condition.filter) ? condition.filter : condition.dateFrom,
       },
     ]
   }
