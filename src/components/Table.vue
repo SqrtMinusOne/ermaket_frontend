@@ -668,9 +668,9 @@ export default class TableComponent extends Mappers {
             }
             if (!_.isEmpty(self.linkedOpened)) {
               data = self.injectLinkedRows(data)
-              // if (!_.isNil(this.rowCount)) {
-              //   this.rowCount += self.linkedOpened.length
-              // }
+              if (!_.isNil(this.rowCount)) {
+                this.rowCount += Object.keys(self.linkedOpened).length
+              }
             }
             if (
               !_.isNil(self.keys) &&
