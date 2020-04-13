@@ -84,9 +84,12 @@ class TableGetters extends Getters<TableState> {
       this.state.loaded[id].rowCount! <= rowEnd
     ) {
       const slice = this.state.loaded[id].data.slice(rowStart, rowEnd)
-      if (slice.every((datum) => datum !== undefined && datum !== null)) {
-        return slice
+      for (const datum of slice) {
+        if (_.isNil(datum)) {
+          return null
+        }
       }
+      return slice
     }
     return null
   }
@@ -785,7 +788,7 @@ class TableActions extends Actions<
         rowEnd,
         injectNew: !skipAdded,
       })
-      if (rows) {
+      if (!_.isEmpty(rows)) {
         return rows
       }
     }

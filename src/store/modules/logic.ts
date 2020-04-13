@@ -83,11 +83,10 @@ class LogicActions extends Actions<
   }
 
   public async safeProcessLogicError(err: AxiosError<LogicResponse>) {
-    try {
-      return this.actions.processLogicError(err)
-    } catch (err) {
+    if (_.isNil(err.response) || _.isNil(err.response.data.businessLogic)) {
       return err
     }
+    return this.actions.processLogic(err.response)
   }
 }
 

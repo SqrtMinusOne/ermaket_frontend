@@ -24,7 +24,7 @@ const Mappers = Mixins(TableErrors).extend({
 })
 
 @Component({
-  template: `<div class="d-flex flex-row pt-1">
+  template: `<div class="d-flex flex-row pt-1" v-if="isLoaded">
     <LogicButtons location="action" :buttons="table.buttonList" :data="{ row: params.data }" />
     <b-button v-if="showErrors"
       v-b-popover.hover.noninteractive="errorPopover"
@@ -119,6 +119,10 @@ export default class ActionRenderer extends Mappers {
   private onUnlink() {
     this.params.context.parent.onKeySet(this.key, false)
     this.params.context.parent.update()
+  }
+
+  private get isLoaded() {
+    return !_.isNil(this.params.data)
   }
 
   private onEdit() {

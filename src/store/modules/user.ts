@@ -269,7 +269,7 @@ class UserActions extends Actions<
       }
       await this.actions.fetchUser()
     } catch (err) {
-      await this.logic.actions.processLogicError(err.response)
+      await this.logic.actions.safeProcessLogicError(err.response)
       return err
     }
   }
