@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import VueRouter, { RouteConfig, Route } from 'vue-router'
+import VueRouter, { RouteConfig, Route, RawLocation } from 'vue-router'
 import UnAuthHome from '@/views/UnAuthHome.vue'
 import Error404 from '@/views/404.vue'
 
@@ -25,6 +25,7 @@ const handleIndex = (to: Route, from: Route, next: any) => {
 const routes: RouteConfig[] = [
   {
     path: '/',
+    name: 'unauth_root',
     component: UnAuthHome,
     children: [
       {
@@ -57,8 +58,22 @@ const routes: RouteConfig[] = [
   }
 ]
 
+class SafeRouter extends VueRouter {
+  public async push(location: RawLocation) {
+    try {
+      const route = await super.push(location)
+      return route
+    } catch (err) {
+      if (err?.name !== 'NavigationDuplicated') {
+        throw err
+      } else {
+        return this.currentRoute
+      }
+    }
+  }
+}
 
-const router = new VueRouter({
+const router = new SafeRouter({
   mode: 'history',
   routes,
 })

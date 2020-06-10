@@ -1,5 +1,5 @@
 <template>
-  <main-card :name="table.name" no-body>
+  <main-card v-if="table" :name="table.name" no-body>
     <template v-slot:controls>
       <LogicButtons location="cardHeader" :buttons="table.buttonList" :buttonAttrs="{ size: 'sm' }" />
       <b-button
@@ -134,7 +134,7 @@ export default class Table extends Mappers {
   private onLogicMessage() {
     setTimeout(() => {
       // FIXME
-      this.tableComponent.setTableHeight()
+      this.tableComponent?.setTableHeight()
     }, 100)
   }
 
