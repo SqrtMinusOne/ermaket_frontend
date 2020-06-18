@@ -52,6 +52,7 @@ import LinkedRenderer from './table/linked_renderer'
 import LinkedTableRenderer from './table/linked_table'
 import TableHeader from './table/header'
 import TimestampRenderer from './table/timestamp_renderer'
+import SetFilter from './table/set_filter';
 
 const Mappers = Vue.extend({
   computed: {
@@ -123,9 +124,10 @@ export default class TableComponent extends Mappers {
       LinkedEditor,
       LinkedRenderer,
       LinkedTableRenderer,
+      SetFilter,
       TimestampRenderer,
       GeneralRenderer,
-      agColumnHeader: TableHeader,
+      agColumnHeader: TableHeader
     },
     multiSortKey: 'ctrl',
     getRowClass: this.getRowClass,
@@ -406,6 +408,9 @@ export default class TableComponent extends Mappers {
         table: this.elem,
         pk: this.pk,
       },
+      filterParams: {
+        columnElem: column
+      },
       editable: this.getIsEditable(column),
       ...this.getRenderer(column),
       ...this.getEditor(column, this.elem),
@@ -582,6 +587,9 @@ export default class TableComponent extends Mappers {
     if (!column.type) {
       return false
     }
+    if (column.type.startsWith('enum')) {
+      return 'SetFilter'
+    }
     if (column.type.match(/((float|int)\d*|bool|decimal.*)/)) {
       return 'agNumberColumnFilter'
     }
@@ -714,6 +722,7 @@ export default class TableComponent extends Mappers {
       and: [],
       or: [],
     }
+    console.log(model)
     for (const [columnName, filter] of Object.entries(model)) {
       const column = (this.columnApi as ColumnApi)
         .getColumn(columnName)
@@ -761,6 +770,14 @@ export default class TableComponent extends Mappers {
         return {
           or: conditions,
         }
+      }
+    } else if (filter.type === 'enum') {
+      return {
+        or: filter.filter.map((value: string) => ({
+          field_name: column,
+          operator: Operator.equals,
+          field_value: value
+        }))
       }
     } else {
       return { and: this.castCondition(column, filter) }

@@ -93,6 +93,7 @@ export interface Column {
   isPk: boolean
   isRequired: boolean
   dateFormat?: string
+  enumOptions?: string[]
   isAuto: boolean
   default: any
 }

@@ -13,6 +13,7 @@ import {
   Access,
   Activation,
   ButtonLocation,
+  Column,
   FormDescription,
   FormLinkType,
   Hierarchy,
@@ -66,6 +67,9 @@ function setEnums(elem: HierarchyElem) {
     for (const column of elem.columns) {
       if (instanceOfLinkedColumn(column)) {
         column.linkType = $enum(TableLinkType).asValueOrThrow(column.linkType)
+      }
+      if (column.type.startsWith('enum')) {
+        column.enumOptions = [...column.type.matchAll(/'[^']*'/gm)].map(option => option.toString().slice(1, -1))
       }
     }
     if (!_.isNil(elem.formDescription)) {
