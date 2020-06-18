@@ -471,7 +471,7 @@ export default class TableComponent extends Mappers {
     if (!_.isEmpty(this.errors[this.elem.id])) {
       n++
     }
-    if (!_.isNil(this.keysParams) && !this.keysParams.edit) {
+    if (!_.isNil(this.keysParams) && !this.keysParams.edit && this.elem.userAccess.has(Access.change)) {
       n++
     }
     if (!_.isNil(this.elem.buttonList)) {

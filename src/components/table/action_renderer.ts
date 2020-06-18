@@ -146,7 +146,10 @@ export default class ActionRenderer extends Mappers {
   }
 
   private get canUnlink() {
-    return this.params.isLinked
+    return (
+      this.params.isLinked
+      && this.table.userAccess.has(Access.change)
+    )
   }
 
   private get table() {

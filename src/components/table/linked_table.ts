@@ -3,7 +3,7 @@ import TableComponent from '@/components/Table.vue'
 import TableControls from '@/mixins/table_controls'
 import { Component, Vue, Mixins, Watch } from 'vue-property-decorator'
 import { ICellRendererParams, GridApi } from 'ag-grid-community'
-import { LinkedColumn, Table, TableLinkType } from '@/types/user'
+import { LinkedColumn, Table, TableLinkType, Access } from '@/types/user'
 import { LoadedRecord } from '@/types/tables'
 import { tableMapper } from '@/store/modules/table'
 import { userMapper } from '@/store/modules/user'
@@ -28,7 +28,12 @@ const Mappers = Mixins(TableControls).extend({
   template: `
     <main-card :name="table.name" no-body>
       <template v-slot:controls>
-        <b-button @click="toggleEdit" variant="outline-light" size="sm">
+        <b-button
+          @click="toggleEdit"
+          variant="outline-light"
+          size="sm"
+          v-if="canEdit"
+        >
           <font-awesome-icon :icon="['fas', 'pencil-alt']" v-if="edit" />
           <font-awesome-icon :icon="['fas', 'eye']" v-else />
           {{ !edit ? 'View mode' : 'Edit mode' }}
@@ -138,5 +143,9 @@ export default class LinkedTableRenderer extends Mappers {
 
   private get table() {
     return this.getTable(this.column.linkSchema, this.column.linkTableName)
+  }
+
+  private get canEdit() {
+    return this.table?.userAccess.has(Access.change)
   }
 }
