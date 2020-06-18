@@ -12,7 +12,7 @@ export default class LoggedInRoutes implements RouterOptions {
   public static routes = [
     {
       path: '/',
-      name: 'home',
+      // name: 'home',
       component: Home,
       children: [
         {

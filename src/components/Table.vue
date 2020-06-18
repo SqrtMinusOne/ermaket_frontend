@@ -478,6 +478,9 @@ export default class TableComponent extends Mappers {
   }
 
   private getIsEditable(column: Column) {
+    if (!this.elem.userAccess.has(Access.change)) {
+      return false
+    }
     if (this.noEdit || column.isAuto || column.type === 'boolean') {
       return false
     }

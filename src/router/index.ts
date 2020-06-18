@@ -25,7 +25,7 @@ const handleIndex = (to: Route, from: Route, next: any) => {
 const routes: RouteConfig[] = [
   {
     path: '/',
-    name: 'unauth_root',
+    // name: 'unauth_root',
     component: UnAuthHome,
     children: [
       {
