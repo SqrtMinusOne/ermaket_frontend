@@ -722,7 +722,6 @@ export default class TableComponent extends Mappers {
       and: [],
       or: [],
     }
-    console.log(model)
     for (const [columnName, filter] of Object.entries(model)) {
       const column = (this.columnApi as ColumnApi)
         .getColumn(columnName)

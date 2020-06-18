@@ -1,6 +1,6 @@
 import { Component, Vue } from 'vue-property-decorator'
 import { ICellRendererParams } from 'ag-grid-community'
-import { Column } from '@/types/user'
+import { Column, Table, Access } from '@/types/user'
 import _ from 'lodash'
 
 interface Params extends ICellRendererParams {
@@ -30,7 +30,14 @@ export default class BooleanRenderer extends Vue {
     return this.params.columnElem as Column | undefined
   }
 
+  private get table() {
+    return this.params.table as Table
+  }
+
   private get isEditable() {
-    return this.columnElem ? this.columnElem.isEditable : true
+    if (this.table.userAccess.has(Access.change)) {
+      return this.columnElem ? this.columnElem.isEditable : true
+    }
+    return false
   }
 }
